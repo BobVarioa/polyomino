@@ -1,0 +1,17 @@
+{
+  "name": "polyomino",
+  "version": "1.0.0",
+  "description": "A falling block game :)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bob Varioa",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.18.13",
+    "fs-extra": "^11.1.1",
+    "glob": "^10.3.3",
+    "serve-handler": "^6.1.5"
+  }
+}
