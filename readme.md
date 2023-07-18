@@ -1,10 +1,3 @@
-# Block Games
-- [ ] Tetris
-- [ ] Tetris Attack
-- [ ] Puyo Puyo
-- [ ] Pac Attack
-
-
 # Todo
 - [ ] Gamemodes
 	- [ ] Monomino
