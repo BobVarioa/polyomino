@@ -85,8 +85,8 @@
 		- [ ] Garbage
 		- [ ] Rollback? Todo, research
 		- [ ] Elo system
-	- [ ] Prefrences
-		- [ ] Soft drop factor
+	- [x] Prefrences
+		- [x] Soft drop factor
 	- [ ] Game over
 - [ ] Rewrite in assemblyscript
 - [ ] Mobile and Desktop version

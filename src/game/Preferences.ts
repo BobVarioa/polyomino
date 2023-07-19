@@ -1,7 +1,7 @@
 export class Preferences {
 	public arr: number = 2;
 	public das: number = 10;
-	public softDropSpeed: number;
+	public sdf: number = 1;
 
 	constructor() { }
 }

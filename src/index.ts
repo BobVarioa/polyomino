@@ -10,6 +10,7 @@ function init() {
 	let prefs = new Preferences();
 	prefs.arr = 0;
 	prefs.das = 7;
+	prefs.sdf = -1;
 
 	let input = new InputManager(document);
 

@@ -287,7 +287,12 @@ export class Logic {
 		}
 
 		if (this.input.isKeyPressed(Keys.SoftDrop)) {
-			this.activePiece.softDrop();
+			if (this.prefs.sdf == -1) {
+				this.activePiece.hardDrop()
+			} else {
+				let i = this.prefs.sdf;
+				while (i-- > 0) this.activePiece.softDrop();
+			}
 			updated = true;
 		}
 
