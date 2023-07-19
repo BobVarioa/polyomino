@@ -105,22 +105,26 @@ export class PieceState {
 		return this;
 	}
 
-	rotateLeft() {
-		let piece = this.copy();
-
-		let rot = piece.rot;
-		piece.rotate90degcc();
+	private rotate(piece: PieceState, rot: RotState) {
 		let newRot = piece.rot;
 		let kicks = piece.parent.calculateKicks(piece.piece, rot, newRot);
 
 		for (const [xK, yK] of kicks) {
-			const translated = piece.relative(xK, yK);
+			// yK is negated as negative values mean up for us
+			const translated = piece.relative(xK, -yK);
 			if (!this.parent.pieceIntersecting(translated)) {
 				return translated;
 			}
 		}
 
 		return undefined;
+	}
+
+	rotateLeft() {
+		let piece = this.copy();
+		let rot = piece.rot;
+		piece.rotate90degcc();
+		return this.rotate(piece, rot);
 	}
 
 	rotateRight() {
@@ -128,35 +132,14 @@ export class PieceState {
 
 		let rot = piece.rot;
 		piece.rotate90deg();
-		let newRot = piece.rot;
-		let kicks = piece.parent.calculateKicks(piece.piece, rot, newRot);
-
-		for (const [xK, yK] of kicks) {
-			const translated = piece.relative(xK, yK);
-			if (!this.parent.pieceIntersecting(translated)) {
-				return translated;
-			}
-		}
-
-		return undefined;
+		return this.rotate(piece, rot);
 	}
 
 	rotate180() {
 		let piece = this.copy();
-
 		let rot = piece.rot;
 		piece.rotate90deg().rotate90deg();
-		let newRot = piece.rot;
-		let kicks = piece.parent.calculateKicks(piece.piece, rot, newRot);
-
-		for (const [xK, yK] of kicks) {
-			const translated = piece.relative(xK, yK);
-			if (!this.parent.pieceIntersecting(translated)) {
-				return translated;
-			}
-		}
-
-		return undefined;
+		return this.rotate(piece, rot);
 	}
 
 	copy() {
