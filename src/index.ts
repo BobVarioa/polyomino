@@ -21,6 +21,8 @@ function init() {
 	input.setKey(Keys.SoftDrop, "ArrowDown");
 	input.setKey(Keys.HardDrop, "ArrowUp");
 	input.setKey(Keys.Hold, " ");
+	input.setKey(Keys.Restart, "r");
+	input.setKey(Keys.Fail, "f");
 	input.setKey(Keys.Pause, "Escape");
 
 	let logic = new Logic(gameDef, prefs, input);

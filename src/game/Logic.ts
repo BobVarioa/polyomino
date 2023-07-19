@@ -146,6 +146,16 @@ export class Logic {
 		}
 
 		if (this.paused) return;
+
+		if (this.input.isKeyPressed(Keys.Fail)) {
+			this.gameOver();
+		}
+
+		if (this.input.isKeyPressed(Keys.Restart)) {
+			this.start();
+			return;
+		}
+
 		const { boardSize, screenSize, are, hold: canHold, gravity, lockDelay, holdDelay } = this.gameDef.settings;
 
 		// if no piece,

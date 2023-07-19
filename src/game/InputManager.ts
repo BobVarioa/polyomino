@@ -10,6 +10,8 @@ export enum Keys {
 	HardDrop,
 	Hold,
 	Pause,
+	Restart,
+	Fail,
 	// NOTE: must be last element
 	Length,
 }
