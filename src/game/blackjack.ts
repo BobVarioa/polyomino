@@ -1,4 +1,4 @@
-import { Random } from "./randomizer";
+import { Random } from "../utils/randomizer";
 
 /*
 (Copied from https://tetris.fandom.com/wiki/Blackjack)
