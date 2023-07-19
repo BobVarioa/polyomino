@@ -43,7 +43,10 @@
 		- [ ] Special Effects
 			- These should **never** be able to be purchased with real money 
 			- No lootboxes, etc.
-			- [ ] Items (Characters?)
+			- [ ] Characters
+				- Inspiration:
+					- [TETR.IO](https://characters.osk.sh/) 
+					- Puyo Puyo Characters
 				- Things that change gameplay throughout the whole match
 				- [ ] 
 			- [ ] Active abilities
@@ -52,12 +55,14 @@
 				- [ ] Zone
 				- [ ] Filling holes
 				- [ ] Changes your hold box into a special mino
-					- [ ] Fairies? Bomb?
+					- [ ] Fairies, removes n lines of garbage 
+					- [ ] Bomb, removes all tiles in an area
+					- [ ] Sword, clears all minos in a direction
 				- [ ] Send garbage to opponent but ... to you
 					- [ ] Double back?
 					- [ ] Unclearable garbage?
 		- [ ] Allows different players to play different gamemodes against each other, i.e. a duo and a tetra player
-		- [ ] Players should be able to have loadouts of items / active abilities
+		- [ ] Players should be able to have loadouts of characters / active abilities
 - [ ] Features
 	- [ ] [Gravity Modes](https://tetris.wiki/Line_clear#Line_clear_gravity)
 		- [x] Naive
@@ -82,6 +87,7 @@
 		- [ ] Elo system
 	- [ ] Prefrences
 		- [ ] Soft drop factor
+	- [ ] Game over
 - [ ] Rewrite in assemblyscript
 - [ ] Mobile and Desktop version
 	- [ ] console????
