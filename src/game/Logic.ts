@@ -18,7 +18,7 @@ export class Logic {
 	start() {
 		// reset randomizer
 		this.gameDef.randomizer.reset(Math.random());
-		this.timers = {
+		this.counters = {
 			areTimer: 0,
 			arrTimer: 0,
 			dasTimer: 0,
@@ -26,6 +26,7 @@ export class Logic {
 			lockDelayTimer: 0,
 			lockDelayMoves: 0,
 			pauseBuffer: 0,
+			heldLast: false,
 		};
 
 		const { boardSize } = this.gameDef.settings;
@@ -74,7 +75,7 @@ export class Logic {
 		return kicks;
 	}
 
-	timers: {
+	counters: {
 		areTimer: number;
 		arrTimer: number;
 		dasTimer: number;
@@ -82,6 +83,7 @@ export class Logic {
 		lockDelayTimer: number;
 		lockDelayMoves: number;
 		pauseBuffer: number;
+		heldLast: boolean;
 	};
 
 	clearLines() {
@@ -130,7 +132,7 @@ export class Logic {
 		}
 
 		if (clearedLines >= 0) {
-			this.timers.areTimer -= this.gameDef.settings.lineClearDelay * clearedLines;
+			this.counters.areTimer -= this.gameDef.settings.lineClearDelay * clearedLines;
 		}
 	}
 
@@ -138,11 +140,11 @@ export class Logic {
 	 * logic loop function, should run 60 times per second
 	 */
 	frame() {
-		if (this.input.isKeyPressed(Keys.Pause) && this.timers.pauseBuffer == 0) {
+		if (this.input.isKeyPressed(Keys.Pause) && this.counters.pauseBuffer == 0) {
 			this.paused = !this.paused;
-			this.timers.pauseBuffer = 60; // 0.5s
-		} else if (this.timers.pauseBuffer != 0) {
-			this.timers.pauseBuffer--;
+			this.counters.pauseBuffer = 60; // 0.5s
+		} else if (this.counters.pauseBuffer != 0) {
+			this.counters.pauseBuffer--;
 		}
 
 		if (this.paused) return;
@@ -161,8 +163,8 @@ export class Logic {
 		// if no piece,
 		if (this.activePiece.invalid) {
 			// wait for are
-			if (this.timers.areTimer <= are) {
-				this.timers.areTimer++;
+			if (this.counters.areTimer <= are) {
+				this.counters.areTimer++;
 				return;
 			} else {
 				this.clearLines();
@@ -191,7 +193,7 @@ export class Logic {
 				this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y - 1);
 			}
 
-			this.timers.areTimer = 0;
+			this.counters.areTimer = 0;
 
 			// check if player is trying to rotate piece, rotate
 			// TODO broken
@@ -205,34 +207,36 @@ export class Logic {
 			// TODO: [garbage] update garbage ?
 			// if is piece in valid location
 			if (!this.pieceIntersecting(this.activePiece)) {
-				if (canHold && this.input.isKeyPressed(Keys.Hold)) {
+				if (canHold && !this.counters.heldLast && this.input.isKeyPressed(Keys.Hold)) {
 					this.activePiece.invalidate();
 					this.holdSwap = this.holdPiece != " ";
 					if (this.holdSwap == false) {
 						this.holdPiece = this.activePiece.piece.name;
 					}
 					// make are longer for holds
-					this.timers.areTimer = -holdDelay;
+					this.counters.areTimer = -holdDelay;
+					this.counters.heldLast = true;
 				}
 
 				// (frames * cells/frames) >= 1 // we moved more than 1 cell, drop piece
-				if (this.timers.gravityTimer * gravity >= 1) {
+				if (this.counters.gravityTimer * gravity >= 1) {
 					this.activePiece.softDrop();
-					this.timers.gravityTimer = 0;
-					this.timers.lockDelayTimer = 0;
+					this.counters.gravityTimer = 0;
+					this.counters.lockDelayTimer = 0;
 				}
-				this.timers.gravityTimer += 1;
+				this.counters.gravityTimer += 1;
 
 				this.handleInputs();
 
 				// is piece touching floor?
 				if (this.pieceIntersecting(this.activePiece.relative(0, 1))) {
-					this.timers.lockDelayTimer += 1;
+					this.counters.lockDelayTimer += 1;
 				}
 
-				if (this.timers.lockDelayTimer >= lockDelay) {
+				if (this.counters.lockDelayTimer >= lockDelay) {
 					this.activePiece.write();
-					this.timers.lockDelayTimer = 0;
+					this.counters.heldLast = false;
+					this.counters.lockDelayTimer = 0;
 				}
 			} else {
 				// TODO: [garbage] below
@@ -281,7 +285,7 @@ export class Logic {
 
 		if (this.input.isKeyPressed(Keys.HardDrop)) {
 			this.activePiece.hardDrop();
-			this.timers.lockDelayTimer = this.gameDef.settings.lockDelay;
+			this.counters.lockDelayTimer = this.gameDef.settings.lockDelay;
 			updated = true;
 			this.input.pressedMap[Keys.HardDrop] = false;
 		}
@@ -302,8 +306,8 @@ export class Logic {
 
 		if (this.movedLastFrame) {
 			if (attemptingMovement) {
-				if (this.timers.dasTimer >= this.prefs.das) {
-					if (this.timers.arrTimer == 0) {
+				if (this.counters.dasTimer >= this.prefs.das) {
+					if (this.counters.arrTimer == 0) {
 						if (movingLeft) {
 							this.activePiece.moveLeft();
 							updated = true;
@@ -317,17 +321,17 @@ export class Logic {
 						}
 					}
 
-					if (this.timers.arrTimer >= this.prefs.arr) {
-						this.timers.arrTimer = 0;
+					if (this.counters.arrTimer >= this.prefs.arr) {
+						this.counters.arrTimer = 0;
 					} else {
-						this.timers.arrTimer++;
+						this.counters.arrTimer++;
 					}
 				} else {
-					this.timers.dasTimer++;
+					this.counters.dasTimer++;
 				}
 			} else {
-				this.timers.dasTimer = 0;
-				this.timers.arrTimer = 0;
+				this.counters.dasTimer = 0;
+				this.counters.arrTimer = 0;
 				this.movedLastFrame = false;
 			}
 		} else {
@@ -347,9 +351,9 @@ export class Logic {
 		}
 
 		// if movement successful reset lock delay
-		if (updated && this.timers.lockDelayMoves >= 15) {
-			this.timers.lockDelayTimer = 0;
-			this.timers.lockDelayMoves++;
+		if (updated && this.counters.lockDelayMoves >= 15) {
+			this.counters.lockDelayTimer = 0;
+			this.counters.lockDelayMoves++;
 		}
 	}
 }
