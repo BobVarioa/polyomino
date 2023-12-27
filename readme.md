@@ -29,7 +29,7 @@
 			- [ ] Scoring
 	- [ ] Pentomino
 		- Inspiration:
-			- 
+			- [ ] 
 		- [x] All non mirrored pentominos
 		- [ ] Add a new rotation system based on SRS
 			- [ ] Flipping? If so add rotation logic for this
