@@ -27,6 +27,8 @@ export interface Settings {
 	hold: boolean;
 	holdDelay: number;
 	lineClearDelay: number;
+	specialRotation: string;
+	rotation: boolean;
 }
 
 export interface KickTable {

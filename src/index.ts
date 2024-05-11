@@ -1,12 +1,12 @@
-import { tetra } from "./data/gameTypes";
+import { tetra, penta } from "./data/gameTypes";
 import { GameDef, GameSchema } from "./game/GameDef";
 import { InputManager, Keys } from "./game/InputManager";
 import { Logic } from "./game/Logic";
-import { Draw } from "./game/Draw";
+import { Draw, DrawMode } from "./game/render/Draw";
 import { Preferences } from "./game/Preferences";
 
 function init() {
-	let gameDef = GameDef.fromJson(tetra as any as GameSchema);
+	let gameDef = GameDef.fromJson(penta as any as GameSchema);
 	let prefs = new Preferences();
 	prefs.arr = 0;
 	prefs.das = 7;
@@ -17,6 +17,7 @@ function init() {
 	input.setKey(Keys.RotateLeft, "z");
 	input.setKey(Keys.RotateRight, "x");
 	input.setKey(Keys.Rotate180, "c");
+	input.setKey(Keys.RotateSpecial, "v");
 	input.setKey(Keys.MoveLeft, "ArrowLeft");
 	input.setKey(Keys.MoveRight, "ArrowRight");
 	input.setKey(Keys.SoftDrop, "ArrowDown");
@@ -30,9 +31,13 @@ function init() {
 	logic.start();
 
 	let canvas = document.querySelector<HTMLCanvasElement>("#gameBoard");
+	let draw = Draw.create(DrawMode.Canvas, logic, canvas);
+	let drawFunc = draw.start();
+	
+	draw.grid = 32;
+	canvas.width = draw.grid * gameDef.settings.screenSize[0];
+	canvas.height = draw.grid * gameDef.settings.screenSize[1];
 
-	let draw = new Draw(logic, canvas);
-	draw.start();
 	let rAF;
 
 	(async () => {
@@ -49,9 +54,13 @@ function init() {
 		cancelAnimationFrame(rAF);
 	});
 
-	function drawLoop() {
+	let then = 0;
+	function drawLoop(now) {
+		now *= 0.001;
+		drawFunc(now - then);
+		then = now;
+
 		rAF = requestAnimationFrame(drawLoop);
-		draw.frame();
 	}
 	rAF = requestAnimationFrame(drawLoop);
 }

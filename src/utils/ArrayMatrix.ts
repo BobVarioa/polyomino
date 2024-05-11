@@ -38,7 +38,7 @@ export class ArrayMatrix<T> extends Array<T> {
 	}
 
 	atXY(x, y) {
-		if (x < 0 || y < 0|| x > this.width - 1 || y > this.height - 1) return;
+		if (x < 0 || y < 0 || x > this.width - 1 || y > this.height - 1) return;
 		return this[x + this.width * y];
 	}
 

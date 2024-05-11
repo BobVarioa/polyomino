@@ -17,7 +17,7 @@
 		- [ ] 
 	- [ ] Tetromino
 		- Inspiration:
-			- [Tetris]()
+			- [Tetris](https://tetris.wiki/Tetris_Guideline)
 		- [x] Guildline rules
 			- [x] All Tetrominos
 			- [x] Rotation: SRS
@@ -29,12 +29,14 @@
 			- [ ] Scoring
 	- [ ] Pentomino
 		- Inspiration:
-			- 
+			- Pentomino modes in jstris, Puyo Puyo Tetris, and various tetris fangames
 		- [x] All non mirrored pentominos
-		- [ ] Add a new rotation system based on SRS
-			- [ ] Flipping? If so add rotation logic for this
-			- [ ] Look into nullpomino's rotation system editor, because doing this by hand seems painful
-		- [ ] Look into which pieces should give spin bonuses
+		- [~] Add a new rotation system based on SRS
+			- [x] Flipping
+			- [ ] Look into nullpomino's rotation system editor to fix the bugs, because doing this by hand is painful
+		- [ ] Scoring
+			- [ ] Look into which pieces should give spin bonuses
+			- [ ] Line clears should be initally less, but multiple line clears should be more due to their difficulty
 	- [ ] Polyomino
 		- Inspiration:
 			- [Puyo Puyo Tetris: Party](https://tetris.wiki/Puyo_Puyo_Tetris#Party)

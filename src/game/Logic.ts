@@ -4,16 +4,16 @@ import { InputManager, Keys } from "./InputManager";
 import { PieceState, RotState } from "./PieceState";
 import { Preferences } from "./Preferences";
 
-
 export class Logic {
 	public gameboard: ArrayMatrix<string>;
+	public ghostboard: ArrayMatrix<string>;
 	public activePiece: PieceState;
 	public holdPiece: string;
 	public paused: boolean;
 	public holdSwap: boolean;
 	public lastMove: Keys;
 
-	constructor(public gameDef: GameDef, public prefs: Preferences, public input: InputManager) { }
+	constructor(public gameDef: GameDef, public prefs: Preferences, public input: InputManager) {}
 
 	start() {
 		// reset randomizer
@@ -27,11 +27,13 @@ export class Logic {
 			lockDelayMoves: 0,
 			pauseBuffer: 0,
 			heldLast: false,
+			combo: 0,
 		};
 
 		const { boardSize } = this.gameDef.settings;
 		// clear gameboard
 		this.gameboard = new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
+		this.ghostboard = new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
 		this.activePiece = PieceState.none;
 		this.holdPiece = " ";
 		this.holdSwap = false;
@@ -84,13 +86,12 @@ export class Logic {
 		lockDelayMoves: number;
 		pauseBuffer: number;
 		heldLast: boolean;
+		combo: number;
 	};
 
 	clearLines() {
 		let clearedLines = 0;
 		let wasSpin = false;
-
-		let score = 0;
 
 		// clearedLines.length
 		// three corner rule
@@ -133,6 +134,10 @@ export class Logic {
 
 		if (clearedLines >= 0) {
 			this.counters.areTimer -= this.gameDef.settings.lineClearDelay * clearedLines;
+
+			this.counters.combo += 1;
+		} else {
+			this.counters.combo = 0;
 		}
 	}
 
@@ -201,7 +206,12 @@ export class Logic {
 
 			// if piece intersects gameboard,
 			if (this.pieceIntersecting(this.activePiece)) {
-				this.gameOver();
+				const piece = this.activePiece.relative(0, -2);
+				if (!this.pieceIntersecting(piece)) {
+					this.activePiece = piece;
+				} else {
+					this.gameOver();
+				}
 			}
 		} else {
 			// TODO: [garbage] update garbage ?
@@ -252,7 +262,8 @@ export class Logic {
 
 	handleInputs() {
 		let updated = false;
-		if (this.input.isKeyPressed(Keys.RotateLeft)) {
+		const { specialRotation, rotation } = this.gameDef.settings;
+		if (this.input.isKeyPressed(Keys.RotateLeft) && rotation) {
 			const piece = this.activePiece.rotateLeft();
 			if (piece != undefined) {
 				this.activePiece = piece;
@@ -263,7 +274,7 @@ export class Logic {
 			this.lastMove = Keys.RotateLeft;
 		}
 
-		if (this.input.isKeyPressed(Keys.RotateRight)) {
+		if (this.input.isKeyPressed(Keys.RotateRight) && rotation) {
 			const piece = this.activePiece.rotateRight();
 			if (piece != undefined) {
 				this.activePiece = piece;
@@ -273,7 +284,7 @@ export class Logic {
 			this.lastMove = Keys.RotateRight;
 		}
 
-		if (this.input.isKeyPressed(Keys.Rotate180)) {
+		if (this.input.isKeyPressed(Keys.Rotate180) && rotation) {
 			const piece = this.activePiece.rotate180();
 			if (piece != undefined) {
 				this.activePiece = piece;
@@ -281,6 +292,50 @@ export class Logic {
 			}
 			this.input.pressedMap[Keys.Rotate180] = false;
 			this.lastMove = Keys.Rotate180;
+		}
+
+		if (this.input.isKeyPressed(Keys.RotateSpecial) && specialRotation != "none") {
+			let piece;
+			switch (specialRotation) {
+				case "flip":
+					const p = this.activePiece;
+					const name = p.piece.name;
+					if (name.endsWith("'")) {
+						const pieceData = this.gameDef.pieces.get(name.slice(0, -1))
+						if (pieceData == undefined) { piece = undefined; break; }
+						piece = new PieceState(this, pieceData, RotState.Initial, p.x, p.y);
+						if (p.rot.value == RotState.Right.value) {
+							piece.rotate90degcc();
+						}
+						if (p.rot.value == RotState.Left.value) {
+							piece.rotate90deg();
+						}
+					} else {
+						const pieceData = this.gameDef.pieces.get(name + "'")
+						if (pieceData == undefined) { piece = undefined; break; }
+						piece = new PieceState(this, pieceData, RotState.Initial, p.x, p.y);
+						if (p.rot.value == RotState.Left.value) {
+							piece.rotate90deg();
+						}
+						if (p.rot.value == RotState.Right.value) {
+							piece.rotate90degcc();
+						}
+					}
+					if (p.rot.value == RotState.Twice.value) {
+						piece.rotate90deg();
+						piece.rotate90deg();
+					}
+					if (this.pieceIntersecting(piece)) {
+						piece = undefined;
+					}
+					break;
+			}
+			if (piece != undefined) {
+				this.activePiece = piece;
+				updated = true;
+			}
+			this.input.pressedMap[Keys.RotateSpecial] = false;
+			this.lastMove = Keys.RotateSpecial;
 		}
 
 		if (this.input.isKeyPressed(Keys.HardDrop)) {
@@ -292,7 +347,7 @@ export class Logic {
 
 		if (this.input.isKeyPressed(Keys.SoftDrop)) {
 			if (this.prefs.sdf == -1) {
-				this.activePiece.hardDrop()
+				this.activePiece.hardDrop();
 			} else {
 				let i = this.prefs.sdf;
 				while (i-- > 0) this.activePiece.softDrop();

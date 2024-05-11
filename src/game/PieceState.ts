@@ -5,11 +5,11 @@ import { Logic } from "./Logic";
 export class RotState {
 	static Initial = new RotState(0);
 	static Left = new RotState(1);
-	static Flipped = new RotState(2);
+	static Twice = new RotState(2);
 	static Right = new RotState(3);
 
 	constructor(public value: number) {}
-
+	
 	left() {
 		let value = this.value + 1;
 		if (value > 3) value = 0;
@@ -22,7 +22,7 @@ export class RotState {
 		return new RotState(value);
 	}
 
-	flip() {
+	twice() {
 		return this.left().left();
 	}
 

@@ -36,6 +36,7 @@
 		"gravity":  0.0156,
 		"lockDelay": 30,
 		"hold": true,
+		"rotation": true,
 		"holdDelay": 2,
 		"lineClearDelay": 20
 	}

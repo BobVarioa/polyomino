@@ -1,0 +1,26 @@
+{
+	"pieces": {
+		"I": { "def": "010/010/010", "color": "cyan" }
+
+		// red 
+		// orange
+		// yellow
+		// green
+		// blue
+		// purple 
+	},
+	"rotation": {},
+	"randomizer": "I",
+	"settings": {
+		"boardSize": [10, 40],
+		"screenSize": [10, 20],
+		"are": 6,
+		"gravity":  0.0156,
+		"lockDelay": 30,
+		"hold": true,
+		"holdDelay": 2,
+		"lineClearDelay": 20,
+		"specialRotation": "cycle",
+		"rotation": true
+	}
+}
