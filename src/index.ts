@@ -1,4 +1,4 @@
-import { tetra, penta } from "./data/gameTypes";
+import { tetro, pento } from "./data/gameTypes";
 import { GameDef, GameSchema } from "./game/GameDef";
 import { InputManager, Keys } from "./game/InputManager";
 import { Logic } from "./game/Logic";
@@ -6,14 +6,13 @@ import { Draw, DrawMode } from "./game/render/Draw";
 import { Preferences } from "./game/Preferences";
 
 function init() {
-	let gameDef = GameDef.fromJson(penta as any as GameSchema);
+	let gameDef = GameDef.fromJson(pento as any as GameSchema);
 	let prefs = new Preferences();
 	prefs.arr = 0;
 	prefs.das = 7;
 	prefs.sdf = -1;
 
 	let input = new InputManager(document);
-
 	input.setKey(Keys.RotateLeft, "z");
 	input.setKey(Keys.RotateRight, "x");
 	input.setKey(Keys.Rotate180, "c");

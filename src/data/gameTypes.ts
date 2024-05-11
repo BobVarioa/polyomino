@@ -1,3 +1,3 @@
-import tetra from "./tetra.json";
-import penta from "./penta.json";
-export { tetra, penta };
+import tetro from "./tetro.json";
+import pento from "./pento.json";
+export { tetro , pento };

@@ -73,7 +73,7 @@
 	- [ ] Rotation Modes
 		- [x] Normal
 		- [ ] Cycle (See Tromino)
-		- [ ] Flip (See Pentomino)
+		- [x] Flip (See Pentomino)
 	- [ ] Removal Modes
 		- [x] Width
 		- [ ] Color match (See Monomino)
