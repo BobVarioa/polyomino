@@ -30,6 +30,7 @@ export class Logic {
 			pauseBuffer: 0,
 			heldLast: false,
 			combo: 0,
+			timesDropped: 0
 		};
 
 		this.flags = {
@@ -95,6 +96,7 @@ export class Logic {
 		pauseBuffer: number;
 		heldLast: boolean;
 		combo: number;
+		timesDropped: number;
 	};
 
 	flags: {
@@ -124,34 +126,121 @@ export class Logic {
 			wasSpin = corners > 2;
 		}
 
-		for (let y = this.gameboard.height - 1; y > 0; y--) {
-			let lines = 0;
-			upper: while (true) {
-				for (let x = 0; x < this.gameboard.width; x++) {
-					const piece = this.gameboard.atXY(x, y - lines);
-					if (piece == " ") {
-						break upper;
+		switch (this.gameDef.settings.gravityType) {
+			case "naive":
+				for (let y = this.gameboard.height - 1; y > 0; y--) {
+					let lines = 0;
+					upper: while (true) {
+						for (let x = 0; x < this.gameboard.width; x++) {
+							const piece = this.gameboard.atXY(x, y - lines);
+							if (piece == " ") {
+								break upper;
+							}
+						}
+						lines++;
 					}
-				}
-				lines++;
-			}
 
-			if (lines > 0) {
-				clearedLines += lines;
-				for (let yy = y; yy > 0; yy--) {
-					for (let x = 0; x < this.gameboard.width; x++) {
-						this.gameboard.setXY(x, yy, this.gameboard.atXY(x, yy - lines) ?? " ");
+					if (lines > 0) {
+						clearedLines += lines;
+						for (let yy = y; yy > 0; yy--) {
+							for (let x = 0; x < this.gameboard.width; x++) {
+								this.gameboard.setXY(x, yy, this.gameboard.atXY(x, yy - lines) ?? " ");
+							}
+						}
 					}
 				}
-			}
+				break;
+
+			case "sticky":
+				for (let y = this.gameboard.height - 1; y > 0; y--) {
+					// X XX
+					// XXXX
+					//  X
+					// XXX
+					// detect full lines
+					let lines = 0;
+					upper: while (true) {
+						for (let x = 0; x < this.gameboard.width; x++) {
+							const piece = this.gameboard.atXY(x, y - lines);
+							if (piece == " ") {
+								break upper;
+							}
+						}
+						lines++;
+					}
+
+					if (lines == 0) continue;
+					clearedLines += lines
+
+					// X XX
+					//
+					//  X
+					// XXX
+					// clear line
+					for (let i = 0; i < lines; i++) {
+						for (let x = 0; x < this.gameboard.width; x++) {
+							this.gameboard.setXY(x, y - i, " ");
+						}
+					}
+
+					// 1 22
+					//
+					//  3
+					// 333
+					// detect sectors
+					const sectors = this.gameboard.detectSectors((a, b) => a != " " && b != " ");
+
+					//
+					//
+					// 1322
+					// 333
+					// make sectors fall
+					for (const sector of sectors) {
+						// just so typescript doesn't complain...
+						const sector2 = sector as any as [number, number, string][];
+						sector2.sort((a, b) => b[1] - a[1]);
+						for (const point of sector2) {
+							point[2] = this.gameboard.atXY(point[0], point[1]);
+							this.gameboard.setXY(point[0], point[1], " ");
+						}
+
+						let yy = 1;
+						loop: while (true) {
+							for (const [px, py] of sector2) {
+								const extracted = this.gameboard.atXY(px, py + yy);
+								if (extracted != " ") {
+									yy -= 1;
+									break loop;
+								}
+							}
+							yy += 1;
+						}
+
+						for (const [px, py, pt] of sector2) {
+							this.gameboard.setXY(px, py + yy, pt);
+						}
+					}
+
+					this.counters.timesDropped++;
+				}
+				break;
+
+			case "cascade":
+				// NOTE: this is going to require a *lot* of state, so for right now i'm going to avoid this
+				// well, okay it might not, because we do store which piece is which for colors, but i don't think reversing these is trival
+				break;
 		}
 
-		if (clearedLines >= 0) {
-			this.counters.areTimer -= this.gameDef.settings.lineClearDelay * clearedLines;
+		if (clearedLines > 0) {
+			this.counters.areTimer -= this.gameDef.settings.lineClearDelay * (clearedLines / 2);
+			if (this.counters.timesDropped > 1) {
+				this.counters.areTimer -= this.counters.timesDropped * Math.floor(this.gameDef.settings.lineClearDelay / 8);
+			} 
 
 			this.counters.combo += 1;
 		} else {
 			this.counters.combo = 0;
+			this.counters.timesDropped = 0;
 		}
 
 		this.abilityManager.charge += clearedLines;
@@ -190,6 +279,7 @@ export class Logic {
 				return;
 			} else {
 				this.clearLines();
+				if (this.counters.areTimer <= are) return;
 			}
 
 			if (canHold && this.holdSwap) {

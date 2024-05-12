@@ -34,10 +34,11 @@
 		"screenSize": [10, 20],
 		"are": 6,
 		"gravity":  0.0156,
+		"gravityType": "naive",
 		"lockDelay": 30,
 		"hold": true,
-		"rotation": true,
 		"holdDelay": 2,
-		"lineClearDelay": 20
+		"rotation": true,
+		"lineClearDelay": 10
 	}
 }

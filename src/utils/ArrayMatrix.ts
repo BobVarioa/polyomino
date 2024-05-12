@@ -37,14 +37,50 @@ export class ArrayMatrix<T> extends Array<T> {
 		return result;
 	}
 
-	atXY(x, y) {
-		if (x < 0 || y < 0 || x > this.width - 1 || y > this.height - 1) return;
+	atXY(x: number, y: number): T {
+		if (x < 0 || y < 0 || x >= this.width || y >= this.height) return;
 		return this[x + this.width * y];
 	}
 
-	setXY(x, y, value) {
-		if (x < 0 || y < 0 || x > this.width - 1 || y > this.height - 1) throw new RangeError("Out of bounds");
+	setXY(x: number, y: number, value: T) {
+		if (x < 0 || y < 0 || x >= this.width || y >= this.height) throw new RangeError("Out of bounds");
 		this[x + this.width * y] = value;
+	}
+
+	detectSectors(isEqual: (a: T, b: T) => boolean): [number, number][][] {
+		const sectors: [number, number][][] = [];
+		const visited = new ArrayMatrix<boolean>(this.width, this.height).fill(false);
+
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				if (!visited.atXY(x, y)) {
+					const value = this.atXY(x, y);
+					const sector: [number, number][] = [];
+					let queue = [[x, y]];
+					let item;
+
+					while ((item = queue.pop())) {
+						const [xx, yy] = item;
+						if (yy < 0 || yy >= this.height || xx < 0 || xx >= this.width) {
+							continue;
+						}
+
+						if (visited.atXY(xx, yy) || !isEqual(this.atXY(xx, yy), value)) {
+							continue;
+						}
+
+						visited.setXY(xx, yy, true);
+						sector.push([xx, yy]);
+
+						// Explore neighbors
+						queue.push([xx + 0, yy + 1], [xx + 0, yy - 1], [xx + 1, yy + 0], [xx - 1, yy + 0]);
+					}
+					if (sector.length > 0) sectors.push(sector);
+				}
+			}
+		}
+
+		return sectors;
 	}
 
 	toString() {

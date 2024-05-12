@@ -63,12 +63,13 @@
 		"boardSize": [10, 40], 
 		"screenSize": [10, 20],
 		"are": 6,
+		"gravityType": "naive",
 		"gravity":  0.0156,
 		"lockDelay": 30,
 		"hold": true,
-		"rotation": true,
 		"holdDelay": 2,
-		"lineClearDelay": 20,
+		"rotation": true,
+		"lineClearDelay": 10,
 		"specialRotation": "flip"
 	}
 }

@@ -29,6 +29,7 @@ export interface Settings {
 	lineClearDelay: number;
 	specialRotation: string;
 	rotation: boolean;
+	gravityType: string;
 }
 
 export interface KickTable {
@@ -67,7 +68,7 @@ export class GameDef {
 			pieces.set(key, new Piece(key, matrix, value.color));
 		}
 
-		pieces.set("?", new Piece("?", new ArrayMatrix(1,1).fill(1) as any, "gray"))
+		pieces.set("?", new Piece("?", new ArrayMatrix<number>(1,1).fill(1), "gray"))
 
 		const rotations = new MultiKeyMap<string, KickTable>();
 

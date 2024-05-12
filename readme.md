@@ -80,14 +80,14 @@
 		- [ ] Allows different players to play different gamemodes against each other, i.e. a duo and a tetra player
 		- [ ] Players should be able to have loadouts of characters / active abilities
 - [ ] Features
-	- [ ] [Gravity Modes](https://tetris.wiki/Line_clear#Line_clear_gravity)
+	- [x] [Gravity Modes](https://tetris.wiki/Line_clear#Line_clear_gravity)
 		- [x] Naive
-		- [ ] Sticky
-		- [ ] Cascade
+		- [x] Sticky
+		- [~] Cascade
 	- [ ] Rotation Modes
 		- [x] Normal
-		- [ ] Cycle (See Tromino)
-		- [x] Flip (See Pentomino)
+		- [ ] Cycle
+		- [x] Flip
 	- [ ] Removal Modes
 		- [x] Width
 		- [ ] Color match (See Monomino)
