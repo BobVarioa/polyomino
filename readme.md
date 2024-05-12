@@ -5,7 +5,7 @@
 			- [Tetris Attack](https://tetris.wiki/Tetris_Attack)?
 			- [Bejeweled]()
 		- [ ] Cursor that can swap pieces
-		- [ ] Clears should generate new rows 
+		- [ ] Clears should generate new rows, can't top out from anything but garbage
 	- [ ] Domino
 		- Inspiration:
 			- [Dr. Mario](https://tetris.wiki/Dr._Mario)?
@@ -13,8 +13,10 @@
 		- [ ] 
 	- [ ] Tromino
 		- Inspiration:
-			- [Columns](https://tetris.wiki/Columns)
-		- [ ] 
+			- None (as of yet)
+		- Ideas:
+			- Color matching? The main problem, and why I scraped Columns as an idea, is that it is vastly different to how any of the other games function. Plus, Columns (and match-3 as a whole) isn't really that fun in long sessions
+			- Something about manipulating the board instead of your pieces? 
 	- [ ] Tetromino
 		- Inspiration:
 			- [Tetris](https://tetris.wiki/Tetris_Guideline)
@@ -27,6 +29,7 @@
 			- [x] Bag randomizer
 			- [ ] Levels
 			- [ ] Scoring
+		- I'm pretty sure that's all I want for this one, but maybe some gimmick could be interesting? 
 	- [ ] Pentomino
 		- Inspiration:
 			- Pentomino modes in jstris, Puyo Puyo Tetris, and various tetris fangames
@@ -39,7 +42,7 @@
 			- [ ] Line clears should be initally less, but multiple line clears should be more due to their difficulty
 	- [ ] Polyomino
 		- Inspiration:
-			- [Puyo Puyo Tetris: Party](https://tetris.wiki/Puyo_Puyo_Tetris#Party)
+			- [Puyo Puyo Tetris: Party](https://puyonexus.com/wiki/Party)
 			- [Tetris Effect Conected: Zone](https://tetris.wiki/Tetris_Effect#Zone_mechanic)
 			- [Pac-Attack](https://en.wikipedia.org/wiki/Pac-Attack)
 		- [ ] Special Effects
@@ -49,13 +52,23 @@
 				- Inspiration:
 					- [TETR.IO](https://characters.osk.sh/) 
 					- Puyo Puyo Characters
-				- Things that change gameplay throughout the whole match
-				- [ ] 
+				- In general, things that change gameplay throughout the whole match
+				- [ ] Something like [Hot Wax](https://www.lexaloffle.com/bbs/?pid=146729)? 
+					- Fires would come every X bags, no candle bombs 
+					- The same wax piece mechanics 
+					- More fires burning continously on your side would mean more garbage 
+				- [ ] Something that involves player movement on the board
+					- Player could be crushed by blocks, but could do something to clear them
+					- Blocks would increase in speed much more rapidly
+				- [ ] Making garbage you send *weird*
+					- [ ] Multi hole garbage
+					- [ ] Garbage which requires some condition?
+					- [ ] 
 			- [ ] Active abilities
 				- By pressing the [Ability] key, these will be activated
 				- Generally these require a charge meter of some sort, the specific action required will depend 
-				- [ ] Zone
-				- [ ] Filling holes
+				- [x] Zone
+				- [x] Filling holes
 				- [ ] Changes your hold box into a special mino
 					- [ ] Fairies, removes n lines of garbage 
 					- [ ] Bomb, removes all tiles in an area
@@ -63,6 +76,7 @@
 				- [ ] Send garbage to opponent but ... to you
 					- [ ] Double back?
 					- [ ] Unclearable garbage?
+				- [ ] 
 		- [ ] Allows different players to play different gamemodes against each other, i.e. a duo and a tetra player
 		- [ ] Players should be able to have loadouts of characters / active abilities
 - [ ] Features

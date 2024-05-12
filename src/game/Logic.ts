@@ -3,6 +3,7 @@ import { GameDef, Piece } from "./GameDef";
 import { InputManager, Keys } from "./InputManager";
 import { PieceState, RotState } from "./PieceState";
 import { Preferences } from "./Preferences";
+import { AbilityManager } from "./AbilityManager";
 
 export class Logic {
 	public gameboard: ArrayMatrix<string>;
@@ -12,6 +13,7 @@ export class Logic {
 	public paused: boolean;
 	public holdSwap: boolean;
 	public lastMove: Keys;
+	public abilityManager: AbilityManager;
 
 	constructor(public gameDef: GameDef, public prefs: Preferences, public input: InputManager) {}
 
@@ -29,6 +31,12 @@ export class Logic {
 			heldLast: false,
 			combo: 0,
 		};
+
+		this.flags = {
+			noLineClears: false,
+		};
+
+		this.abilityManager = new AbilityManager(this);
 
 		const { boardSize } = this.gameDef.settings;
 		// clear gameboard
@@ -89,11 +97,17 @@ export class Logic {
 		combo: number;
 	};
 
+	flags: {
+		noLineClears: boolean;
+	};
+
 	clearLines() {
+		if (this.flags.noLineClears) return;
+
 		let clearedLines = 0;
 		let wasSpin = false;
 
-		// clearedLines.length
+		// clearedLines
 		// three corner rule
 		// TODO: scoring
 		if (this.lastMove == Keys.RotateLeft || this.lastMove == Keys.RotateRight || this.lastMove == Keys.Rotate180) {
@@ -123,7 +137,7 @@ export class Logic {
 			}
 
 			if (lines > 0) {
-				clearedLines++;
+				clearedLines += lines;
 				for (let yy = y; yy > 0; yy--) {
 					for (let x = 0; x < this.gameboard.width; x++) {
 						this.gameboard.setXY(x, yy, this.gameboard.atXY(x, yy - lines) ?? " ");
@@ -139,6 +153,9 @@ export class Logic {
 		} else {
 			this.counters.combo = 0;
 		}
+
+		this.abilityManager.charge += clearedLines;
+		console.log(this.abilityManager.charge);
 	}
 
 	/**
@@ -243,6 +260,8 @@ export class Logic {
 					this.counters.lockDelayTimer += 1;
 				}
 
+				this.abilityManager.frame();
+
 				if (this.counters.lockDelayTimer >= lockDelay) {
 					this.activePiece.write();
 					this.counters.heldLast = false;
@@ -294,6 +313,11 @@ export class Logic {
 			this.lastMove = Keys.Rotate180;
 		}
 
+		if (this.input.isKeyPressed(Keys.Ability)) {
+			this.abilityManager.handleInput();
+			this.input.pressedMap[Keys.Ability] = false;
+		}
+
 		if (this.input.isKeyPressed(Keys.RotateSpecial) && specialRotation != "none") {
 			let piece;
 			switch (specialRotation) {
@@ -301,8 +325,11 @@ export class Logic {
 					const p = this.activePiece;
 					const name = p.piece.name;
 					if (name.endsWith("'")) {
-						const pieceData = this.gameDef.pieces.get(name.slice(0, -1))
-						if (pieceData == undefined) { piece = undefined; break; }
+						const pieceData = this.gameDef.pieces.get(name.slice(0, -1));
+						if (pieceData == undefined) {
+							piece = undefined;
+							break;
+						}
 						piece = new PieceState(this, pieceData, RotState.Initial, p.x, p.y);
 						if (p.rot.value == RotState.Right.value) {
 							piece.rotate90degcc();
@@ -311,8 +338,11 @@ export class Logic {
 							piece.rotate90deg();
 						}
 					} else {
-						const pieceData = this.gameDef.pieces.get(name + "'")
-						if (pieceData == undefined) { piece = undefined; break; }
+						const pieceData = this.gameDef.pieces.get(name + "'");
+						if (pieceData == undefined) {
+							piece = undefined;
+							break;
+						}
 						piece = new PieceState(this, pieceData, RotState.Initial, p.x, p.y);
 						if (p.rot.value == RotState.Left.value) {
 							piece.rotate90deg();

@@ -5,6 +5,7 @@ export enum Keys {
 	RotateRight,
 	Rotate180,
 	RotateSpecial,
+	Ability,
 	MoveLeft,
 	MoveRight,
 	SoftDrop,

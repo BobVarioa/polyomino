@@ -6,7 +6,7 @@ import { Draw, DrawMode } from "./game/render/Draw";
 import { Preferences } from "./game/Preferences";
 
 function init() {
-	let gameDef = GameDef.fromJson(pento as any as GameSchema);
+	let gameDef = GameDef.fromJson(tetro as any as GameSchema);
 	let prefs = new Preferences();
 	prefs.arr = 0;
 	prefs.das = 7;
@@ -17,6 +17,7 @@ function init() {
 	input.setKey(Keys.RotateRight, "x");
 	input.setKey(Keys.Rotate180, "c");
 	input.setKey(Keys.RotateSpecial, "v");
+	input.setKey(Keys.Ability, "Shift");
 	input.setKey(Keys.MoveLeft, "ArrowLeft");
 	input.setKey(Keys.MoveRight, "ArrowRight");
 	input.setKey(Keys.SoftDrop, "ArrowDown");

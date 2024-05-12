@@ -67,6 +67,8 @@ export class GameDef {
 			pieces.set(key, new Piece(key, matrix, value.color));
 		}
 
+		pieces.set("?", new Piece("?", new ArrayMatrix(1,1).fill(1) as any, "gray"))
+
 		const rotations = new MultiKeyMap<string, KickTable>();
 
 		for (const [key, value] of Object.entries(json.rotation)) {
