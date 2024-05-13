@@ -3,6 +3,18 @@ export class ArrayMatrix<T> extends Array<T> {
 		super(width * height);
 	}
 
+	copy() {
+		const arr = new ArrayMatrix<T>(this.width, this.height)
+
+		for (let x = 0; x < this.width; x++) {
+			for (let y = 0; y < this.height; y++) {
+				arr.setXY(x, y, this.atXY(x, y));
+			}
+		}
+
+		return arr;
+	}
+
 	/**
 	 *
 	 * @returns a copy of the matrix rotated counter clockwise

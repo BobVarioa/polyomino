@@ -1,12 +1,12 @@
 {
 	"pieces": {
 		"I": { "def": "00000/00000/01111/00000/00000", "color": "cyan" },
-		"O": { "def": "011/011/000", "color": "yellow"  },
-		"J": { "def": "100/111/000", "color": "blue"  },
-		"L": { "def": "001/111/000", "color": "orange"  },
-		"S": { "def": "011/110/000", "color": "green"  },
-		"T": { "def": "010/111/000", "color": "purple"  },
-		"Z": { "def": "110/011/000", "color": "red"  }
+		"O": { "def": "011/011/000", "color": "yellow" },
+		"J": { "def": "100/111/000", "color": "blue" },
+		"L": { "def": "001/111/000", "color": "orange" },
+		"S": { "def": "011/110/000", "color": "green" },
+		"T": { "def": "010/111/000", "color": "purple" },
+		"Z": { "def": "110/011/000", "color": "red" }
 	},
 	"rotation": {
 		"J,L,S,T,Z": {
@@ -33,7 +33,7 @@
 		"boardSize": [10, 40],
 		"screenSize": [10, 20],
 		"are": 6,
-		"gravity":  0.0156,
+		"gravity": 0.0156,
 		"gravityType": "naive",
 		"lockDelay": 30,
 		"hold": true,

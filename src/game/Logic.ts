@@ -11,11 +11,15 @@ export class Logic {
 	public activePiece: PieceState;
 	public holdPiece: string;
 	public paused: boolean;
-	public holdSwap: boolean;
+	public swapHold: boolean;
 	public lastMove: Keys;
 	public abilityManager: AbilityManager;
 
 	constructor(public gameDef: GameDef, public prefs: Preferences, public input: InputManager) {}
+
+	swapGameDef(gameDef: GameDef) {
+		this.gameDef = gameDef;
+	}
 
 	start() {
 		// reset randomizer
@@ -30,11 +34,14 @@ export class Logic {
 			pauseBuffer: 0,
 			heldLast: false,
 			combo: 0,
-			timesDropped: 0
+			timesDropped: 0,
+			dasDirection: undefined
 		};
 
 		this.flags = {
 			noLineClears: false,
+			disableGravity: false,
+			disableLockDelay: false,
 		};
 
 		this.abilityManager = new AbilityManager(this);
@@ -42,10 +49,10 @@ export class Logic {
 		const { boardSize } = this.gameDef.settings;
 		// clear gameboard
 		this.gameboard = new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
-		this.ghostboard = new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
+		this.ghostboard ??= new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
 		this.activePiece = PieceState.none;
 		this.holdPiece = " ";
-		this.holdSwap = false;
+		this.swapHold = false;
 		this.paused = false;
 		this.lastMove = Keys.Pause; // used as a placeholder empty value
 	}
@@ -97,10 +104,13 @@ export class Logic {
 		heldLast: boolean;
 		combo: number;
 		timesDropped: number;
+		dasDirection: Keys;
 	};
 
 	flags: {
 		noLineClears: boolean;
+		disableGravity: boolean;
+		disableLockDelay: boolean;
 	};
 
 	clearLines() {
@@ -170,7 +180,7 @@ export class Logic {
 					}
 
 					if (lines == 0) continue;
-					clearedLines += lines
+					clearedLines += lines;
 
 					// X XX
 					//
@@ -234,8 +244,9 @@ export class Logic {
 		if (clearedLines > 0) {
 			this.counters.areTimer -= this.gameDef.settings.lineClearDelay * (clearedLines / 2);
 			if (this.counters.timesDropped > 1) {
-				this.counters.areTimer -= this.counters.timesDropped * Math.floor(this.gameDef.settings.lineClearDelay / 8);
-			} 
+				this.counters.areTimer -=
+					this.counters.timesDropped * Math.floor(this.gameDef.settings.lineClearDelay / 8);
+			}
 
 			this.counters.combo += 1;
 		} else {
@@ -282,7 +293,7 @@ export class Logic {
 				if (this.counters.areTimer <= are) return;
 			}
 
-			if (canHold && this.holdSwap) {
+			if (canHold && this.swapHold) {
 				const pieceName = this.holdPiece;
 				const piece = this.gameDef.pieces.get(pieceName);
 				// x = ceil((BW - n) / 2)
@@ -292,15 +303,20 @@ export class Logic {
 
 				this.holdPiece = this.activePiece.piece.name;
 				this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y - 1);
-				this.holdSwap = false;
+				this.swapHold = false;
 			} else {
 				// generate piece
 				const pieceName = this.gameDef.randomizer.next();
 				const piece = this.gameDef.pieces.get(pieceName);
 				// x = ceil((BW - n) / 2)
-				const x = Math.ceil((boardSize[0] - piece.matrix.width) / 2);
+				let x = Math.ceil((boardSize[0] - piece.matrix.width) / 2);
 				let y = screenSize[1] + 1;
+				if (piece.matrix.height > 3) {
+					y -= 1;
+				}
 				if (y > boardSize[1]) y = boardSize[1];
+				if (x < 1) x = 1;
+				if (y < 1) y = 1;
 
 				this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y - 1);
 			}
@@ -326,8 +342,8 @@ export class Logic {
 			if (!this.pieceIntersecting(this.activePiece)) {
 				if (canHold && !this.counters.heldLast && this.input.isKeyPressed(Keys.Hold)) {
 					this.activePiece.invalidate();
-					this.holdSwap = this.holdPiece != " ";
-					if (this.holdSwap == false) {
+					this.swapHold = this.holdPiece != " ";
+					if (this.swapHold == false) {
 						this.holdPiece = this.activePiece.piece.name;
 					}
 					// make are longer for holds
@@ -336,7 +352,7 @@ export class Logic {
 				}
 
 				// (frames * cells/frames) >= 1 // we moved more than 1 cell, drop piece
-				if (this.counters.gravityTimer * gravity >= 1) {
+				if (!this.flags.disableGravity && this.counters.gravityTimer * gravity >= 1) {
 					this.activePiece.softDrop();
 					this.counters.gravityTimer = 0;
 					this.counters.lockDelayTimer = 0;
@@ -346,7 +362,7 @@ export class Logic {
 				this.handleInputs();
 
 				// is piece touching floor?
-				if (this.pieceIntersecting(this.activePiece.relative(0, 1))) {
+				if (!this.flags.disableLockDelay && this.pieceIntersecting(this.activePiece.relative(0, 1))) {
 					this.counters.lockDelayTimer += 1;
 				}
 
@@ -369,14 +385,45 @@ export class Logic {
 
 	movedLastFrame = true;
 
+	devInputs() {
+		if (this.input.isKeyPressed(Keys.DiscardActivePiece)) {
+			this.activePiece.invalidate();
+			this.input.pressedMap[Keys.DiscardActivePiece] = false;
+		}
+
+		if (this.input.isKeyPressed(Keys.ClearHoldBox)) {
+			this.holdPiece = " ";
+			this.input.pressedMap[Keys.ClearHoldBox] = false;
+		}
+
+		if (this.input.isKeyPressed(Keys.Ghostboard)) {
+			const { boardSize } = this.gameDef.settings;
+			this.ghostboard = this.gameboard.copy();
+			this.gameboard = new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
+			this.input.pressedMap[Keys.Ghostboard] = false;
+		}
+
+		if (this.input.isKeyPressed(Keys.ToggleGravity)) {
+			this.flags.disableGravity = !this.flags.disableGravity;
+			this.input.pressedMap[Keys.ToggleGravity] = false;
+		}
+
+		if (this.input.isKeyPressed(Keys.ToggleLocking)) {
+			this.flags.disableLockDelay = !this.flags.disableLockDelay;
+			this.input.pressedMap[Keys.ToggleLocking] = false;
+		}
+	}
+
 	handleInputs() {
 		let updated = false;
 		const { specialRotation, rotation } = this.gameDef.settings;
+
+		this.devInputs();
+
 		if (this.input.isKeyPressed(Keys.RotateLeft) && rotation) {
 			const piece = this.activePiece.rotateLeft();
 			if (piece != undefined) {
 				this.activePiece = piece;
-				// gameboard is flipped to make logic easier
 				updated = true;
 			}
 			this.input.pressedMap[Keys.RotateLeft] = false;
@@ -487,12 +534,14 @@ export class Logic {
 							this.activePiece.moveLeft();
 							updated = true;
 							this.lastMove = Keys.MoveLeft;
+							this.counters.dasDirection = Keys.MoveLeft;
 						}
 
 						if (movingRight) {
 							this.activePiece.moveRight();
 							updated = true;
 							this.lastMove = Keys.MoveRight;
+							this.counters.dasDirection = Keys.MoveRight;
 						}
 					}
 
@@ -502,12 +551,28 @@ export class Logic {
 						this.counters.arrTimer++;
 					}
 				} else {
-					this.counters.dasTimer++;
+					if (this.counters.dasDirection != undefined) {
+						const movedLeft = this.counters.dasDirection == Keys.MoveLeft;
+						const movedRight = this.counters.dasDirection == Keys.MoveRight;
+						if (movedLeft && movingLeft) {
+							this.counters.dasTimer++;
+						} else if (movedRight && movingRight) {
+							this.counters.dasTimer++;
+						} else {
+							this.counters.dasTimer = 0;
+							this.counters.dasDirection = undefined;
+						}
+					} else {
+						this.counters.dasTimer++;
+						if (movingLeft) this.counters.dasDirection = Keys.MoveLeft;
+						if (movingRight) this.counters.dasDirection = Keys.MoveRight;
+					}
 				}
 			} else {
 				this.counters.dasTimer = 0;
 				this.counters.arrTimer = 0;
 				this.movedLastFrame = false;
+				this.counters.dasDirection = undefined;
 			}
 		} else {
 			if (movingLeft) {

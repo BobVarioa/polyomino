@@ -1,36 +1,36 @@
 {
 	"pieces": {
-		"F": { "def": "011/110/010", "color": "yellow"  },
-		"F'": { "def": "110/011/010", "color": "yellow"  },
-		
+		"F": { "def": "011/110/010", "color": "blue" },
+		"F'": { "def": "110/011/010", "color": "orange" },
+
 		"I": { "def": "00000/00000/11111/00000/00000", "color": "cyan" },
-		
-		"L": { "def": "00000/00001/01111/00000/00000", "color": "orange"  },
-		"L'": { "def": "00000/01000/01111/00000/00000", "color": "orange"  },
-		
-		"N": { "def": "00000/11000/01110/00000/00000",  "color": "blue"  },
-		"N'": { "def": "00000/00011/01110/00000/00000",  "color": "blue"  },
 
-		"P": { "def": "011/011/010", "color": "purple"  },
-		"P'": { "def": "011/011/001", "color": "purple"  },
+		"L": { "def": "00000/00001/01111/00000/00000", "color": "blue" },
+		"L'": { "def": "00000/01000/01111/00000/00000", "color": "orange" },
 
-		"T": { "def": "111/010/010", "color": "purple"  },
+		"N": { "def": "00000/11000/01110/00000/00000", "color": "red" },
+		"N'": { "def": "00000/00011/01110/00000/00000", "color": "green" },
 
-		"U": { "def": "101/111/000", "color": "purple"  },
+		"P": { "def": "011/011/010", "color": "yellow" },
+		"P'": { "def": "011/011/001", "color": "yellow" },
 
-		"V": { "def": "100/100/111", "color": "purple"  },
-		"V'": { "def": "001/001/111", "color": "purple"  },
+		"T": { "def": "111/010/010", "color": "purple" },
 
-		"W": { "def": "001/011/110", "color": "purple"  },
-		"W'": { "def": "100/110/011", "color": "purple"  },
+		"X": { "def": "010/111/010", "color": "fuchsia" },
 
-		"X": { "def": "010/111/010", "color": "purple"  },
+		"U": { "def": "101/111/000", "color": "hotpink" },
 
-		"Y": { "def": "00000/00010/01111/00000/00000", "color": "orange"  },
-		"Y'": { "def": "00000/00100/01111/00000/00000", "color": "orange"  },
+		"V": { "def": "100/100/111", "color": "goldenrod" },
+		"V'": { "def": "001/001/111", "color": "goldenrod" },
 
-		"Z": { "def": "110/010/011", "color": "red"  },
-		"Z'": { "def": "011/010/110", "color": "red"  }
+		"W": { "def": "001/011/110", "color": "purple" },
+		"W'": { "def": "100/110/011", "color": "purple" },
+
+		"Y": { "def": "00000/00010/01111/00000/00000", "color": "cyan" },
+		"Y'": { "def": "00000/00100/01111/00000/00000", "color": "cyan" },
+
+		"Z": { "def": "110/010/011", "color": "red" },
+		"Z'": { "def": "011/010/110", "color": "green" }
 	},
 	"rotation": {
 		"F,I,L,N,T,U,V,W,X,Y,Z": {
@@ -60,11 +60,11 @@
 	},
 	"randomizer": "bag of F,I,L,N,P,T,U,V,W,X,Y,Z",
 	"settings": {
-		"boardSize": [10, 40], 
-		"screenSize": [10, 20],
+		"boardSize": [12, 42],
+		"screenSize": [12, 22],
 		"are": 6,
-		"gravityType": "naive",
-		"gravity":  0.0156,
+		"gravityType": "sticky",
+		"gravity": 0.0156,
 		"lockDelay": 30,
 		"hold": true,
 		"holdDelay": 2,

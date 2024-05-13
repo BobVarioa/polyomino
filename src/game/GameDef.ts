@@ -1,5 +1,5 @@
 import { MultiKeyMap } from "../utils/MultiKeyMap";
-import { WrappedGenerator, blackjack } from "./blackjack";
+import { WrappedGenerator, blackjack } from "./Blackjack";
 import { ArrayMatrix } from "../utils/ArrayMatrix";
 
 export interface GameSchema {
@@ -14,22 +14,22 @@ export class Piece {
 }
 
 export interface PieceDef {
-	def: string;
-	color: string;
+	readonly def: string;
+	readonly color: string;
 }
 
 export interface Settings {
-	boardSize: [number, number];
-	screenSize: [number, number];
-	are: number;
-	gravity: number;
-	lockDelay: number;
-	hold: boolean;
-	holdDelay: number;
-	lineClearDelay: number;
-	specialRotation: string;
-	rotation: boolean;
-	gravityType: string;
+	readonly boardSize: [number, number];
+	readonly screenSize: [number, number];
+	readonly are: number;
+	readonly gravity: number;
+	readonly lockDelay: number;
+	readonly hold: boolean;
+	readonly holdDelay: number;
+	readonly lineClearDelay: number;
+	readonly specialRotation: string;
+	readonly rotation: boolean;
+	readonly gravityType: string;
 }
 
 export interface KickTable {
@@ -41,10 +41,10 @@ export interface KickTable {
 
 export class GameDef {
 	constructor(
-		public pieces: Map<string, Piece>,
-		public rotations: MultiKeyMap<string, KickTable>,
-		public randomizer: WrappedGenerator<string>,
-		public settings: Settings
+		public readonly pieces: Map<string, Piece>,
+		public readonly rotations: MultiKeyMap<string, KickTable>,
+		public readonly randomizer: WrappedGenerator<string>,
+		public readonly settings: Settings
 	) { }
 
 	static fromJson(json: GameSchema | string) {

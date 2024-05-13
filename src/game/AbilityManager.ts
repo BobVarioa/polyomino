@@ -28,9 +28,10 @@ export class AbilityManager {
 			case AbilityType.Zone:
 				if (this.zoneTimer > 0) {
 					this.zoneTimer--;
-					this.logic.counters.gravityTimer -= 1;
+					this.logic.flags.disableGravity = true;
 					this.logic.flags.noLineClears = true;
 				} else {
+					this.logic.flags.disableGravity = false;
 					this.logic.flags.noLineClears = false;
 				}
 				break;

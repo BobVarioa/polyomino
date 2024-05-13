@@ -14,6 +14,12 @@ export enum Keys {
 	Pause,
 	Restart,
 	Fail,
+	// dev keys
+	DiscardActivePiece,
+	ClearHoldBox,
+	Ghostboard,
+	ToggleGravity,
+	ToggleLocking,
 	// NOTE: must be last element
 	Length,
 }

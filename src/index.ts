@@ -7,8 +7,9 @@ import { Preferences } from "./game/Preferences";
 
 function init() {
 	let gameDef = GameDef.fromJson(tetro as any as GameSchema);
+
 	let prefs = new Preferences();
-	prefs.arr = 0;
+	prefs.arr = 5;
 	prefs.das = 7;
 	prefs.sdf = -1;
 
@@ -26,6 +27,15 @@ function init() {
 	input.setKey(Keys.Restart, "r");
 	input.setKey(Keys.Fail, "f");
 	input.setKey(Keys.Pause, "Escape");
+	 
+	const devMode = true;
+	if (devMode) {
+		input.setKey(Keys.DiscardActivePiece, "1");
+		input.setKey(Keys.ClearHoldBox, "2");
+		input.setKey(Keys.ToggleGravity, "3");
+		input.setKey(Keys.ToggleLocking, "4");
+		input.setKey(Keys.Ghostboard, "9");
+	}
 
 	let logic = new Logic(gameDef, prefs, input);
 	logic.start();
