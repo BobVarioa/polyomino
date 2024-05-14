@@ -4,6 +4,7 @@ import { InputManager, Keys } from "./InputManager";
 import { PieceState, RotState } from "./PieceState";
 import { Preferences } from "./Preferences";
 import { AbilityManager } from "./AbilityManager";
+import random from "secure-random";
 
 export class Logic {
 	public gameboard: ArrayMatrix<string>;
@@ -23,7 +24,7 @@ export class Logic {
 
 	start() {
 		// reset randomizer
-		this.gameDef.randomizer.reset(Math.random());
+		this.gameDef.randomizer.reset(random(1, { type: "Uint8Array" })[0]);
 		this.counters = {
 			areTimer: 0,
 			arrTimer: 0,

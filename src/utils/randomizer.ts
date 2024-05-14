@@ -1,21 +1,20 @@
-/**
- * Park Miller "Minimal Standard" PRNG.
- */
+
+import seedRandom from "seedrandom";
 
 export class Random {
-	constructor(public seed = 1) {}
+	generator: seedRandom.PRNG;
+
+	constructor(public seed = 1) {
+		this.generator = seedRandom.tychei(seed+"");
+	}
 
 	next(): number {
   		// Returns a float between 0.0, and 1.0
-		return this.nextSeed() / 2147483647;
+		return this.generator();
 	}
 
 	setSeed(n: number) {
-		this.seed = n;
-	}
-
-	nextSeed() {
-		return this.seed = (this.seed * 16807) % 2147483647;
+		this.generator = seedRandom.tychei(n + "")
 	}
 
 	randomInt(min: number, max: number): number {
