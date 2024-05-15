@@ -1,21 +1,18 @@
 import { tetro, pento } from "./data/gameTypes";
-import { GameDef, GameSchema } from "./game/GameDef";
 import { InputManager, Keys } from "./game/InputManager";
 import { Logic } from "./game/Logic";
 import { Draw, DrawMode } from "./game/render/Draw";
 import { Preferences } from "./game/Preferences";
 
-const $ = <T>(s: string): T => document.querySelector(s) as T; 
+const $ = <T>(s: string): T => document.querySelector(s) as T;
 
 function init() {
-	let gameDef = GameDef.fromJson(tetro as any as GameSchema);
-
-	let prefs = new Preferences();
+	const prefs = new Preferences();
 	prefs.arr = 0;
 	prefs.das = 7;
 	prefs.sdf = -1;
 
-	let input = new InputManager(document);
+	const input = new InputManager(document);
 	input.setKey(Keys.RotateLeft, "z");
 	input.setKey(Keys.RotateRight, "x");
 	input.setKey(Keys.Rotate180, "c");
@@ -29,54 +26,27 @@ function init() {
 	input.setKey(Keys.Restart, "r");
 	input.setKey(Keys.Fail, "f");
 	input.setKey(Keys.Pause, "Escape");
-	 
+
 	const devMode = true;
 	if (devMode) {
 		input.setKey(Keys.DiscardActivePiece, "1");
 		input.setKey(Keys.ClearHoldBox, "2");
 		input.setKey(Keys.ToggleGravity, "3");
 		input.setKey(Keys.ToggleLocking, "4");
-		input.setKey(Keys.Ghostboard, "9");
+		input.setKey(Keys.Ghostboard, "7");
+		input.setKey(Keys.TetroMode, "9");
+		input.setKey(Keys.PentoMode, "0");
 	}
 
-	let logic = new Logic(gameDef, prefs, input);
-	logic.start();
-
-	let canvas = $<HTMLCanvasElement>("#gameCanvas");
-	let holdCanvas = $<HTMLCanvasElement>("#holdCanvas");
-	let queueCanvas = $<HTMLCanvasElement>("#queueCanvas");
-	let draw = Draw.create(DrawMode.Canvas, logic, canvas, holdCanvas, queueCanvas);
-	let drawFunc = draw.start();
-	
+	const canvas = $<HTMLCanvasElement>("#gameCanvas");
+	const holdCanvas = $<HTMLCanvasElement>("#holdCanvas");
+	const queueCanvas = $<HTMLCanvasElement>("#queueCanvas");
+	const draw = Draw.create(DrawMode.Canvas, canvas, holdCanvas, queueCanvas);
 	draw.grid = 32;
-	canvas.width = draw.grid * gameDef.settings.screenSize[0];
-	canvas.height = draw.grid * gameDef.settings.screenSize[1];
 
-	let rAF;
-
-	(async () => {
-		const fps = 60;
-
-		const func = () => {
-			logic.frame();
-
-			setTimeout(func, 1000 / fps);
-		};
-
-		func();
-	})().catch((v) => {
-		cancelAnimationFrame(rAF);
-	});
-
-	let then = 0;
-	function drawLoop(now) {
-		now *= 0.001;
-		drawFunc(now - then);
-		then = now;
-
-		rAF = requestAnimationFrame(drawLoop);
-	}
-	rAF = requestAnimationFrame(drawLoop);
+	const logic = new Logic(prefs, input, draw);
+	logic.swapGameDef(tetro);
+	logic.loop();
 }
 
 document.addEventListener("DOMContentLoaded", init);

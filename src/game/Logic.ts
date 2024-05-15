@@ -5,6 +5,9 @@ import { PieceState, RotState } from "./PieceState";
 import { Preferences } from "./Preferences";
 import { AbilityManager } from "./AbilityManager";
 import random from "secure-random";
+import { pento, tetro } from "../data/gameTypes";
+import { BaseDraw } from "./render/BaseDraw";
+import { EventEmitter } from "eventemitter3";
 
 export class Logic {
 	public gameboard: ArrayMatrix<string>;
@@ -15,10 +18,57 @@ export class Logic {
 	public swapHold: boolean;
 	public lastMove: Keys;
 	public abilityManager: AbilityManager;
+	public gameDef: GameDef;
+	constructor(public prefs: Preferences, public input: InputManager, public draw: BaseDraw) {}
 
-	constructor(public gameDef: GameDef, public prefs: Preferences, public input: InputManager) {}
+	#signal = new EventEmitter();
+
+	loop() {
+		this.draw.logic = this;
+
+		this.start();
+		this.draw.start();
+
+		let rAF;
+		let then = 0;
+		const drawLoop = (now) => {
+			now *= 0.001;
+			this.draw.frame(now - then);
+			then = now;
+			rAF = requestAnimationFrame(drawLoop);
+		};
+
+		const fps = 60;
+
+		let timeout;
+
+		const func = () => {
+			this.frame();
+
+			timeout = setTimeout(func, 1000 / fps);
+		};
+
+		this.#signal.on("stop", () => {
+			cancelAnimationFrame(rAF);
+			clearTimeout(timeout);
+		});
+		this.#signal.on("start", async () => {
+			func();
+			requestAnimationFrame(drawLoop);
+		});
+
+		this.#signal.emit("start");
+	}
+
+	restart() {
+		this.#signal.emit("stop");
+		this.start();
+		this.draw.start();
+		this.#signal.emit("start");
+	}
 
 	swapGameDef(gameDef: GameDef) {
+		this.#signal.emit("stop");
 		this.gameDef = gameDef;
 	}
 
@@ -36,7 +86,7 @@ export class Logic {
 			heldLast: false,
 			combo: 0,
 			timesDropped: 0,
-			dasDirection: undefined
+			dasDirection: undefined,
 		};
 
 		this.flags = {
@@ -50,7 +100,7 @@ export class Logic {
 		const { boardSize } = this.gameDef.settings;
 		// clear gameboard
 		this.gameboard = new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
-		this.ghostboard ??= new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
+		this.ghostboard = new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
 		this.activePiece = PieceState.none;
 		this.holdPiece = " ";
 		this.swapHold = false;
@@ -277,7 +327,10 @@ export class Logic {
 		}
 
 		if (this.input.isKeyPressed(Keys.Restart)) {
-			this.start();
+			this.input.pressedMap[Keys.Restart] = false;
+			const ghost = this.ghostboard;
+			this.restart();
+			this.ghostboard = ghost;
 			return;
 		}
 
@@ -412,6 +465,18 @@ export class Logic {
 		if (this.input.isKeyPressed(Keys.ToggleLocking)) {
 			this.flags.disableLockDelay = !this.flags.disableLockDelay;
 			this.input.pressedMap[Keys.ToggleLocking] = false;
+		}
+
+		if (this.input.isKeyPressed(Keys.TetroMode)) {
+			this.swapGameDef(tetro);
+			this.restart();
+			this.input.pressedMap[Keys.TetroMode] = false;
+		}
+
+		if (this.input.isKeyPressed(Keys.PentoMode)) {
+			this.swapGameDef(pento);
+			this.restart();
+			this.input.pressedMap[Keys.PentoMode] = false;
 		}
 	}
 

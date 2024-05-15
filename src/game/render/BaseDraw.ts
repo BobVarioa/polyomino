@@ -1,16 +1,17 @@
 import { Logic } from "../Logic";
 
-export class BaseDraw {
+export abstract class BaseDraw {
 	grid: number;
 	sw: number;
 	sh: number;
 
 	backgroundColor: string;
 	gridColor: string;
+	logic: Logic;
 
-	constructor(public logic: Logic, public canvas: HTMLCanvasElement, public holdCanvas: HTMLCanvasElement, public queueCanvas: HTMLCanvasElement) { }
+	constructor(public canvas: HTMLCanvasElement, public holdCanvas: HTMLCanvasElement, public queueCanvas: HTMLCanvasElement) { }
 
-	start(): (deltaTime: number) => void {
+	start() {
 		this.grid = 32;
 
 		const { boardSize, screenSize } = this.logic.gameDef.settings;
@@ -20,7 +21,7 @@ export class BaseDraw {
 
 		this.backgroundColor = this.logic.prefs.backgroundColor;
 		this.gridColor = this.logic.prefs.gridColor;
-
-		return () => { };
 	}
+
+	abstract frame(deltaTime: number): void;
 }

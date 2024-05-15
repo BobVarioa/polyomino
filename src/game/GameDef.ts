@@ -30,6 +30,7 @@ export interface Settings {
 	readonly specialRotation: string;
 	readonly rotation: boolean;
 	readonly gravityType: string;
+	readonly queueLength: number;
 }
 
 export interface KickTable {

@@ -15,14 +15,17 @@ export class CanvasDraw extends BaseDraw {
 
 	start() {
 		super.start();
+		const gameDef = this.logic.gameDef;
 
+		this.canvas.width = this.grid * gameDef.settings.screenSize[0];
+		this.canvas.height = this.grid * gameDef.settings.screenSize[1];
 		this.ctx = this.canvas.getContext("2d");
 
 		this.topLeftMap = new Map();
 
 		let maxW = 0;
 		let maxH = 0;
-		for (const piece of this.logic.gameDef.pieces.values()) {
+		for (const piece of gameDef.pieces.values()) {
 			let topLeftPoint: [number, number] = [0, 0];
 			let realWidth = 0;
 			let realHeight = 0;
@@ -52,7 +55,7 @@ export class CanvasDraw extends BaseDraw {
 			}
 
 			this.topLeftMap.set(piece.name, topLeftPoint);
-			
+
 			maxW = Math.max(realWidth, maxW);
 			maxH = Math.max(realHeight, maxH);
 		}
@@ -64,9 +67,9 @@ export class CanvasDraw extends BaseDraw {
 		this.ctxHold = this.holdCanvas.getContext("2d");
 
 		this.queueCanvas.width = this.maxWidth + 20; // 10px padding + piece size
-		this.queueCanvas.height = this.maxHeight * 5 + 10 * 7; // 10px padding top and bottom + 5x piece size + 10px padding between pieces
+		this.queueCanvas.height =
+			this.maxHeight * gameDef.settings.queueLength + 10 * (gameDef.settings.queueLength + 2); // 10px padding top and bottom + 5x piece size + 10px padding between pieces
 		this.ctxQueue = this.queueCanvas.getContext("2d");
-		return this.frameCanvas.bind(this);
 	}
 
 	private drawPieceState(piece: PieceState) {
@@ -90,7 +93,12 @@ export class CanvasDraw extends BaseDraw {
 		for (let y = topLeft[1]; y < piece.matrix.height; y++) {
 			for (let x = topLeft[0]; x < piece.matrix.width; x++) {
 				if (piece.matrix.atXY(x, y) == 1) {
-					ctx.fillRect(offsetX + (x - topLeft[0]) * grid, offsetY + (y - topLeft[1]) * grid, grid - 1, grid - 1);
+					ctx.fillRect(
+						offsetX + (x - topLeft[0]) * grid,
+						offsetY + (y - topLeft[1]) * grid,
+						grid - 1,
+						grid - 1
+					);
 				}
 			}
 		}
@@ -116,7 +124,7 @@ export class CanvasDraw extends BaseDraw {
 	lastQueueTop: string;
 	lastHold: string;
 
-	frameCanvas(deltaTime: number) {
+	frame(deltaTime: number) {
 		const { ctx } = this;
 		const { gameDef } = this.logic;
 		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -157,7 +165,7 @@ export class CanvasDraw extends BaseDraw {
 		if (this.lastQueueTop != nextPiece) {
 			this.lastQueueTop = nextPiece;
 
-			const queue = gameDef.randomizer.peek(5).map((v) => gameDef.pieces.get(v));
+			const queue = gameDef.randomizer.peek(gameDef.settings.queueLength).map((v) => gameDef.pieces.get(v));
 			this.ctxQueue.clearRect(0, 0, this.queueCanvas.width, this.queueCanvas.height);
 			let x = 10;
 			let y = 10;
