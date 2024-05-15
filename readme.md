@@ -17,6 +17,7 @@
 		- Ideas:
 			- Color matching? The main problem, and why I scraped Columns as an idea, is that it is vastly different to how any of the other games function. Plus, Columns (and match-3 as a whole) isn't really that fun in long sessions
 			- Something about manipulating the board instead of your pieces? 
+			- [Pipe Tetris?](https://alphageneric.itch.io/pipe-tetris)
 	- [ ] Tetromino
 		- Inspiration:
 			- [Tetris](https://tetris.wiki/Tetris_Guideline)
@@ -24,8 +25,8 @@
 			- [x] All Tetrominos
 			- [x] Rotation: SRS
 			- [x] Lock delay: 0.5s
-			- [~] Piece preview
-			- [~] Hold box
+			- [x] Piece preview
+			- [x] Hold box
 			- [x] Bag randomizer
 			- [ ] Levels
 			- [ ] Scoring
@@ -63,7 +64,11 @@
 				- [ ] Making garbage you send *weird*
 					- [ ] Multi hole garbage
 					- [ ] Garbage which requires some condition?
-					- [ ] 
+				- [ ] Something that requires you to both move pieces and a cursor
+					- Maybe something like [Tetrisweeper](https://kertisjones.itch.io/tetrisweeper)? 
+				- [ ] Something unlike the other things mentioned
+					- [Sandtris](https://sandtris.com/)
+					- [Soft Body Tetris](https://newbie-indie-game-dev.itch.io/softbody-tetris)
 			- [ ] Active abilities
 				- By pressing the [Ability] key, these will be activated
 				- Generally these require a charge meter of some sort, the specific action required will depend 
@@ -76,7 +81,7 @@
 				- [ ] Send garbage to opponent but ... to you
 					- [ ] Double back?
 					- [ ] Unclearable garbage?
-				- [ ] 
+				- [ ] Breakout? Like ball and paddle, probably your piece becomes the paddle
 		- [ ] Allows different players to play different gamemodes against each other, i.e. a duo and a tetra player
 		- [ ] Players should be able to have loadouts of characters / active abilities
 - [ ] Features
@@ -91,9 +96,13 @@
 	- [ ] Removal Modes
 		- [x] Width
 		- [ ] Color match (See Monomino)
-	- [ ] Scoring language
+	- [ ] Scoring
+	- [ ] Piece Types
+		- [ ] Solid (normal)
+		- [ ] Multicolor
+		- [ ] Special, some unique effect on lock
 	- [ ] Actual menus 
-		- [ ] Configurable preferences and keys
+		- [~] Configurable preferences and keys
 			- [ ] Controller support
 		- [ ] i18n
 	- [ ] Blackjack rewrite

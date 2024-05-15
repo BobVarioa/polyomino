@@ -5,11 +5,13 @@ import { Logic } from "./game/Logic";
 import { Draw, DrawMode } from "./game/render/Draw";
 import { Preferences } from "./game/Preferences";
 
+const $ = <T>(s: string): T => document.querySelector(s) as T; 
+
 function init() {
 	let gameDef = GameDef.fromJson(tetro as any as GameSchema);
 
 	let prefs = new Preferences();
-	prefs.arr = 5;
+	prefs.arr = 0;
 	prefs.das = 7;
 	prefs.sdf = -1;
 
@@ -40,8 +42,10 @@ function init() {
 	let logic = new Logic(gameDef, prefs, input);
 	logic.start();
 
-	let canvas = document.querySelector<HTMLCanvasElement>("#gameBoard");
-	let draw = Draw.create(DrawMode.Canvas, logic, canvas);
+	let canvas = $<HTMLCanvasElement>("#gameCanvas");
+	let holdCanvas = $<HTMLCanvasElement>("#holdCanvas");
+	let queueCanvas = $<HTMLCanvasElement>("#queueCanvas");
+	let draw = Draw.create(DrawMode.Canvas, logic, canvas, holdCanvas, queueCanvas);
 	let drawFunc = draw.start();
 	
 	draw.grid = 32;

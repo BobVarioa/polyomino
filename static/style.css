@@ -17,3 +17,8 @@ body {
 canvas {
 	border: 1px solid white;
 }
+
+.gameContainer {
+	display: flex;
+	align-items: flex-start;
+}

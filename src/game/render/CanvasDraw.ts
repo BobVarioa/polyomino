@@ -1,25 +1,96 @@
 import { ArrayMatrix } from "../../utils/ArrayMatrix";
+import { Piece } from "../GameDef";
 import { PieceState } from "../PieceState";
 import { BaseDraw } from "./BaseDraw";
 
 export class CanvasDraw extends BaseDraw {
 	ctx: CanvasRenderingContext2D;
+	ctxQueue: CanvasRenderingContext2D;
+	ctxHold: CanvasRenderingContext2D;
+
+	maxWidth: number;
+	maxHeight: number;
+
+	topLeftMap: Map<string, [number, number]>;
 
 	start() {
 		super.start();
 
 		this.ctx = this.canvas.getContext("2d");
+
+		this.topLeftMap = new Map();
+
+		let maxW = 0;
+		let maxH = 0;
+		for (const piece of this.logic.gameDef.pieces.values()) {
+			let topLeftPoint: [number, number] = [0, 0];
+			let realWidth = 0;
+			let realHeight = 0;
+			// NOTE: you probably don't need two loops here but pieces are so small, and this only happens once, so this really shouldn't be a big deal
+			column: for (let x = 0; x < piece.matrix.width; x++) {
+				for (let y = 0; y < piece.matrix.height; y++) {
+					if (piece.matrix.atXY(x, y) == 1) {
+						if (realWidth == 0) {
+							topLeftPoint[0] = x;
+						}
+						realWidth++;
+						continue column;
+					}
+				}
+			}
+
+			row: for (let y = 0; y < piece.matrix.height; y++) {
+				for (let x = 0; x < piece.matrix.width; x++) {
+					if (piece.matrix.atXY(x, y) == 1) {
+						if (realHeight == 0) {
+							topLeftPoint[1] = y;
+						}
+						realHeight++;
+						continue row;
+					}
+				}
+			}
+
+			this.topLeftMap.set(piece.name, topLeftPoint);
+			
+			maxW = Math.max(realWidth, maxW);
+			maxH = Math.max(realHeight, maxH);
+		}
+		this.maxHeight = maxH * this.grid;
+		this.maxWidth = maxW * this.grid;
+
+		this.holdCanvas.width = this.maxWidth + 20; // 10px padding + piece size
+		this.holdCanvas.height = this.maxHeight + 20; // 10px padding + piece size
+		this.ctxHold = this.holdCanvas.getContext("2d");
+
+		this.queueCanvas.width = this.maxWidth + 20; // 10px padding + piece size
+		this.queueCanvas.height = this.maxHeight * 5 + 10 * 7; // 10px padding top and bottom + 5x piece size + 10px padding between pieces
+		this.ctxQueue = this.queueCanvas.getContext("2d");
 		return this.frameCanvas.bind(this);
 	}
 
-	private drawPiece(piece: PieceState) {
+	private drawPieceState(piece: PieceState) {
 		const { grid, sh, ctx } = this;
-		
+
 		ctx.fillStyle = piece.piece.color;
 		for (let y = 0; y < piece.data.height; y++) {
 			for (let x = 0; x < piece.data.width; x++) {
 				if (piece.data.atXY(x, y) == 1) {
 					ctx.fillRect((piece.x + x) * grid, (piece.y - sh + y) * grid, grid - 1, grid - 1);
+				}
+			}
+		}
+	}
+
+	private drawPiece(ctx: CanvasRenderingContext2D, piece: Piece, offsetX: number, offsetY: number) {
+		const { grid, sh } = this;
+
+		ctx.fillStyle = piece.color;
+		const topLeft = this.topLeftMap.get(piece.name);
+		for (let y = topLeft[1]; y < piece.matrix.height; y++) {
+			for (let x = topLeft[0]; x < piece.matrix.width; x++) {
+				if (piece.matrix.atXY(x, y) == 1) {
+					ctx.fillRect(offsetX + (x - topLeft[0]) * grid, offsetY + (y - topLeft[1]) * grid, grid - 1, grid - 1);
 				}
 			}
 		}
@@ -36,19 +107,23 @@ export class CanvasDraw extends BaseDraw {
 				if (name != " ") {
 					ctx.fillStyle = pieces.get(name).color;
 				} else continue;
-				
+
 				ctx.fillRect(x * grid, (y - sh) * grid, grid - 1, grid - 1);
 			}
 		}
 	}
-	
+
+	lastQueueTop: string;
+	lastHold: string;
+
 	frameCanvas(deltaTime: number) {
 		const { ctx } = this;
+		const { gameDef } = this.logic;
 		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		ctx.fillStyle = this.gridColor;
 		ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-		const boardSize = this.logic.gameDef.settings.boardSize;
-		
+		const boardSize = gameDef.settings.boardSize;
+
 		const { grid, sh, sw } = this;
 		ctx.fillStyle = this.backgroundColor;
 		for (let y = sh; y < boardSize[1]; y++) {
@@ -57,26 +132,50 @@ export class CanvasDraw extends BaseDraw {
 				ctx.fillRect(x * grid, (y - sh) * grid, grid - 1, grid - 1);
 			}
 		}
-		
-		ctx.save()
+
+		ctx.save();
 		ctx.globalAlpha = 0.4;
 		this.drawBoard(this.logic.ghostboard, boardSize[1]);
-		ctx.restore()
+		ctx.restore();
 
 		this.drawBoard(this.logic.gameboard, boardSize[1]);
-		
 
 		if (!this.logic.activePiece.invalid) {
 			const piece = this.logic.activePiece;
 			const ghostPiece = this.logic.activePiece.copy().hardDrop();
 
-			
-			ctx.save()
+			ctx.save();
 			ctx.globalAlpha = 0.4;
-			this.drawPiece(ghostPiece)
-			ctx.restore()
+			this.drawPieceState(ghostPiece);
+			ctx.restore();
 
-			this.drawPiece(piece);
+			this.drawPieceState(piece);
+		}
+
+		// draw queue
+		const nextPiece = gameDef.randomizer.peek(1)[0];
+		if (this.lastQueueTop != nextPiece) {
+			this.lastQueueTop = nextPiece;
+
+			const queue = gameDef.randomizer.peek(5).map((v) => gameDef.pieces.get(v));
+			this.ctxQueue.clearRect(0, 0, this.queueCanvas.width, this.queueCanvas.height);
+			let x = 10;
+			let y = 10;
+			for (const piece of queue) {
+				this.drawPiece(this.ctxQueue, piece, x, y);
+				y += 10 + this.maxHeight;
+			}
+		}
+
+		// draw hold
+		const holdPiece = this.logic.holdPiece;
+		if (this.lastHold != holdPiece) {
+			this.lastHold = holdPiece;
+			this.ctxHold.clearRect(0, 0, this.holdCanvas.width, this.holdCanvas.height);
+
+			if (holdPiece != " ") {
+				this.drawPiece(this.ctxHold, gameDef.pieces.get(holdPiece), 10, 10);
+			}
 		}
 	}
 }

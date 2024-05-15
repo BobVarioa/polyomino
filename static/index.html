@@ -8,7 +8,11 @@
 	<link rel="stylesheet" href="./style.css">
 </head>
 <body>
-	<canvas width="320" height="640" id="gameBoard"></canvas>
+	<div class="gameContainer">
+		<canvas width="128" height="640" id="holdCanvas"></canvas>
+		<canvas width="320" height="640" id="gameCanvas"></canvas>
+		<canvas width="128" height="640" id="queueCanvas"></canvas>
+	</div>
 	<script src="/index.js"></script>
 </body>
 </html>

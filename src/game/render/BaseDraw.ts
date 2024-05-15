@@ -8,7 +8,7 @@ export class BaseDraw {
 	backgroundColor: string;
 	gridColor: string;
 
-	constructor(public logic: Logic, public canvas: HTMLCanvasElement) { }
+	constructor(public logic: Logic, public canvas: HTMLCanvasElement, public holdCanvas: HTMLCanvasElement, public queueCanvas: HTMLCanvasElement) { }
 
 	start(): (deltaTime: number) => void {
 		this.grid = 32;

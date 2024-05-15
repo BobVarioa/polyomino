@@ -9,12 +9,12 @@ export enum DrawMode {
 }
 
 export class Draw {
-	static create(mode: DrawMode, logic: Logic, canvas: HTMLCanvasElement): BaseDraw {
+	static create(mode: DrawMode, logic: Logic, canvas: HTMLCanvasElement, holdCanvas: HTMLCanvasElement, queueCanvas: HTMLCanvasElement): BaseDraw {
 		switch (mode) {
 			case DrawMode.Canvas:
-				return new CanvasDraw(logic, canvas);
+				return new CanvasDraw(logic, canvas, holdCanvas, queueCanvas);
 			case DrawMode.WebGL:
-				return new GlDraw(logic, canvas);
+				return new GlDraw(logic, canvas, holdCanvas, queueCanvas);
 		}
 	}
 }
