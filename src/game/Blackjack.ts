@@ -26,32 +26,30 @@ export interface WrappedGenerator<T> {
 	[Symbol.iterator]: () => Generator<T>;
 }
 
-function wrapGenerator<T>(
-	gen: (rng: Random) => Generator<T>
-): WrappedGenerator<T> {
+function wrapGenerator<T>(gen: (rng: Random) => Generator<T>): WrappedGenerator<T> {
 	let random = new Random();
 	let iter = gen(random);
 	let peekCache: T[] = [];
 
 	return {
-		next: (): T => {
+		next(): T {
 			if (peekCache.length > 0) {
 				return peekCache.shift();
 			}
 			return iter.next().value as T;
 		},
-		peek: (n = 1): T[] => {
+		peek(n = 1): T[] {
 			for (let i = peekCache.length; i < n; i++) {
-				peekCache.push(this.next());
+				peekCache.push(iter.next().value);
 			}
 			return peekCache.slice(0, n);
 		},
-		reset: (seed: number) => {
+		reset(seed: number) {
 			random.seed = seed;
 			iter = gen(random);
 			peekCache = [];
 		},
-		[Symbol.iterator]: () => {
+		[Symbol.iterator]() {
 			return iter;
 		},
 	};
@@ -66,8 +64,7 @@ const rng = wrapGenerator(function* () {
 
 const bagOfRegex = /^(\d+)?\+?(\d+)? ?bag of (.*)$/;
 const sequenceOfRegex = /^(\d+) ?(random)? ?sequence of (.*)$/;
-const withRegex =
-	/^(.*) with (\d+) history(?: (\d+) rolls)?(?: starting with (.*))?$/;
+const withRegex = /^(.*) with (\d+) history(?: (\d+) rolls)?(?: starting with (.*))?$/;
 const listItemRegex = /^(\d*)?\*?(.*)$/;
 const firstRegex = /^(.*) but first (.*)$/;
 
@@ -119,8 +116,7 @@ function createRandomizer(str: string): (rng: Random) => Generator<string> {
 				for (let i = 0; i < len; i++) {
 					if (!bag.length) {
 						if (bonus) {
-							if (!bonusBag.length)
-								bonusBag = rng.shuffleArray(list.slice());
+							if (!bonusBag.length) bonusBag = rng.shuffleArray(list.slice());
 							yield bonusBag.pop();
 						} else {
 							yield rng.chooseRandom(list);
