@@ -17,6 +17,7 @@
     "serve-handler": "^6.1.5"
   },
   "dependencies": {
+    "eventemitter3": "^5.0.1",
     "gl-matrix": "^3.4.3",
     "secure-random": "^1.1.2",
     "seedrandom": "^3.0.5"

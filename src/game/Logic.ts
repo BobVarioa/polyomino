@@ -8,6 +8,7 @@ import random from "secure-random";
 import { pento, tetro } from "../data/gameTypes";
 import { BaseDraw } from "./render/BaseDraw";
 import { EventEmitter } from "eventemitter3";
+import { BaseMode } from "./BaseMode";
 
 export class Logic {
 	public gameboard: ArrayMatrix<string>;
@@ -19,6 +20,8 @@ export class Logic {
 	public lastMove: Keys;
 	public abilityManager: AbilityManager;
 	public gameDef: GameDef;
+	mode: BaseMode;
+
 	constructor(public prefs: Preferences, public input: InputManager, public draw: BaseDraw) {}
 
 	#signal = new EventEmitter();
@@ -70,6 +73,12 @@ export class Logic {
 	swapGameDef(gameDef: GameDef) {
 		this.#signal.emit("stop");
 		this.gameDef = gameDef;
+	}
+
+	swapMode(mode: BaseMode) {
+		this.#signal.emit("stop");
+		this.mode = mode;
+		this.mode.logic = this;
 	}
 
 	start() {
@@ -435,6 +444,8 @@ export class Logic {
 				this.gameOver();
 			}
 		}
+
+		this.mode.frame();
 	}
 
 	movedLastFrame = true;

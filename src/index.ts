@@ -3,6 +3,7 @@ import { InputManager, Keys } from "./game/InputManager";
 import { Logic } from "./game/Logic";
 import { Draw, DrawMode } from "./game/render/Draw";
 import { Preferences } from "./game/Preferences";
+import { PCOMode } from "./game/PCOMode";
 
 const $ = <T>(s: string): T => document.querySelector(s) as T;
 
@@ -46,6 +47,7 @@ function init() {
 
 	const logic = new Logic(prefs, input, draw);
 	logic.swapGameDef(tetro);
+	// logic.swapMode(new PCOMode());
 	logic.loop();
 }
 

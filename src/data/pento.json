@@ -70,6 +70,7 @@
 		"holdDelay": 2,
 		"rotation": true,
 		"lineClearDelay": 10,
-		"specialRotation": "flip"
+		"specialRotation": "flip",
+		"queueLength": 7
 	}
 }
