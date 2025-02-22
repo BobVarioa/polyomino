@@ -59,6 +59,7 @@
 					- The same wax piece mechanics 
 					- More fires burning continously on your side would mean more garbage 
 				- [ ] Something that involves player movement on the board
+					- Maybe something like [Combo Postage?](https://kirklindsay.itch.io/combo-postage)
 					- Player could be crushed by blocks, but could do something to clear them
 					- Blocks would increase in speed much more rapidly
 				- [ ] Making garbage you send *weird*
@@ -66,6 +67,8 @@
 					- [ ] Garbage which requires some condition?
 				- [ ] Something that requires you to both move pieces and a cursor
 					- Maybe something like [Tetrisweeper](https://kertisjones.itch.io/tetrisweeper)? 
+				- [ ] Something like [Scrabble Tetris](https://htwins.net/scrabbletetris/)?
+					- Not sure if I like this one because i18n
 				- [ ] Something unlike the other things mentioned
 					- [Sandtris](https://sandtris.com/)
 					- [Soft Body Tetris](https://newbie-indie-game-dev.itch.io/softbody-tetris)
