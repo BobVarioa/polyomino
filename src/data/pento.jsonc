@@ -71,6 +71,8 @@
 		"rotation": true,
 		"lineClearDelay": 10,
 		"specialRotation": "flip",
-		"queueLength": 7
+		"queueLength": 7,
+		"pieceType": "normal",
+		"clearType": "line"
 	}
 }

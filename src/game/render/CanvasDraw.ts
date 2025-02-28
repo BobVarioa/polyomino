@@ -32,7 +32,7 @@ export class CanvasDraw extends BaseDraw {
 			// NOTE: you probably don't need two loops here but pieces are so small, and this only happens once, so this really shouldn't be a big deal
 			column: for (let x = 0; x < piece.matrix.width; x++) {
 				for (let y = 0; y < piece.matrix.height; y++) {
-					if (piece.matrix.atXY(x, y) == 1) {
+					if (piece.matrix.atXY(x, y) != 0) {
 						if (realWidth == 0) {
 							topLeftPoint[0] = x;
 						}
@@ -44,7 +44,7 @@ export class CanvasDraw extends BaseDraw {
 
 			row: for (let y = 0; y < piece.matrix.height; y++) {
 				for (let x = 0; x < piece.matrix.width; x++) {
-					if (piece.matrix.atXY(x, y) == 1) {
+					if (piece.matrix.atXY(x, y) != 0) {
 						if (realHeight == 0) {
 							topLeftPoint[1] = y;
 						}
@@ -73,12 +73,20 @@ export class CanvasDraw extends BaseDraw {
 	}
 
 	private drawPieceState(piece: PieceState) {
-		const { grid, sh, ctx } = this;
+		const {
+			grid,
+			sh,
+			ctx,
+			logic: { gameDef },
+		} = this;
+		const multi = gameDef.settings.pieceType == "multi";
 
-		ctx.fillStyle = piece.piece.color;
+		if (!multi) ctx.fillStyle = piece.piece.color;
 		for (let y = 0; y < piece.data.height; y++) {
 			for (let x = 0; x < piece.data.width; x++) {
-				if (piece.data.atXY(x, y) == 1) {
+				const v = piece.data.atXY(x, y);
+				if (v != 0) {
+					if (multi) ctx.fillStyle = gameDef.colors.get(v);
 					ctx.fillRect((piece.x + x) * grid, (piece.y - sh + y) * grid, grid - 1, grid - 1);
 				}
 			}
@@ -86,13 +94,21 @@ export class CanvasDraw extends BaseDraw {
 	}
 
 	private drawPiece(ctx: CanvasRenderingContext2D, piece: Piece, offsetX: number, offsetY: number) {
-		const { grid, sh } = this;
+		const {
+			grid,
+			sh,
+			logic: { gameDef },
+		} = this;
 
-		ctx.fillStyle = piece.color;
+		const multi = gameDef.settings.pieceType == "multi";
+
+		if (!multi) ctx.fillStyle = piece.color;
 		const topLeft = this.topLeftMap.get(piece.name);
 		for (let y = topLeft[1]; y < piece.matrix.height; y++) {
 			for (let x = topLeft[0]; x < piece.matrix.width; x++) {
-				if (piece.matrix.atXY(x, y) == 1) {
+				const v = piece.matrix.atXY(x, y);
+				if (v != 0) {
+					if (multi) ctx.fillStyle = gameDef.colors.get(v);
 					ctx.fillRect(
 						offsetX + (x - topLeft[0]) * grid,
 						offsetY + (y - topLeft[1]) * grid,
@@ -105,15 +121,21 @@ export class CanvasDraw extends BaseDraw {
 	}
 
 	private drawBoard(playfield: ArrayMatrix<string>, height: number) {
-		const { pieces } = this.logic.gameDef;
+		const {
+			pieces,
+			settings: { pieceType },
+			colors,
+		} = this.logic.gameDef;
 		const { ctx, grid, sh, sw } = this;
 		// todo: display half of the row above the screen if boardSize is bigger than screenSize
+		const multi = pieceType === "multi";
 
 		for (let y = sh; y < height; y++) {
 			for (let x = 0; x < sw; x++) {
 				const name = playfield.atXY(x, y);
 				if (name != " ") {
-					ctx.fillStyle = pieces.get(name).color;
+					if (multi) ctx.fillStyle = colors.get(parseInt(name));
+					else ctx.fillStyle = pieces.get(name).color;
 				} else continue;
 
 				ctx.fillRect(x * grid, (y - sh) * grid, grid - 1, grid - 1);

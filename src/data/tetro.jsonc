@@ -40,6 +40,8 @@
 		"holdDelay": 2,
 		"rotation": true,
 		"lineClearDelay": 10,
-		"queueLength": 5
+		"queueLength": 5,
+		"pieceType": "normal",
+		"clearType": "line"
 	}
 }

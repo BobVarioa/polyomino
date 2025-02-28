@@ -1,27 +1,46 @@
 {
 	"pieces": {
-		"I": { "def": "010/010", "color": "cyan" }
-
-		// red 
-		// orange
-		// yellow
-		// green
-		// blue
-		// purple 
+		// 1-color
+		"I": { "def": "010/010/000" },
+		"J": { "def": "020/020/000" },
+		"K": { "def": "030/030/000" },
+		"L": { "def": "040/040/000" },
+		// pairs
+		"i": { "def": "010/020/000" }, 
+		"j": { "def": "020/030/000" },
+		"k": { "def": "030/010/000" },
+		"l": { "def": "040/010/000" },
+		"m": { "def": "040/020/000" },
+		"n": { "def": "040/030/000" }
 	},
-	"rotation": {},
-	"randomizer": "I",
+	"colors": {
+		"1": "red",
+		"2": "blue",
+		"3": "green",
+		"4": "yellow"
+	},
+	"rotation": {
+		"I,J,K,L,i,j,k,l,m,n": {
+			"0": "0,0",
+			"L": "0,0",
+			"2": "0,0",
+			"R": "0,0"
+		}
+	},
+	"randomizer": "bag of I,J,K,L,i,j,k,l,m,n",
 	"settings": {
-		"boardSize": [10, 40],
-		"screenSize": [10, 20],
+		"boardSize": [6, 24],
+		"screenSize": [6, 12],
 		"are": 6,
 		"gravity":  0.0156,
-		"gravityType": "naive",
+		"gravityType": "linear",
 		"lockDelay": 30,
 		"hold": true,
 		"holdDelay": 2,
 		"rotation": true,
-		"specialRotation": "cycle",
-		"lineClearDelay": 10
+		"lineClearDelay": 10,
+		"queueLength": 5,
+		"pieceType": "multi",
+		"clearType": "color"
 	}
 }

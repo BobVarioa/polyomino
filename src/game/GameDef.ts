@@ -4,13 +4,18 @@ import { ArrayMatrix } from "../utils/ArrayMatrix";
 
 export interface GameSchema {
 	pieces: Record<string, PieceDef>;
+	colors?: Record<string, string>;
 	rotation: Record<string, { "0": string; R: string; "2": string; L: string }>;
 	randomizer: string;
 	settings: Settings;
 }
 
 export class Piece {
-	constructor(public name: string, public matrix: ArrayMatrix<number>, public color: string) {}
+	constructor(
+		public name: string,
+		public matrix: ArrayMatrix<number>,
+		public color: string | undefined = undefined
+	) {}
 }
 
 export interface PieceDef {
@@ -31,6 +36,8 @@ export interface Settings {
 	readonly rotation: boolean;
 	readonly gravityType: string;
 	readonly queueLength: number;
+	readonly clearType: string;
+	readonly pieceType: string;
 }
 
 export interface KickTable {
@@ -45,8 +52,9 @@ export class GameDef {
 		public readonly pieces: Map<string, Piece>,
 		public readonly rotations: MultiKeyMap<string, KickTable>,
 		public readonly randomizer: WrappedGenerator<string>,
-		public readonly settings: Settings
-	) { }
+		public readonly settings: Settings,
+		public readonly colors: Map<number, string>
+	) {}
 
 	static fromJson(json: GameSchema | string) {
 		if (typeof json == "string") {
@@ -62,14 +70,14 @@ export class GameDef {
 
 			for (let x = 0; x < size; x++) {
 				for (let y = 0; y < size; y++) {
-					matrix.setXY(x, y, data[y][x] === "0" ? 0 : 1);
+					matrix.setXY(x, y, parseInt(data[y][x]));
 				}
 			}
 
 			pieces.set(key, new Piece(key, matrix, value.color));
 		}
 
-		pieces.set("?", new Piece("?", new ArrayMatrix<number>(1,1).fill(1), "gray"))
+		pieces.set("?", new Piece("?", new ArrayMatrix<number>(1, 1).fill(1), "gray"));
 
 		const rotations = new MultiKeyMap<string, KickTable>();
 
@@ -94,6 +102,13 @@ export class GameDef {
 
 		const settings = json.settings;
 
-		return new GameDef(pieces, rotations, randomizer, settings);
+		const colors = new Map<number, string>();
+
+		if (settings.pieceType == "multi")
+			for (const [piece, color] of Object.entries(json.colors)) {
+				colors.set(parseInt(piece), color);
+			}
+
+		return new GameDef(pieces, rotations, randomizer, settings, colors);
 	}
 }

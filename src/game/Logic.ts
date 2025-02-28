@@ -94,7 +94,7 @@ export class Logic {
 			timesDropped: 0,
 			dasDirection: undefined,
 			failTimer: 0,
-			failBuffer: 0
+			failBuffer: 0,
 		};
 		this.failed = false;
 
@@ -122,7 +122,7 @@ export class Logic {
 		if (piece.invalid) throw new Error("Invalid piece");
 		for (let x = 0; x < piece.data.width; x++) {
 			for (let y = 0; y < piece.data.height; y++) {
-				if (piece.data.atXY(x, y) == 1) {
+				if (piece.data.atXY(x, y) != 0) {
 					const extracted = this.gameboard.atXY(piece.x + x, piece.y + y);
 					if (extracted != " ") {
 						return true;
@@ -177,29 +177,7 @@ export class Logic {
 		disableLockDelay: boolean;
 	};
 
-	clearLines() {
-		if (this.flags.noLineClears) return;
-
-		let clearedLines = 0;
-		let wasSpin = false;
-
-		// clearedLines
-		// three corner rule
-		// TODO: scoring
-		if (this.lastMove == Keys.RotateLeft || this.lastMove == Keys.RotateRight || this.lastMove == Keys.Rotate180) {
-			let corners = 0;
-			const piece = this.activePiece;
-			const matrix = piece.piece.matrix;
-			for (const x of [0, matrix.width - 1]) {
-				for (const y of [0, matrix.height - 1]) {
-					if (this.gameboard.atXY(piece.x + x, piece.y + y) != " ") {
-						corners++;
-					}
-				}
-			}
-			wasSpin = corners > 2;
-		}
-
+	gravity() {
 		switch (this.gameDef.settings.gravityType) {
 			case "naive":
 				for (let y = this.gameboard.height - 1; y > 0; y--) {
@@ -207,7 +185,7 @@ export class Logic {
 					upper: while (true) {
 						for (let x = 0; x < this.gameboard.width; x++) {
 							const piece = this.gameboard.atXY(x, y - lines);
-							if (piece == " ") {
+							if (piece != " ") {
 								break upper;
 							}
 						}
@@ -215,7 +193,6 @@ export class Logic {
 					}
 
 					if (lines > 0) {
-						clearedLines += lines;
 						for (let yy = y; yy > 0; yy--) {
 							for (let x = 0; x < this.gameboard.width; x++) {
 								this.gameboard.setXY(x, yy, this.gameboard.atXY(x, yy - lines) ?? " ");
@@ -225,37 +202,40 @@ export class Logic {
 				}
 				break;
 
+			case "linear":
+				let maxDropped = 0;
+				for (let x = 0; x < this.gameboard.width; x++) {
+					for (let y = this.gameboard.height - 1; y > 0; y--) {
+						let lines = 0;
+						while (this.gameboard.atXY(x, y - lines) === " ") {
+							lines++;
+						}
+						if (y - lines < 0) break;
+						for (let yy = y; yy > 0; yy--) {
+							this.gameboard.setXY(x, yy, this.gameboard.atXY(x, yy - lines) ?? " ");
+						}
+						maxDropped = Math.max(lines, maxDropped)
+					}
+				}
+				this.counters.timesDropped += maxDropped;
+				break;
+
 			case "sticky":
 				for (let y = this.gameboard.height - 1; y > 0; y--) {
 					// X XX
-					// XXXX
-					//  X
-					// XXX
-					// detect full lines
-					let lines = 0;
-					upper: while (true) {
-						for (let x = 0; x < this.gameboard.width; x++) {
-							const piece = this.gameboard.atXY(x, y - lines);
-							if (piece == " ") {
-								break upper;
-							}
-						}
-						lines++;
-					}
-
-					if (lines == 0) continue;
-					clearedLines += lines;
-
-					// X XX
 					//
-					//  X
+					//  x
 					// XXX
-					// clear line
-					for (let i = 0; i < lines; i++) {
-						for (let x = 0; x < this.gameboard.width; x++) {
-							this.gameboard.setXY(x, y - i, " ");
+					// detect empty lines
+					let empty = true;
+					for (let x = 0; x < this.gameboard.width; x++) {
+						const piece = this.gameboard.atXY(x, y);
+						if (piece != " ") {
+							empty = false;
 						}
 					}
+
+					if (empty) continue;
 
 					// 1 22
 					//
@@ -304,22 +284,76 @@ export class Logic {
 				// well, okay it might not, because we do store which piece is which for colors, but i don't think reversing these is trival
 				break;
 		}
+	}
+
+	clearLines() {
+		if (this.flags.noLineClears) return;
+
+		let clearedLines = 0;
+		let wasSpin = false;
+
+		// clearedLines
+		// three corner rule
+		// TODO: scoring
+		if (this.lastMove == Keys.RotateLeft || this.lastMove == Keys.RotateRight || this.lastMove == Keys.Rotate180) {
+			let corners = 0;
+			const piece = this.activePiece;
+			const matrix = piece.piece.matrix;
+			for (const x of [0, matrix.width - 1]) {
+				for (const y of [0, matrix.height - 1]) {
+					if (this.gameboard.atXY(piece.x + x, piece.y + y) != " ") {
+						corners++;
+					}
+				}
+			}
+			wasSpin = corners > 2;
+		}
+
+		switch (this.gameDef.settings.clearType) {
+			case "line":
+				for (let y = this.gameboard.height - 1; y > 0; y--) {
+					let hole = false;
+					for (let x = 0; x < this.gameboard.width; x++) {
+						const piece = this.gameboard.atXY(x, y);
+						if (piece == " ") {
+							hole = true;
+							break;
+						}
+					}
+
+					if (!hole) {
+						for (let x = 0; x < this.gameboard.width; x++) {
+							this.gameboard.setXY(x, y, " ");
+						}
+						clearedLines += 1;
+					}
+				}
+				break;
+
+			case "color":
+				const sectors = this.gameboard.detectSectors((a, b) => a != " " && a == b);
+				for (const sector of sectors) {
+					if (sector.length >= 4) {
+						clearedLines += 1;
+						for (const [x, y] of sector) {
+							this.gameboard.setXY(x, y, " ");
+						}
+					}
+				}
+				break;
+		}
 
 		if (clearedLines > 0) {
 			this.counters.areTimer -= this.gameDef.settings.lineClearDelay * (clearedLines / 2);
-			if (this.counters.timesDropped > 1) {
-				this.counters.areTimer -=
-					this.counters.timesDropped * Math.floor(this.gameDef.settings.lineClearDelay / 8);
-			}
-
 			this.counters.combo += 1;
 		} else {
 			this.counters.combo = 0;
-			this.counters.timesDropped = 0;
 		}
 
 		this.abilityManager.charge += clearedLines;
-		console.log(this.abilityManager.charge);
+		// console.log(this.abilityManager.charge);
+
+		return clearedLines;
 	}
 
 	/**
@@ -355,9 +389,8 @@ export class Logic {
 			return;
 		}
 
-
 		if (this.input.isKeyPressed(Keys.Fail)) {
-			this.counters.failBuffer = 10
+			this.counters.failBuffer = 10;
 			if (this.counters.failTimer >= 60) {
 				this.counters.failTimer = -10;
 				this.gameOver();
@@ -379,8 +412,19 @@ export class Logic {
 				this.counters.areTimer++;
 				return;
 			} else {
-				this.clearLines();
-				if (this.counters.areTimer <= are) return;
+				this.counters.timesDropped = 0;
+				if (this.gameDef.settings.gravityType == "naive") {
+					if (this.clearLines() != 0) this.gravity();
+					if (this.counters.areTimer <= are) return;
+				} else {
+					this.clearLines()
+					this.gravity();
+					if (this.counters.timesDropped > 1) {
+						this.counters.areTimer -=
+							this.counters.timesDropped * Math.floor(this.gameDef.settings.lineClearDelay / 8);
+					}
+					if (this.counters.areTimer <= are) return;
+				}
 			}
 
 			if (canHold && this.swapHold) {

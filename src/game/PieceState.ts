@@ -163,10 +163,12 @@ export class PieceState {
 	 * writes piece to gameboard then invalidates self
 	 */
 	write() {
+		const multi = this.parent.gameDef.settings.pieceType == "multi"
 		for (let y = 0; y < this.data.height; y++) {
 			for (let x = 0; x < this.data.width; x++) {
-				if (this.data.atXY(x, y) == 1) {
-					this.parent.gameboard.setXY(this.x + x, this.y + y, this.piece.name);
+				const v = this.data.atXY(x, y);
+				if (v != 0) {
+					this.parent.gameboard.setXY(this.x + x, this.y + y, multi ? v.toString() : this.piece.name);
 				}
 			}
 		}
