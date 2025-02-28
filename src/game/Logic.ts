@@ -326,6 +326,14 @@ export class Logic {
 	 * logic loop function, should run 60 times per second
 	 */
 	frame() {
+		if (this.input.isKeyPressed(Keys.Restart)) {
+			this.input.pressedMap[Keys.Restart] = false;
+			const ghost = this.ghostboard;
+			this.restart();
+			this.ghostboard = ghost;
+			return;
+		}
+
 		if (this.input.isKeyPressed(Keys.Pause) && this.counters.pauseBuffer == 0) {
 			this.paused = !this.paused;
 			this.counters.pauseBuffer = 60; // 0.5s
@@ -334,14 +342,6 @@ export class Logic {
 		}
 
 		if (this.paused) return;
-
-		if (this.input.isKeyPressed(Keys.Restart)) {
-			this.input.pressedMap[Keys.Restart] = false;
-			const ghost = this.ghostboard;
-			this.restart();
-			this.ghostboard = ghost;
-			return;
-		}
 
 		if (this.failed) {
 			if (this.counters.failTimer >= 60) {
