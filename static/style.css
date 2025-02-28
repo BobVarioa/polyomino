@@ -22,3 +22,18 @@ canvas {
 	display: flex;
 	align-items: flex-start;
 }
+
+.menuContainer {
+	display: grid;
+	grid-template-columns: 1fr;
+	grid-template-rows: 1fr;
+}
+
+.menuContainer > * {
+	grid-row: 1;
+	grid-column: 1;
+}
+
+#menus {
+	z-index: 10;
+}

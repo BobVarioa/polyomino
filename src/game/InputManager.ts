@@ -26,6 +26,11 @@ export enum Keys {
 	Length,
 }
 
+const namesToKeys = Object.fromEntries((Object.entries(Keys) as [string, Keys][]).map(v => ([
+	"key" + v[0].replace(/A-Z/g, l => `_${l.toLowerCase()}`), 
+	v[1]
+])));
+
 export class InputManager {
 	inputMap = new MultiKeyMap<string, Keys>();
 	pressedMap: boolean[] = new Array(Keys.Length).fill(false);
@@ -36,6 +41,12 @@ export class InputManager {
 	}
 
 	setKey(id: Keys, key: string) {
+		this.inputMap.deleteKey(key);
+		this.inputMap.set([key], id);
+	}
+
+	setKeyByName(name: string, key: string) {
+		const id = namesToKeys[name];
 		this.inputMap.deleteKey(key);
 		this.inputMap.set([key], id);
 	}
