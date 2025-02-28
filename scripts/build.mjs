@@ -1,6 +1,7 @@
 import esbuild from "esbuild";
 import fs from "fs-extra";
 import { globSync } from "glob";
+import { jsonc } from "jsonc";
 import pbjs from "protobufjs-cli/pbjs.js";
 import pbts from "protobufjs-cli/pbts.js";
 
@@ -23,11 +24,7 @@ await new Promise((res, rej) => {
 
 await new Promise((res, rej) => {
 	pbts.main(
-		[
-			"./src/game/network/network-compiled.js",
-			"-o",
-			"./src/game/network/network-compiled.d.ts",
-		],
+		["./src/game/network/network-compiled.js", "-o", "./src/game/network/network-compiled.d.ts"],
 		(err, out) => {
 			res();
 		}
@@ -42,6 +39,18 @@ for (const file of globSync("./static/**/*.*")) {
 	fs.copy(`./static/${f}`, `./dist/${f}`);
 }
 
+const jsoncPlugin = {
+	name: "jsonc",
+	setup(build) {
+		build.onLoad({ filter: /.jsonc$/ }, async (args) => {
+			return {
+				contents: JSON.stringify(jsonc.parse(await fs.promises.readFile(args.path, "utf-8"))),
+				loader: "json",
+			};
+		});
+	},
+};
+
 await esbuild.build({
 	entryPoints: ["./src/index.ts"],
 	bundle: true,
@@ -51,6 +60,6 @@ await esbuild.build({
 	loader: { ".js": "jsx" },
 	minify: false,
 	jsx: "automatic",
-
 	jsxImportSource: "preact",
+	plugins: [jsoncPlugin]
 });

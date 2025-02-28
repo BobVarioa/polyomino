@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "node ./scripts/build.mjs",
-	"serve": "node ./scripts/serve.mjs"
+    "serve": "node ./scripts/serve.mjs"
   },
   "author": "Bob Varioa",
   "license": "MIT",
@@ -15,6 +15,7 @@
     "esbuild": "^0.18.13",
     "fs-extra": "^11.1.1",
     "glob": "^10.3.3",
+    "jsonc": "^2.0.0",
     "protobufjs-cli": "^1.1.2",
     "serve-handler": "^6.1.5"
   },
