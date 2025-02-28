@@ -414,7 +414,6 @@ export class Logic {
 			this.counters.areTimer = 0;
 
 			// check if player is trying to rotate piece, rotate
-			// TODO broken
 			this.handleInputs();
 
 			// if piece intersects gameboard,
@@ -439,6 +438,7 @@ export class Logic {
 					// make are longer for holds
 					this.counters.areTimer = -holdDelay;
 					this.counters.heldLast = true;
+					return;
 				}
 
 				// (frames * cells/frames) >= 1 // we moved more than 1 cell, drop piece
