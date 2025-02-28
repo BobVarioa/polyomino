@@ -47,8 +47,8 @@ function init() {
 
 	const logic = new Logic(prefs, input, draw);
 	logic.swapGameDef(tetro);
-	// logic.swapMode(new PCOMode());
-	logic.loop();
+	logic.init();
+
 }
 
 document.addEventListener("DOMContentLoaded", init);

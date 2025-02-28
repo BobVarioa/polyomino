@@ -17,6 +17,7 @@ export class Logic {
 	public holdPiece: string;
 	public paused: boolean;
 	public swapHold: boolean;
+	public failed: boolean;
 	public lastMove: Keys;
 	public abilityManager: AbilityManager;
 	public gameDef: GameDef;
@@ -24,13 +25,10 @@ export class Logic {
 
 	constructor(public prefs: Preferences, public input: InputManager, public draw: BaseDraw) {}
 
-	#signal = new EventEmitter();
+	_signal = new EventEmitter();
 
-	loop() {
+	init() {
 		this.draw.logic = this;
-
-		this.start();
-		this.draw.start();
 
 		let rAF;
 		let then = 0;
@@ -51,38 +49,37 @@ export class Logic {
 			timeout = setTimeout(func, 1000 / fps);
 		};
 
-		this.#signal.on("stop", () => {
+		this._signal.on("stop", () => {
 			cancelAnimationFrame(rAF);
 			clearTimeout(timeout);
 		});
-		this.#signal.on("start", async () => {
+		this._signal.on("start", () => {
 			func();
 			requestAnimationFrame(drawLoop);
 		});
 
-		this.#signal.emit("start");
+		return this._signal;
 	}
 
 	restart() {
-		this.#signal.emit("stop");
-		this.start();
-		this.draw.start();
-		this.#signal.emit("start");
+		this._signal.emit("stop");
+		this.reset();
+		this._signal.emit("start");
 	}
 
 	swapGameDef(gameDef: GameDef) {
-		this.#signal.emit("stop");
+		this._signal.emit("stop");
 		this.gameDef = gameDef;
 	}
 
 	swapMode(mode: BaseMode) {
-		this.#signal.emit("stop");
+		this._signal.emit("stop");
 		this.mode = mode;
 		this.mode.logic = this;
 	}
 
-	start() {
-		// reset randomizer
+	reset() {
+		this.paused = false;
 		this.gameDef.randomizer.reset(random(1, { type: "Uint8Array" })[0]);
 		this.counters = {
 			areTimer: 0,
@@ -96,7 +93,10 @@ export class Logic {
 			combo: 0,
 			timesDropped: 0,
 			dasDirection: undefined,
+			failTimer: 0,
+			failBuffer: 0
 		};
+		this.failed = false;
 
 		this.flags = {
 			noLineClears: false,
@@ -115,9 +115,11 @@ export class Logic {
 		this.swapHold = false;
 		this.paused = false;
 		this.lastMove = Keys.Pause; // used as a placeholder empty value
+		this.draw.reset();
 	}
 
 	pieceIntersecting(piece: PieceState): boolean {
+		if (piece.invalid) throw new Error("Invalid piece");
 		for (let x = 0; x < piece.data.width; x++) {
 			for (let y = 0; y < piece.data.height; y++) {
 				if (piece.data.atXY(x, y) == 1) {
@@ -133,7 +135,7 @@ export class Logic {
 	}
 
 	gameOver() {
-		// throw "Game over!";
+		this.failed = true;
 	}
 
 	calculateKicks(piece: Piece, from: RotState, to: RotState): [number, number][] {
@@ -165,6 +167,8 @@ export class Logic {
 		combo: number;
 		timesDropped: number;
 		dasDirection: Keys;
+		failTimer: number;
+		failBuffer: number;
 	};
 
 	flags: {
@@ -331,16 +335,39 @@ export class Logic {
 
 		if (this.paused) return;
 
-		if (this.input.isKeyPressed(Keys.Fail)) {
-			this.gameOver();
-		}
-
 		if (this.input.isKeyPressed(Keys.Restart)) {
 			this.input.pressedMap[Keys.Restart] = false;
 			const ghost = this.ghostboard;
 			this.restart();
 			this.ghostboard = ghost;
 			return;
+		}
+
+		if (this.failed) {
+			if (this.counters.failTimer >= 60) {
+				this._signal.emit("stop");
+				this._signal.emit("fail");
+				return;
+			}
+			if (this.input.isKeyPressed(Keys.Fail)) {
+				this.counters.failTimer += 1;
+			}
+			return;
+		}
+
+
+		if (this.input.isKeyPressed(Keys.Fail)) {
+			this.counters.failBuffer = 10
+			if (this.counters.failTimer >= 60) {
+				this.counters.failTimer = -10;
+				this.gameOver();
+			} else {
+				this.counters.failTimer += 1;
+			}
+		} else if (this.counters.failBuffer <= 0) {
+			if (this.counters.failTimer >= 0) this.counters.failTimer -= 1;
+		} else {
+			this.counters.failBuffer--;
 		}
 
 		const { boardSize, screenSize, are, hold: canHold, gravity, lockDelay, holdDelay } = this.gameDef.settings;
@@ -445,7 +472,9 @@ export class Logic {
 			}
 		}
 
-		this.mode.frame();
+		if (this.mode) {
+			this.mode.frame();
+		}
 	}
 
 	movedLastFrame = true;

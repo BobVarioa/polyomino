@@ -11,7 +11,7 @@ export abstract class BaseDraw {
 
 	constructor(public canvas: HTMLCanvasElement, public holdCanvas: HTMLCanvasElement, public queueCanvas: HTMLCanvasElement) { }
 
-	start() {
+	reset() {
 		this.grid = 32;
 
 		const { boardSize, screenSize } = this.logic.gameDef.settings;

@@ -13,8 +13,8 @@ export class CanvasDraw extends BaseDraw {
 
 	topLeftMap: Map<string, [number, number]>;
 
-	start() {
-		super.start();
+	reset() {
+		super.reset();
 		const gameDef = this.logic.gameDef;
 
 		this.canvas.width = this.grid * gameDef.settings.screenSize[0];
@@ -158,6 +158,19 @@ export class CanvasDraw extends BaseDraw {
 			ctx.restore();
 
 			this.drawPieceState(piece);
+		}
+
+		if (this.logic.counters.failTimer > 0) {
+			ctx.save();
+			ctx.globalAlpha = 0.4;
+			ctx.fillStyle = "red";
+			ctx.fillRect(
+				0,
+				this.canvas.height - this.canvas.height * Math.min(1, this.logic.counters.failTimer / 60),
+				this.canvas.width,
+				this.canvas.height
+			);
+			ctx.restore();
 		}
 
 		// draw queue

@@ -12,8 +12,8 @@ export class GlDraw extends BaseDraw {
 	};
 	buffers: { position: WebGLBuffer; color: WebGLBuffer };
 
-	start(): (deltaTime: number) => void {
-		super.start();
+	reset(): (deltaTime: number) => void {
+		super.reset();
 
 		this.gl = this.canvas.getContext("webgl2");
 		this.clientWidth = this.canvas.clientWidth;
