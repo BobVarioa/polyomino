@@ -18,6 +18,10 @@ canvas {
 	border: 1px solid white;
 }
 
+#gameCanvas {
+	background: linear-gradient(in hsl, black, hsl(263, 76%, 8%));
+}
+
 .gameContainer {
 	display: flex;
 	align-items: flex-start;

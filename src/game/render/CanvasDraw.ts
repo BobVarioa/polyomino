@@ -127,7 +127,6 @@ export class CanvasDraw extends BaseDraw {
 	frame(deltaTime: number) {
 		const { ctx } = this;
 		const { gameDef } = this.logic;
-		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		ctx.fillStyle = this.gridColor;
 		ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 		const boardSize = gameDef.settings.boardSize;
@@ -137,7 +136,7 @@ export class CanvasDraw extends BaseDraw {
 		for (let y = sh; y < boardSize[1]; y++) {
 			for (let x = 0; x < sw; x++) {
 				// drawing 1 px smaller than the grid creates a grid effect
-				ctx.fillRect(x * grid, (y - sh) * grid, grid - 1, grid - 1);
+				ctx.clearRect(x * grid, (y - sh) * grid, grid - 1, grid - 1);
 			}
 		}
 
