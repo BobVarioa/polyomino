@@ -3,21 +3,27 @@
 	- [ ] Monomino
 		- Inspiration:
 			- [Tetris Attack](https://tetris.wiki/Tetris_Attack)?
-			- [Bejeweled]()
+			- General match-3 mechanics
 		- [ ] Cursor that can swap pieces
-		- [ ] Clears should generate new rows, can't top out from anything but garbage
+		- [ ] Generating new pieces
+    		- [ ] Clears generating new pieces, can't top out from anything but garbage?
+    		- [ ] Manual send pieces button?
+    		- [ ] Screen is forced to be full of pieces?
+  		- [ ] Random replace garbage
 	- [ ] Domino
 		- Inspiration:
 			- [Dr. Mario](https://tetris.wiki/Dr._Mario)?
-			- [Puyo Puyo]()
-		- [ ] 
+			- [Puyo Puyo](https://puyonexus.com/wiki/Tsu_(rule))
+		- [x] Multicolor pieces that clear based on the color
+		- [x] Linear gravity
+		- [ ] Falling garbage
 	- [ ] Tromino
 		- Inspiration:
 			- None (as of yet)
 		- Ideas:
 			- Color matching? The main problem, and why I scraped Columns as an idea, is that it is vastly different to how any of the other games function. Plus, Columns (and match-3 as a whole) isn't really that fun in long sessions
 			- Something about manipulating the board instead of your pieces? 
-			- [Pipe Tetris?](https://alphageneric.itch.io/pipe-tetris)
+    			- [Pipe Tetris?](https://alphageneric.itch.io/pipe-tetris)
 	- [ ] Tetromino
 		- Inspiration:
 			- [Tetris](https://tetris.wiki/Tetris_Guideline)
@@ -29,8 +35,7 @@
 			- [x] Hold box
 			- [x] Bag randomizer
 			- [ ] Levels
-			- [ ] Scoring
-		- I'm pretty sure that's all I want for this one, but maybe some gimmick could be interesting? 
+			- [ ] Garbage
 	- [ ] Pentomino
 		- Inspiration:
 			- Pentomino modes in jstris, Puyo Puyo Tetris, and various tetris fangames
@@ -38,7 +43,7 @@
 		- [~] Add a new rotation system based on SRS
 			- [x] Flipping
 			- [ ] Look into nullpomino's rotation system editor to fix the bugs, because doing this by hand is painful
-		- [ ] Scoring
+		- [ ] Garbage
 			- [ ] Look into which pieces should give spin bonuses
 			- [ ] Line clears should be initally less, but multiple line clears should be more due to their difficulty
 	- [ ] Polyomino
@@ -47,8 +52,7 @@
 			- [Tetris Effect Conected: Zone](https://tetris.wiki/Tetris_Effect#Zone_mechanic)
 			- [Pac-Attack](https://en.wikipedia.org/wiki/Pac-Attack)
 		- [ ] Special Effects
-			- These should **never** be able to be purchased with real money 
-			- No lootboxes, etc.
+			- These are obtained via an XP like system, or maybe an ingame currency to give more agency to the player
 			- [ ] Characters
 				- Inspiration:
 					- [TETR.IO](https://characters.osk.sh/) 
@@ -59,10 +63,10 @@
 					- The same wax piece mechanics 
 					- More fires burning continously on your side would mean more garbage 
 				- [ ] Something that involves player movement on the board
-					- Maybe something like [Combo Postage?](https://kirklindsay.itch.io/combo-postage)
+					- Maybe something like [Combo Postage](https://kirklindsay.itch.io/combo-postage)?
 					- Player could be crushed by blocks, but could do something to clear them
 					- Blocks would increase in speed much more rapidly
-				- [ ] Making garbage you send *weird*
+				- [ ] Manipulating your garbage
 					- [ ] Multi hole garbage
 					- [ ] Garbage which requires some condition?
 				- [ ] Something that requires you to both move pieces and a cursor
@@ -92,30 +96,31 @@
 		- [x] Naive
 		- [x] Sticky
 		- [~] Cascade
+		- [x] Linear
 	- [ ] Rotation Modes
 		- [x] Normal
 		- [ ] Cycle
 		- [x] Flip
-	- [ ] Removal Modes
+	- [x] Line Clear Modes
 		- [x] Width
-		- [ ] Color match (See Monomino)
-	- [ ] Scoring
+		- [x] Color match (see Monomino/Domino)
 	- [ ] Piece Types
-		- [ ] Solid (normal)
-		- [ ] Multicolor
+		- [x] Solid (normal)
+		- [x] Multicolor
 		- [ ] Special, some unique effect on lock
-	- [ ] Actual menus 
+    	- [ ] Garbage
+        	- [x] Normal
+        	- [ ] Unclearable
+        	- [ ] Immovable (see gravity)
+	- [~] Actual menus 
 		- [~] Configurable preferences and keys
 			- [ ] Controller support
 		- [ ] i18n
-	- [ ] Blackjack rewrite
 	- [ ] Mulitplayer
-		- [ ] Garbage
+    	- [ ] Sending garbage
 		- [ ] Rollback? Todo, research
 		- [ ] Elo system
 	- [x] Prefrences
 		- [x] Soft drop factor
-	- [ ] Game over
-- [ ] Rewrite in assemblyscript
+	- [x] Game over
 - [ ] Mobile and Desktop version
-	- [ ] console????
