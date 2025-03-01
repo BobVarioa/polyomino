@@ -1,15 +1,54 @@
-# Todo
+# Todo / Design Doc
+
 - [ ] Gamemodes
 	- [ ] Monomino
-		- Inspiration:
-			- [Tetris Attack](https://tetris.wiki/Tetris_Attack)?
-			- General match-3 mechanics
-		- [ ] Cursor that can swap pieces
-		- [ ] Generating new pieces
-    		- [ ] Clears generating new pieces, can't top out from anything but garbage?
-    		- [ ] Manual send pieces button?
-    		- [ ] Screen is forced to be full of pieces?
-  		- [ ] Random replace garbage
+    	- Idea 1:
+    		- Inspiration:
+    			- [Tetris Attack/Panel de Pon](https://tetris.wiki/Tetris_Attack)?
+    			- General match-3 mechanics
+    		- [ ] Cursor that can swap pieces
+    		- [ ] Generating new pieces
+        		- [ ] Clears generate new pieces, can't top out from anything but garbage?
+        		- [ ] Manual send pieces button?
+        		- [ ] Screen is forced to be full of pieces?
+    		- [ ] Random replace garbage
+    		- General problem: match-3 is not really that fun in long sessions, and most definitely has a pretty low skill ceiling
+		- Idea 2:
+    		- Inspiration:
+        		- [Stackitect](https://farly.itch.io/stackitect)
+        		- [C::Reactris](https://hdms.itch.io/c4r)
+      		- [ ] Blocks with special abilities that interact in dynamic ways
+        		- [ ] Rest`ricted placement mechanics
+        		- [ ] Mainipulating the playfield (pushing blocks, creating new blocks, destroying them, etc.)
+        		- [ ] Special clear mechanics (if near X block and Y block, destroy this one)
+        		- [ ] Liquids? (this works in C::Reactris because there's proper tetraminos with this ability, unsure how this would work with monominos)
+      		- [ ] C::Reactris has a concept of weather and a day night cycle, so perhaps a similar global style effect
+      		- [ ] Stackitect has a selection screen that lets them choose which blocks to get next, perhaps something where you manipulate the pieces in your queue
+      		- General problems: 
+        		- This would be very gimmicky, and I kinda wanna keep that stuff in a polyomino mode/character? 
+        		- This would be either really simple or really complex strategy-wise (there is one correct way to play / essentially random)
+        		- Too relient on RNG
+  		- Idea 3:
+    		- Inspiration:
+        		- [Elementris](https://mayzavan.itch.io/elementris)
+        		- [Tactris](https://nofowl.itch.io/tactris)
+      		- [ ] Reversed board gravity (pieces come from bottom and go up)
+      		- [x] Linear gravity 
+      		- [ ] Garbage comes from the top and slowly sinks down
+        		- [ ] Garbage will be tiered in how many clears it takes to remove (think Puyo Puyo)
+        		- [ ] Garbage will be generated at a faster rate per level, and steadly take more hits to remove
+        		- [ ] Enemy garbage will be additional to your normal steady garbage 
+      		- [ ] Each monomino has a special ability that will clear an area
+        		- [ ] Bomb-type ability that clears garbage in a 5x5 under (over) it
+        		- [ ] Blocking garbage from rising
+        		- [ ] Moving garbage
+        		- [ ] Digging holes through garbage]
+      		- [ ] Minos are activated whenever they touch three other minos
+    		- General problems:
+        		- Conveying to the player what each piece does without tutorializing it, the other gamemodes make this pretty easy
+        		- Limited complexity, for example, in Elementris, a winning strategy is just to spam pieces
+            		- No rotation, potenially addressable by allowing the player to "aim" the pieces
+            		- Limited combo or set up potenial
 	- [ ] Domino
 		- Inspiration:
 			- [Dr. Mario](https://tetris.wiki/Dr._Mario)?
@@ -21,7 +60,7 @@
 		- Inspiration:
 			- None (as of yet)
 		- Ideas:
-			- Color matching? The main problem, and why I scraped Columns as an idea, is that it is vastly different to how any of the other games function. Plus, Columns (and match-3 as a whole) isn't really that fun in long sessions
+			- Color matching? Problem: Too similar to domino, no idea how to make it more interesting
 			- Something about manipulating the board instead of your pieces? 
     			- [Pipe Tetris?](https://alphageneric.itch.io/pipe-tetris)
 	- [ ] Tetromino
