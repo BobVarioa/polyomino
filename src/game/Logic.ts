@@ -214,7 +214,7 @@ export class Logic {
 						for (let yy = y; yy > 0; yy--) {
 							this.gameboard.setXY(x, yy, this.gameboard.atXY(x, yy - lines) ?? " ");
 						}
-						maxDropped = Math.max(lines, maxDropped)
+						maxDropped = Math.max(lines, maxDropped);
 					}
 				}
 				this.counters.timesDropped += maxDropped;
@@ -417,7 +417,7 @@ export class Logic {
 					if (this.clearLines() != 0) this.gravity();
 					if (this.counters.areTimer <= are) return;
 				} else {
-					this.clearLines()
+					this.clearLines();
 					this.gravity();
 					if (this.counters.timesDropped > 1) {
 						this.counters.areTimer -=

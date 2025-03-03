@@ -4,7 +4,6 @@ import { ArrayMatrix } from "../utils/ArrayMatrix";
 
 export interface GameSchema {
 	pieces: Record<string, PieceDef>;
-	colors?: Record<string, string>;
 	rotation: Record<string, { "0": string; R: string; "2": string; L: string }>;
 	randomizer: string;
 	settings: Settings;
@@ -13,8 +12,7 @@ export interface GameSchema {
 export class Piece {
 	constructor(
 		public name: string,
-		public matrix: ArrayMatrix<number>,
-		public color: string | undefined = undefined
+		public matrix: ArrayMatrix<number>
 	) {}
 }
 
@@ -53,7 +51,8 @@ export class GameDef {
 		public readonly rotations: MultiKeyMap<string, KickTable>,
 		public readonly randomizer: WrappedGenerator<string>,
 		public readonly settings: Settings,
-		public readonly colors: Map<number, string>
+		public readonly colors: Map<string, string>,
+		public readonly subpieces: Map<number, string>
 	) {}
 
 	static fromJson(json: GameSchema | string) {
@@ -61,7 +60,14 @@ export class GameDef {
 			json = JSON.parse(json) as GameSchema;
 		}
 
+		const settings = json.settings;
+		const canMetaPieces = settings.pieceType == "meta";
+
 		const pieces = new Map();
+		let subpieceIndex = 2;
+		const subpieces = new Map<number, string>();
+		const revSubpieces = new Map<string, number>();
+		const colors = new Map<string, string>();
 
 		for (const [key, value] of Object.entries(json.pieces)) {
 			const data = value.def.split("/");
@@ -70,14 +76,28 @@ export class GameDef {
 
 			for (let x = 0; x < size; x++) {
 				for (let y = 0; y < size; y++) {
-					matrix.setXY(x, y, parseInt(data[y][x]));
+					const c = data[y][x];
+					if (canMetaPieces && pieces.has(c)) {
+						if (revSubpieces.has(c)) {
+							matrix.setXY(x, y, revSubpieces.get(c));
+						} else {
+							subpieces.set(subpieceIndex, c);
+							revSubpieces.set(c, subpieceIndex);
+							matrix.setXY(x, y, subpieceIndex);
+							subpieceIndex++;
+						}
+					} else {
+						matrix.setXY(x, y, parseInt(c));
+					}
 				}
 			}
 
-			pieces.set(key, new Piece(key, matrix, value.color));
+			pieces.set(key, new Piece(key, matrix));
+			if (value.color) colors.set(key, value.color);
 		}
 
-		pieces.set("?", new Piece("?", new ArrayMatrix<number>(1, 1).fill(1), "gray"));
+			pieces.set("?", new Piece("?", new ArrayMatrix<number>(1, 1).fill(1)));
+			colors.set("?", "#707070")
 
 		const rotations = new MultiKeyMap<string, KickTable>();
 
@@ -100,15 +120,6 @@ export class GameDef {
 
 		const randomizer = blackjack(json.randomizer);
 
-		const settings = json.settings;
-
-		const colors = new Map<number, string>();
-
-		if (settings.pieceType == "multi")
-			for (const [piece, color] of Object.entries(json.colors)) {
-				colors.set(parseInt(piece), color);
-			}
-
-		return new GameDef(pieces, rotations, randomizer, settings, colors);
+		return new GameDef(pieces, rotations, randomizer, settings, colors, subpieces);
 	}
 }

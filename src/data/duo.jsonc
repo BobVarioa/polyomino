@@ -1,23 +1,21 @@
 {
 	"pieces": {
+		"R": { "def": "1", "color": "red" },
+		"B": { "def": "1", "color": "blue" },
+		"G": { "def": "1", "color": "green" },
+		"Y": { "def": "1", "color": "yellow" },
 		// 1-color
-		"I": { "def": "010/010/000" },
-		"J": { "def": "020/020/000" },
-		"K": { "def": "030/030/000" },
-		"L": { "def": "040/040/000" },
+		"I": { "def": "0R0/0R0/000" },
+		"J": { "def": "0B0/0B0/000" },
+		"K": { "def": "0G0/0G0/000" },
+		"L": { "def": "0Y0/0Y0/000" },
 		// pairs
-		"i": { "def": "010/020/000" }, 
-		"j": { "def": "020/030/000" },
-		"k": { "def": "030/010/000" },
-		"l": { "def": "040/010/000" },
-		"m": { "def": "040/020/000" },
-		"n": { "def": "040/030/000" }
-	},
-	"colors": {
-		"1": "red",
-		"2": "blue",
-		"3": "green",
-		"4": "yellow"
+		"i": { "def": "0R0/0B0/000" },
+		"j": { "def": "0B0/0G0/000" },
+		"k": { "def": "0G0/0R0/000" },
+		"l": { "def": "0Y0/0R0/000" },
+		"m": { "def": "0Y0/0B0/000" },
+		"n": { "def": "0Y0/0G0/000" }
 	},
 	"rotation": {
 		"I,J,K,L,i,j,k,l,m,n": {
@@ -32,15 +30,15 @@
 		"boardSize": [6, 24],
 		"screenSize": [6, 12],
 		"are": 6,
-		"gravity":  0.0156,
+		"gravity": 0.0156,
 		"gravityType": "linear",
 		"lockDelay": 30,
 		"hold": true,
 		"holdDelay": 2,
 		"rotation": true,
 		"lineClearDelay": 10,
-		"queueLength": 5,
-		"pieceType": "multi",
+		"queueLength": 2,
+		"pieceType": "meta",
 		"clearType": "color"
 	}
 }

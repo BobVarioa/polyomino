@@ -145,8 +145,8 @@
 		- [x] Color match (see Monomino/Domino)
 	- [ ] Piece Types
 		- [x] Solid (normal)
-		- [x] Multicolor
-		- [ ] Special, some unique effect on lock
+		- [x] Metapiece
+		- [ ] Special, some unique effect on lock/clear
     	- [ ] Garbage
         	- [x] Normal
         	- [ ] Unclearable

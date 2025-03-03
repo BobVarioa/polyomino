@@ -163,12 +163,22 @@ export class PieceState {
 	 * writes piece to gameboard then invalidates self
 	 */
 	write() {
-		const multi = this.parent.gameDef.settings.pieceType == "multi"
+		const gameDef = this.parent.gameDef;
+		const canMetaPiece = gameDef.settings.pieceType == "meta"
 		for (let y = 0; y < this.data.height; y++) {
 			for (let x = 0; x < this.data.width; x++) {
 				const v = this.data.atXY(x, y);
 				if (v != 0) {
-					this.parent.gameboard.setXY(this.x + x, this.y + y, multi ? v.toString() : this.piece.name);
+					if (!canMetaPiece) {
+						this.parent.gameboard.setXY(this.x + x, this.y + y, this.piece.name);
+					} else {
+						const c = gameDef.subpieces.get(v);
+						if (c === undefined) {
+							this.parent.gameboard.setXY(this.x + x, this.y + y, this.piece.name);
+						} else {
+							this.parent.gameboard.setXY(this.x + x, this.y + y, c);
+						}
+					}
 				}
 			}
 		}

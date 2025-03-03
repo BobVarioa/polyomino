@@ -79,14 +79,12 @@ export class CanvasDraw extends BaseDraw {
 			ctx,
 			logic: { gameDef },
 		} = this;
-		const multi = gameDef.settings.pieceType == "multi";
 
-		if (!multi) ctx.fillStyle = piece.piece.color;
 		for (let y = 0; y < piece.data.height; y++) {
 			for (let x = 0; x < piece.data.width; x++) {
 				const v = piece.data.atXY(x, y);
-				if (v != 0) {
-					if (multi) ctx.fillStyle = gameDef.colors.get(v);
+				if (v !== 0) {
+					ctx.fillStyle = gameDef.colors.get(piece.piece.name) ?? gameDef.colors.get(gameDef.subpieces.get(v));
 					ctx.fillRect((piece.x + x) * grid, (piece.y - sh + y) * grid, grid - 1, grid - 1);
 				}
 			}
@@ -96,19 +94,15 @@ export class CanvasDraw extends BaseDraw {
 	private drawPiece(ctx: CanvasRenderingContext2D, piece: Piece, offsetX: number, offsetY: number) {
 		const {
 			grid,
-			sh,
 			logic: { gameDef },
 		} = this;
 
-		const multi = gameDef.settings.pieceType == "multi";
-
-		if (!multi) ctx.fillStyle = piece.color;
 		const topLeft = this.topLeftMap.get(piece.name);
 		for (let y = topLeft[1]; y < piece.matrix.height; y++) {
 			for (let x = topLeft[0]; x < piece.matrix.width; x++) {
 				const v = piece.matrix.atXY(x, y);
 				if (v != 0) {
-					if (multi) ctx.fillStyle = gameDef.colors.get(v);
+					ctx.fillStyle = gameDef.colors.get(piece.name) ?? gameDef.colors.get(gameDef.subpieces.get(v));
 					ctx.fillRect(
 						offsetX + (x - topLeft[0]) * grid,
 						offsetY + (y - topLeft[1]) * grid,
@@ -122,22 +116,22 @@ export class CanvasDraw extends BaseDraw {
 
 	private drawBoard(playfield: ArrayMatrix<string>, height: number) {
 		const {
-			pieces,
-			settings: { pieceType },
-			colors,
-		} = this.logic.gameDef;
-		const { ctx, grid, sh, sw } = this;
+			ctx,
+			grid,
+			sh,
+			sw,
+			logic: {
+				gameDef: { colors },
+			},
+		} = this;
 		// todo: display half of the row above the screen if boardSize is bigger than screenSize
-		const multi = pieceType === "multi";
 
 		for (let y = sh; y < height; y++) {
 			for (let x = 0; x < sw; x++) {
 				const name = playfield.atXY(x, y);
-				if (name != " ") {
-					if (multi) ctx.fillStyle = colors.get(parseInt(name));
-					else ctx.fillStyle = pieces.get(name).color;
-				} else continue;
+				if (name == " ") continue;
 
+				ctx.fillStyle = colors.get(name);
 				ctx.fillRect(x * grid, (y - sh) * grid, grid - 1, grid - 1);
 			}
 		}
