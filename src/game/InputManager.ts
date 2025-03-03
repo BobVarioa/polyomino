@@ -20,6 +20,7 @@ export enum Keys {
 	Ghostboard,
 	ToggleGravity,
 	ToggleLocking,
+	CycleActivePiece,
 	TetroMode,
 	PentoMode,
 	// NOTE: must be last element

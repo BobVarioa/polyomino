@@ -546,6 +546,25 @@ export class Logic {
 			this.input.pressedMap[Keys.ToggleGravity] = false;
 		}
 
+		if (this.input.isKeyPressed(Keys.CycleActivePiece)) {
+			const {
+				settings: { boardSize, screenSize },
+				pieces,
+			} = this.gameDef;
+
+			const piecesKeys = [...pieces.keys()];
+			const nextPieceName = piecesKeys[(piecesKeys.indexOf(this.activePiece.piece.name) + 1) % piecesKeys.length];
+
+			const piece = pieces.get(nextPieceName);
+			// x = ceil((BW - n) / 2)
+			const x = Math.ceil((boardSize[0] - piece.matrix.width) / 2);
+			let y = screenSize[1] + 1;
+			if (y > boardSize[1]) y = boardSize[1];
+			this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y - 1);
+
+			this.input.pressedMap[Keys.CycleActivePiece] = false;
+		}
+
 		if (this.input.isKeyPressed(Keys.ToggleLocking)) {
 			this.flags.disableLockDelay = !this.flags.disableLockDelay;
 			this.input.pressedMap[Keys.ToggleLocking] = false;
