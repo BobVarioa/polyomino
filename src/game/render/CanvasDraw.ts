@@ -175,13 +175,13 @@ export class CanvasDraw extends BaseDraw {
 			this.drawPieceState(piece);
 		}
 
-		if (this.logic.counters.failTimer > 0) {
+		if (this.logic.state.failTimer > 0) {
 			ctx.save();
 			ctx.globalAlpha = 0.4;
 			ctx.fillStyle = "red";
 			ctx.fillRect(
 				0,
-				this.canvas.height - this.canvas.height * Math.min(1, this.logic.counters.failTimer / 60),
+				this.canvas.height - this.canvas.height * Math.min(1, this.logic.state.failTimer / 60),
 				this.canvas.width,
 				this.canvas.height
 			);

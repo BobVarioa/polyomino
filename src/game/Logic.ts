@@ -81,7 +81,7 @@ export class Logic {
 	reset() {
 		this.paused = false;
 		this.gameDef.randomizer.reset(random(1, { type: "Uint8Array" })[0]);
-		this.counters = {
+		this.state = {
 			areTimer: 0,
 			arrTimer: 0,
 			dasTimer: 0,
@@ -95,6 +95,7 @@ export class Logic {
 			dasDirection: undefined,
 			failTimer: 0,
 			failBuffer: 0,
+			boardDirty: false,
 		};
 		this.failed = false;
 
@@ -155,7 +156,7 @@ export class Logic {
 		return kicks;
 	}
 
-	counters: {
+	state: {
 		areTimer: number;
 		arrTimer: number;
 		dasTimer: number;
@@ -169,6 +170,7 @@ export class Logic {
 		dasDirection: Keys;
 		failTimer: number;
 		failBuffer: number;
+		boardDirty: boolean;
 	};
 
 	flags: {
@@ -217,7 +219,10 @@ export class Logic {
 						maxDropped = Math.max(lines, maxDropped);
 					}
 				}
-				this.counters.timesDropped += maxDropped;
+				this.state.timesDropped += maxDropped;
+				if (maxDropped > 0) {
+					this.state.boardDirty = true;
+				}
 				break;
 
 			case "sticky":
@@ -275,7 +280,8 @@ export class Logic {
 						}
 					}
 
-					this.counters.timesDropped++;
+					this.state.timesDropped++;
+					this.state.boardDirty = true;
 				}
 				break;
 
@@ -344,16 +350,15 @@ export class Logic {
 		}
 
 		if (clearedLines > 0) {
-			this.counters.areTimer -= this.gameDef.settings.lineClearDelay * (clearedLines / 2);
-			this.counters.combo += 1;
+			this.state.areTimer -= this.gameDef.settings.lineClearDelay * (clearedLines / 2);
+			this.state.combo += 1;
+			this.state.boardDirty = true;
 		} else {
-			this.counters.combo = 0;
+			this.state.combo = 0;
 		}
 
 		this.abilityManager.charge += clearedLines;
 		// console.log(this.abilityManager.charge);
-
-		return clearedLines;
 	}
 
 	/**
@@ -368,39 +373,39 @@ export class Logic {
 			return;
 		}
 
-		if (this.input.isKeyPressed(Keys.Pause) && this.counters.pauseBuffer == 0) {
+		if (this.input.isKeyPressed(Keys.Pause) && this.state.pauseBuffer == 0) {
 			this.paused = !this.paused;
-			this.counters.pauseBuffer = 60; // 0.5s
-		} else if (this.counters.pauseBuffer != 0) {
-			this.counters.pauseBuffer--;
+			this.state.pauseBuffer = 60; // 0.5s
+		} else if (this.state.pauseBuffer != 0) {
+			this.state.pauseBuffer--;
 		}
 
 		if (this.paused) return;
 
 		if (this.failed) {
-			if (this.counters.failTimer >= 60) {
+			if (this.state.failTimer >= 60) {
 				this._signal.emit("stop");
 				this._signal.emit("fail");
 				return;
 			}
 			if (this.input.isKeyPressed(Keys.Fail)) {
-				this.counters.failTimer += 1;
+				this.state.failTimer += 1;
 			}
 			return;
 		}
 
 		if (this.input.isKeyPressed(Keys.Fail)) {
-			this.counters.failBuffer = 10;
-			if (this.counters.failTimer >= 60) {
-				this.counters.failTimer = -10;
+			this.state.failBuffer = 10;
+			if (this.state.failTimer >= 60) {
+				this.state.failTimer = -10;
 				this.gameOver();
 			} else {
-				this.counters.failTimer += 1;
+				this.state.failTimer += 1;
 			}
-		} else if (this.counters.failBuffer <= 0) {
-			if (this.counters.failTimer >= 0) this.counters.failTimer -= 1;
+		} else if (this.state.failBuffer <= 0) {
+			if (this.state.failTimer >= 0) this.state.failTimer -= 1;
 		} else {
-			this.counters.failBuffer--;
+			this.state.failBuffer--;
 		}
 
 		const { boardSize, screenSize, are, hold: canHold, gravity, lockDelay, holdDelay } = this.gameDef.settings;
@@ -408,23 +413,24 @@ export class Logic {
 		// if no piece,
 		if (this.activePiece.invalid) {
 			// wait for are
-			if (this.counters.areTimer <= are) {
-				this.counters.areTimer++;
+			if (this.state.areTimer <= are) {
+				this.state.areTimer++;
 				return;
-			} else {
-				this.counters.timesDropped = 0;
-				if (this.gameDef.settings.gravityType == "naive") {
-					if (this.clearLines() != 0) this.gravity();
-					if (this.counters.areTimer <= are) return;
-				} else {
+			} 
+
+			if (this.state.boardDirty) {
+				this.state.boardDirty = false;
+				this.state.timesDropped = 0;
 					this.clearLines();
+				if (this.state.boardDirty) {
 					this.gravity();
-					if (this.counters.timesDropped > 1) {
-						this.counters.areTimer -=
-							this.counters.timesDropped * Math.floor(this.gameDef.settings.lineClearDelay / 8);
+					if (this.state.timesDropped > 1) {
+						this.state.areTimer -=
+							this.state.timesDropped * Math.floor(this.gameDef.settings.lineClearDelay / 8);
 					}
-					if (this.counters.areTimer <= are) return;
-				}
+					return;
+					}
+				if (this.state.areTimer <= are) return;
 			}
 
 			if (canHold && this.swapHold) {
@@ -455,8 +461,6 @@ export class Logic {
 				this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y - 1);
 			}
 
-			this.counters.areTimer = 0;
-
 			// check if player is trying to rotate piece, rotate
 			this.handleInputs();
 
@@ -473,39 +477,40 @@ export class Logic {
 			// TODO: [garbage] update garbage ?
 			// if is piece in valid location
 			if (!this.pieceIntersecting(this.activePiece)) {
-				if (canHold && !this.counters.heldLast && this.input.isKeyPressed(Keys.Hold)) {
+				if (canHold && !this.state.heldLast && this.input.isKeyPressed(Keys.Hold)) {
 					this.activePiece.invalidate();
 					this.swapHold = this.holdPiece != " ";
 					if (this.swapHold == false) {
 						this.holdPiece = this.activePiece.piece.name;
 					}
 					// make are longer for holds
-					this.counters.areTimer = -holdDelay;
-					this.counters.heldLast = true;
+					this.state.areTimer = -holdDelay;
+					this.state.heldLast = true;
 					return;
 				}
 
 				// (frames * cells/frames) >= 1 // we moved more than 1 cell, drop piece
-				if (!this.flags.disableGravity && this.counters.gravityTimer * gravity >= 1) {
+				if (!this.flags.disableGravity && this.state.gravityTimer * gravity >= 1) {
 					this.activePiece.softDrop();
-					this.counters.gravityTimer = 0;
-					this.counters.lockDelayTimer = 0;
+					this.state.gravityTimer = 0;
+					this.state.lockDelayTimer = 0;
 				}
-				this.counters.gravityTimer += 1;
+				this.state.gravityTimer += 1;
 
 				this.handleInputs();
 
 				// is piece touching floor?
 				if (!this.flags.disableLockDelay && this.pieceIntersecting(this.activePiece.relative(0, 1))) {
-					this.counters.lockDelayTimer += 1;
+					this.state.lockDelayTimer += 1;
 				}
 
 				this.abilityManager.frame();
 
-				if (this.counters.lockDelayTimer >= lockDelay) {
+				if (this.state.lockDelayTimer >= lockDelay) {
 					this.activePiece.write();
-					this.counters.heldLast = false;
-					this.counters.lockDelayTimer = 0;
+					this.state.heldLast = false;
+					this.state.lockDelayTimer = 0;
+					this.state.boardDirty = true;
 				}
 			} else {
 				// TODO: [garbage] below
@@ -676,7 +681,7 @@ export class Logic {
 
 		if (this.input.isKeyPressed(Keys.HardDrop)) {
 			this.activePiece.hardDrop();
-			this.counters.lockDelayTimer = this.gameDef.settings.lockDelay;
+			this.state.lockDelayTimer = this.gameDef.settings.lockDelay;
 			updated = true;
 			this.input.pressedMap[Keys.HardDrop] = false;
 		}
@@ -697,51 +702,51 @@ export class Logic {
 
 		if (this.movedLastFrame) {
 			if (attemptingMovement) {
-				if (this.counters.dasTimer >= this.prefs.das) {
-					if (this.counters.arrTimer == 0) {
+				if (this.state.dasTimer >= this.prefs.das) {
+					if (this.state.arrTimer == 0) {
 						if (movingLeft) {
 							this.activePiece.moveLeft();
 							updated = true;
 							this.lastMove = Keys.MoveLeft;
-							this.counters.dasDirection = Keys.MoveLeft;
+							this.state.dasDirection = Keys.MoveLeft;
 						}
 
 						if (movingRight) {
 							this.activePiece.moveRight();
 							updated = true;
 							this.lastMove = Keys.MoveRight;
-							this.counters.dasDirection = Keys.MoveRight;
+							this.state.dasDirection = Keys.MoveRight;
 						}
 					}
 
-					if (this.counters.arrTimer >= this.prefs.arr) {
-						this.counters.arrTimer = 0;
+					if (this.state.arrTimer >= this.prefs.arr) {
+						this.state.arrTimer = 0;
 					} else {
-						this.counters.arrTimer++;
+						this.state.arrTimer++;
 					}
 				} else {
-					if (this.counters.dasDirection != undefined) {
-						const movedLeft = this.counters.dasDirection == Keys.MoveLeft;
-						const movedRight = this.counters.dasDirection == Keys.MoveRight;
+					if (this.state.dasDirection != undefined) {
+						const movedLeft = this.state.dasDirection == Keys.MoveLeft;
+						const movedRight = this.state.dasDirection == Keys.MoveRight;
 						if (movedLeft && movingLeft) {
-							this.counters.dasTimer++;
+							this.state.dasTimer++;
 						} else if (movedRight && movingRight) {
-							this.counters.dasTimer++;
+							this.state.dasTimer++;
 						} else {
-							this.counters.dasTimer = 0;
-							this.counters.dasDirection = undefined;
+							this.state.dasTimer = 0;
+							this.state.dasDirection = undefined;
 						}
 					} else {
-						this.counters.dasTimer++;
-						if (movingLeft) this.counters.dasDirection = Keys.MoveLeft;
-						if (movingRight) this.counters.dasDirection = Keys.MoveRight;
+						this.state.dasTimer++;
+						if (movingLeft) this.state.dasDirection = Keys.MoveLeft;
+						if (movingRight) this.state.dasDirection = Keys.MoveRight;
 					}
 				}
 			} else {
-				this.counters.dasTimer = 0;
-				this.counters.arrTimer = 0;
+				this.state.dasTimer = 0;
+				this.state.arrTimer = 0;
 				this.movedLastFrame = false;
-				this.counters.dasDirection = undefined;
+				this.state.dasDirection = undefined;
 			}
 		} else {
 			if (movingLeft) {
@@ -760,9 +765,9 @@ export class Logic {
 		}
 
 		// if movement successful reset lock delay
-		if (updated && this.counters.lockDelayMoves >= 15) {
-			this.counters.lockDelayTimer = 0;
-			this.counters.lockDelayMoves++;
+		if (updated && this.state.lockDelayMoves >= 15) {
+			this.state.lockDelayTimer = 0;
+			this.state.lockDelayMoves++;
 		}
 	}
 }
