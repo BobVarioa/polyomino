@@ -34,6 +34,7 @@ function init() {
 		input.setKey(Keys.ClearHoldBox, "2");
 		input.setKey(Keys.ToggleGravity, "3");
 		input.setKey(Keys.ToggleLocking, "4");
+		input.setKey(Keys.CycleActivePiece, "5");
 		input.setKey(Keys.Ghostboard, "7");
 		input.setKey(Keys.TetroMode, "9");
 		input.setKey(Keys.PentoMode, "0");
