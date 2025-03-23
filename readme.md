@@ -147,10 +147,9 @@
 		- [x] Solid (normal)
 		- [x] Metapiece
 		- [ ] Special, some unique effect on lock/clear
-    	- [ ] Garbage
+    	- [x] Garbage
         	- [x] Normal
-        	- [ ] Unclearable
-        	- [ ] Immovable (see gravity)
+        	- [x] Unclearable
 	- [~] Actual menus 
 		- [~] Configurable preferences and keys
 			- [ ] Controller support

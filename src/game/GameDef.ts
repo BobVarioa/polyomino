@@ -9,10 +9,16 @@ export interface GameSchema {
 	settings: Settings;
 }
 
+export enum PieceFlags {
+	Garbage = 1,
+	Unclearable = 2,
+}
+
 export class Piece {
 	constructor(
-		public name: string,
-		public matrix: ArrayMatrix<number>
+		public name: string, 
+		public matrix: ArrayMatrix<number>, 
+		public flags: number = 0
 	) {}
 }
 
@@ -97,8 +103,18 @@ export class GameDef {
 			if (value.color) colors.set(key, value.color);
 		}
 
-			pieces.set("?", new Piece("?", new ArrayMatrix<number>(1, 1).fill(1)));
+		// prettier-ignore
+		{
+			/*
+			reserved piece names:
+			?: normal garbage
+			!: unclearable garbage
+			*/
+			pieces.set("?", new Piece("?", new ArrayMatrix<number>(1, 1).fill(1), PieceFlags.Garbage));
+			pieces.set("!", new Piece("!", new ArrayMatrix<number>(1, 1).fill(1), PieceFlags.Garbage | PieceFlags.Unclearable));
 			colors.set("?", "#707070")
+			colors.set("!", "#202020")
+		}
 
 		const rotations = new MultiKeyMap<string, KickTable>();
 

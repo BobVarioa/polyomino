@@ -1,5 +1,5 @@
 import { ArrayMatrix } from "../utils/ArrayMatrix";
-import { GameDef, Piece } from "./GameDef";
+import { GameDef, Piece, PieceFlags } from "./GameDef";
 import { InputManager, Keys } from "./InputManager";
 import { PieceState, RotState } from "./PieceState";
 import { Preferences } from "./Preferences";
@@ -208,7 +208,7 @@ export class Logic {
 
 					if (lines > 0) {
 						this.gameboard.in();
-							for (let x = 0; x < this.gameboard.width; x++) {
+						for (let x = 0; x < this.gameboard.width; x++) {
 							this.gameboard.drop(x, 0, y, lines);
 						}
 						this.gameboard.out(dropDelay);
@@ -342,7 +342,7 @@ export class Logic {
 					let hole = false;
 					for (let x = 0; x < this.gameboard.width; x++) {
 						const piece = this.gameboard.atXY(x, y);
-						if (piece == " ") {
+						if (piece == " " || pieces.get(piece).flags & PieceFlags.Unclearable) {
 							hole = true;
 							break;
 						}
@@ -359,12 +359,28 @@ export class Logic {
 				break;
 
 			case "color":
-				const sectors = this.gameboard.detectSectors((a, b) => a != " " && a == b);
+				const sectors = this.gameboard.detectSectors((a, b) => {
+					if (a === " ") return false;
+					if (pieces.get(a).flags & PieceFlags.Garbage) return false;
+					return a === b;
+				});
+				this.gameboard.in();
 				for (const sector of sectors) {
 					if (sector.length >= 4) {
 						clearedLines += 1;
 						for (const [x, y] of sector) {
 							this.gameboard.delete(x, y);
+							for (const xx of [-1, 1]) {
+								for (const yy of [-1, 1]) {
+									const piece = this.gameboard.atXY(x + xx, y + yy) ?? " ";
+									if (piece != " ") {
+										const flags = pieces.get(piece).flags;
+										if (flags & PieceFlags.Garbage && !(flags & PieceFlags.Unclearable)) {
+											this.gameboard.delete(x + xx, y + yy);
+										}
+									}
+								}
+							}
 						}
 					}
 				}
@@ -440,7 +456,7 @@ export class Logic {
 			if (this.state.areTimer <= are) {
 				this.state.areTimer++;
 				return;
-			} 
+			}
 
 			if (this.state.checkState == CheckState.Clear) {
 				this.state.checkState = CheckState.Done;
@@ -451,8 +467,8 @@ export class Logic {
 			} else if (this.state.checkState == CheckState.Gravity) {
 				this.state.checkState = CheckState.Done;
 				this.state.timesDropped = 0;
-					this.gravity();
-					}
+				this.gravity();
+			}
 			if (this.state.checkState != CheckState.Done) return;
 
 			if (canHold && this.swapHold) {
