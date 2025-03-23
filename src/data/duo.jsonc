@@ -25,7 +25,7 @@
 			"R": "0,0;1,0"
 		}
 	},
-	"randomizer": "bag of I,J,K,L,i,j,k,l,m,n",
+	"randomizer": "bag of I,J,K,L,2*i,2*j,2*k,2*l,2*m,2*n",
 	"settings": {
 		"boardSize": [6, 24],
 		"screenSize": [6, 12],
