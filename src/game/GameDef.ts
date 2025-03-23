@@ -36,6 +36,7 @@ export interface Settings {
 	readonly queueLength: number;
 	readonly clearType: string;
 	readonly pieceType: string;
+	readonly dropDelay: number;
 }
 
 export interface KickTable {

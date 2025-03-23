@@ -42,6 +42,7 @@
 		"lineClearDelay": 10,
 		"queueLength": 5,
 		"pieceType": "normal",
-		"clearType": "line"
+		"clearType": "line",
+		"dropDelay": 0
 	}
 }

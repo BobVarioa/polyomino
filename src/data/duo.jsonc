@@ -39,6 +39,7 @@
 		"lineClearDelay": 10,
 		"queueLength": 2,
 		"pieceType": "meta",
-		"clearType": "color"
+		"clearType": "color",
+		"dropDelay": 6
 	}
 }

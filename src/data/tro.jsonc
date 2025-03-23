@@ -22,6 +22,7 @@
 		"holdDelay": 2,
 		"rotation": true,
 		"specialRotation": "cycle",
-		"lineClearDelay": 10
+		"lineClearDelay": 10,
+		"dropDelay": 0
 	}
 }

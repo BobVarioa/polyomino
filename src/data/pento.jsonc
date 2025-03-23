@@ -73,6 +73,7 @@
 		"specialRotation": "flip",
 		"queueLength": 7,
 		"pieceType": "normal",
-		"clearType": "line"
+		"clearType": "line",
+		"dropDelay": 0
 	}
 }

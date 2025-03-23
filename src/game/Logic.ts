@@ -9,9 +9,16 @@ import { pento, tetro } from "../data/gameTypes";
 import { BaseDraw } from "./render/BaseDraw";
 import { EventEmitter } from "eventemitter3";
 import { BaseMode } from "./BaseMode";
+import Gameboard from "./Gameboard";
+
+enum CheckState {
+	Clear,
+	Gravity,
+	Done,
+}
 
 export class Logic {
-	public gameboard: ArrayMatrix<string>;
+	public gameboard: Gameboard;
 	public ghostboard: ArrayMatrix<string>;
 	public activePiece: PieceState;
 	public holdPiece: string;
@@ -95,7 +102,7 @@ export class Logic {
 			dasDirection: undefined,
 			failTimer: 0,
 			failBuffer: 0,
-			boardDirty: false,
+			checkState: CheckState.Clear,
 		};
 		this.failed = false;
 
@@ -109,7 +116,7 @@ export class Logic {
 
 		const { boardSize } = this.gameDef.settings;
 		// clear gameboard
-		this.gameboard = new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
+		this.gameboard = new Gameboard(boardSize[0], boardSize[1]).fill(" ");
 		this.ghostboard = new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
 		this.activePiece = PieceState.none;
 		this.holdPiece = " ";
@@ -170,7 +177,7 @@ export class Logic {
 		dasDirection: Keys;
 		failTimer: number;
 		failBuffer: number;
-		boardDirty: boolean;
+		checkState: CheckState;
 	};
 
 	flags: {
@@ -180,6 +187,8 @@ export class Logic {
 	};
 
 	gravity() {
+		// console.log("grav");
+		const dropDelay = this.gameDef.settings.dropDelay;
 		switch (this.gameDef.settings.gravityType) {
 			case "naive":
 				for (let y = this.gameboard.height - 1; y > 0; y--) {
@@ -194,34 +203,42 @@ export class Logic {
 						lines++;
 					}
 
+					// if this whole board above is empty, continue
+					if (y - lines < 0) continue;
+
 					if (lines > 0) {
-						for (let yy = y; yy > 0; yy--) {
+						this.gameboard.in();
 							for (let x = 0; x < this.gameboard.width; x++) {
-								this.gameboard.setXY(x, yy, this.gameboard.atXY(x, yy - lines) ?? " ");
-							}
+							this.gameboard.drop(x, 0, y, lines);
 						}
+						this.gameboard.out(dropDelay);
+						this.state.checkState = CheckState.Gravity;
+						return;
 					}
 				}
 				break;
 
 			case "linear":
-				let maxDropped = 0;
+				let dropped = false;
+				this.gameboard.in();
 				for (let x = 0; x < this.gameboard.width; x++) {
 					for (let y = this.gameboard.height - 1; y > 0; y--) {
 						let lines = 0;
 						while (this.gameboard.atXY(x, y - lines) === " ") {
 							lines++;
 						}
+						// if this whole column is empty, break
 						if (y - lines < 0) break;
-						for (let yy = y; yy > 0; yy--) {
-							this.gameboard.setXY(x, yy, this.gameboard.atXY(x, yy - lines) ?? " ");
+						if (lines != 0) {
+							this.gameboard.drop(x, 0, y, lines);
+							dropped = true;
+							break;
 						}
-						maxDropped = Math.max(lines, maxDropped);
 					}
 				}
-				this.state.timesDropped += maxDropped;
-				if (maxDropped > 0) {
-					this.state.boardDirty = true;
+				this.gameboard.out(dropDelay);
+				if (dropped) {
+					this.state.checkState = CheckState.Clear;
 				}
 				break;
 
@@ -237,6 +254,7 @@ export class Logic {
 						const piece = this.gameboard.atXY(x, y);
 						if (piece != " ") {
 							empty = false;
+							break;
 						}
 					}
 
@@ -281,7 +299,7 @@ export class Logic {
 					}
 
 					this.state.timesDropped++;
-					this.state.boardDirty = true;
+					this.state.checkState = CheckState.Clear;
 				}
 				break;
 
@@ -315,8 +333,11 @@ export class Logic {
 			wasSpin = corners > 2;
 		}
 
+		const pieces = this.gameDef.pieces;
+		const lineClearDelay = this.gameDef.settings.lineClearDelay;
 		switch (this.gameDef.settings.clearType) {
 			case "line":
+				this.gameboard.in();
 				for (let y = this.gameboard.height - 1; y > 0; y--) {
 					let hole = false;
 					for (let x = 0; x < this.gameboard.width; x++) {
@@ -329,11 +350,12 @@ export class Logic {
 
 					if (!hole) {
 						for (let x = 0; x < this.gameboard.width; x++) {
-							this.gameboard.setXY(x, y, " ");
+							this.gameboard.delete(x, y);
 						}
 						clearedLines += 1;
 					}
 				}
+				this.gameboard.out(lineClearDelay);
 				break;
 
 			case "color":
@@ -342,17 +364,17 @@ export class Logic {
 					if (sector.length >= 4) {
 						clearedLines += 1;
 						for (const [x, y] of sector) {
-							this.gameboard.setXY(x, y, " ");
+							this.gameboard.delete(x, y);
 						}
 					}
 				}
+				this.gameboard.out(lineClearDelay);
 				break;
 		}
 
 		if (clearedLines > 0) {
-			this.state.areTimer -= this.gameDef.settings.lineClearDelay * (clearedLines / 2);
 			this.state.combo += 1;
-			this.state.boardDirty = true;
+			this.state.checkState = CheckState.Gravity;
 		} else {
 			this.state.combo = 0;
 		}
@@ -408,6 +430,8 @@ export class Logic {
 			this.state.failBuffer--;
 		}
 
+		if (this.gameboard.step()) return;
+
 		const { boardSize, screenSize, are, hold: canHold, gravity, lockDelay, holdDelay } = this.gameDef.settings;
 
 		// if no piece,
@@ -418,20 +442,18 @@ export class Logic {
 				return;
 			} 
 
-			if (this.state.boardDirty) {
-				this.state.boardDirty = false;
+			if (this.state.checkState == CheckState.Clear) {
+				this.state.checkState = CheckState.Done;
+				this.clearLines();
+				if (this.gameDef.settings.gravityType !== "naive") {
+					this.state.checkState = CheckState.Gravity;
+				}
+			} else if (this.state.checkState == CheckState.Gravity) {
+				this.state.checkState = CheckState.Done;
 				this.state.timesDropped = 0;
-					this.clearLines();
-				if (this.state.boardDirty) {
 					this.gravity();
-					if (this.state.timesDropped > 1) {
-						this.state.areTimer -=
-							this.state.timesDropped * Math.floor(this.gameDef.settings.lineClearDelay / 8);
 					}
-					return;
-					}
-				if (this.state.areTimer <= are) return;
-			}
+			if (this.state.checkState != CheckState.Done) return;
 
 			if (canHold && this.swapHold) {
 				const pieceName = this.holdPiece;
@@ -510,7 +532,7 @@ export class Logic {
 					this.activePiece.write();
 					this.state.heldLast = false;
 					this.state.lockDelayTimer = 0;
-					this.state.boardDirty = true;
+					this.state.checkState = CheckState.Clear;
 				}
 			} else {
 				// TODO: [garbage] below
@@ -542,7 +564,7 @@ export class Logic {
 		if (this.input.isKeyPressed(Keys.Ghostboard)) {
 			const { boardSize } = this.gameDef.settings;
 			this.ghostboard = this.gameboard.copy();
-			this.gameboard = new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
+			this.gameboard = new Gameboard(boardSize[0], boardSize[1]).fill(" ");
 			this.input.pressedMap[Keys.Ghostboard] = false;
 		}
 
