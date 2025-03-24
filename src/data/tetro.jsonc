@@ -33,7 +33,7 @@
 		"boardSize": [10, 40],
 		"screenSize": [10, 20],
 		"are": 6,
-		"gravity": 0.0156,
+		"gravity": 64, // 1 cell per 64 frames
 		"gravityType": "naive",
 		"lockDelay": 30,
 		"hold": true,

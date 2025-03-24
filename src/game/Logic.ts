@@ -92,6 +92,8 @@ export class Logic {
 			areTimer: 0,
 			arrTimer: 0,
 			dasTimer: 0,
+			sdfTimer: 0,
+			sdfMax: Math.min(this.prefs.sdf, this.gameDef.settings.gravity),
 			gravityTimer: 0,
 			lockDelayTimer: 0,
 			lockDelayMoves: 0,
@@ -167,6 +169,8 @@ export class Logic {
 		areTimer: number;
 		arrTimer: number;
 		dasTimer: number;
+		sdfTimer: number;
+		sdfMax: number;
 		gravityTimer: number;
 		lockDelayTimer: number;
 		lockDelayMoves: number;
@@ -396,7 +400,6 @@ export class Logic {
 		}
 
 		this.abilityManager.charge += clearedLines;
-		// console.log(this.abilityManager.charge);
 	}
 
 	/**
@@ -528,7 +531,7 @@ export class Logic {
 				}
 
 				// (frames * cells/frames) >= 1 // we moved more than 1 cell, drop piece
-				if (!this.flags.disableGravity && this.state.gravityTimer * gravity >= 1) {
+				if (!this.flags.disableGravity && this.state.gravityTimer >= gravity) {
 					this.activePiece.softDrop();
 					this.state.gravityTimer = 0;
 					this.state.lockDelayTimer = 0;
@@ -727,9 +730,14 @@ export class Logic {
 		if (this.input.isKeyPressed(Keys.SoftDrop)) {
 			if (this.prefs.sdf == -1) {
 				this.activePiece.hardDrop();
+				this.state.gravityTimer = 0;
 			} else {
-				let i = this.prefs.sdf;
-				while (i-- > 0) this.activePiece.softDrop();
+				if (this.state.sdfTimer >= this.prefs.sdf) {
+					this.activePiece.softDrop();
+					this.state.sdfTimer = 0;
+					this.state.gravityTimer = 0;
+				}
+				this.state.sdfTimer++;
 			}
 			updated = true;
 		}

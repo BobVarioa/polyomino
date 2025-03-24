@@ -64,7 +64,7 @@
 		"screenSize": [12, 22],
 		"are": 6,
 		"gravityType": "sticky",
-		"gravity": 0.0156,
+		"gravity": 64,
 		"lockDelay": 30,
 		"hold": true,
 		"holdDelay": 2,

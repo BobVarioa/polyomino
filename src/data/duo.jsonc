@@ -30,7 +30,7 @@
 		"boardSize": [6, 24],
 		"screenSize": [6, 12],
 		"are": 6,
-		"gravity": 0.0156,
+		"gravity": 64,
 		"gravityType": "linear",
 		"lockDelay": 30,
 		"hold": true,
