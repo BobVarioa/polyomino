@@ -1,5 +1,6 @@
 * {
 	margin: 0;
+	font-family: sans-serif;
 }
 
 html,
@@ -22,26 +23,78 @@ canvas {
 	border: 1px solid white;
 }
 
-#gameCanvas {
-	background: linear-gradient(in hsl, black, hsl(263, 76%, 8%));
-}
-
 .gameContainer {
-	display: flex;
-	align-items: flex-start;
-}
-
-.menuContainer {
 	display: grid;
-	grid-template-columns: 1fr;
+	grid-template-columns: 0.5fr 1fr 0.5fr;
 	grid-template-rows: 1fr;
 }
 
-.menuContainer > * {
+#holdCanvas {
 	grid-row: 1;
 	grid-column: 1;
 }
 
+#queueCanvas {
+	grid-row: 1;
+	grid-column: 3;
+}
+
+#gameCanvas {
+	grid-row: 1;
+	grid-column: 2;
+	background: linear-gradient(in hsl, black, hsl(263, 76%, 8%));
+}
+
 #menus {
 	z-index: 10;
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	grid-row: 1;
+	grid-column: 2;
+}
+
+#menus button {
+	margin: 0.5em 0.5em 0em;
+	padding: 0.2em;
+	background: hsl(263, 13%, 19%);
+	color: white;
+	appearance: none;
+}
+
+#menus span {
+	margin: 0.5em 0.5em 0em;
+	padding: 0.2em;
+	background: hsl(263, 13%, 19%);
+	color: white;
+}
+
+#menus > button {
+	width: 90%;
+}
+
+#menus > .key {
+	display: flex;
+	width: 90%;
+}
+
+#menus > .key > button {
+	justify-self: left;
+}
+
+#menus > .key > .spacer {
+	flex-grow: 2;
+}
+
+#menus > .key > span {
+	justify-self: right;
+}
+
+#menus > .slider {
+	display: flex;
+	width: 95%;
+}
+
+#menus > .slider > input {
+	flex-grow: 2;
 }

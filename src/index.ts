@@ -9,7 +9,7 @@ const $ = <T>(s: string): T => document.querySelector(s) as T;
 
 function init() {
 	const prefs = new Preferences();
-
+	
 	const input = new InputManager(document);
 	input.set(Keys.RotateLeft, "z");
 	input.set(Keys.RotateRight, "x");
@@ -56,39 +56,51 @@ function init() {
 	const menusEle = $<HTMLDivElement>("#menus");
 
 	const buttons: MenuEle[] = [
-		{ id: "play", action: "nest", children: [
-			{ id: "duo", action: "game" },
-			{ id: "tro", action: "game" },
-			{ id: "tetro", action: "game" },
-			{ id: "pento", action: "game" },
-		] },
-		{ id: "settings", action: "nest", children: [
-			{ id: "prefs.volume", action: "slider" },
-			{ id: "prefs.music_volume", action: "slider" },
-			{ id: "prefs.arr", action: "slider" },
-			{ id: "prefs.das", action: "slider" },
-			{ id: "prefs.sdf", action: "slider" },
-			{ id: "keys", action: "nest", children: [
-				{ id: "key.rotate_left", action: "key" },
-				{ id: "key.rotate_right", action: "key" },
-				{ id: "key.rotate180", action: "key" },
-				{ id: "key.rotate_special", action: "key" },
-				{ id: "key.ability", action: "key" },
-				{ id: "key.move_left", action: "key" },
-				{ id: "key.move_right", action: "key" },
-				{ id: "key.soft_drop", action: "key" },
-				{ id: "key.hard_drop", action: "key" },
-				{ id: "key.hold", action: "key" },
-				{ id: "key.restart", action: "key" },
-				{ id: "key.fail", action: "key" },
-				{ id: "key.pause", action: "key" },
-			] }
-		] }
+		{
+			id: "menu.play",
+			action: "nest",
+			children: [
+				{ id: "game.duo", action: "game" },
+				{ id: "game.tro", action: "game" },
+				{ id: "game.tetro", action: "game" },
+				{ id: "game.pento", action: "game" },
+			],
+		},
+		{
+			id: "menu.settings",
+			action: "nest",
+			children: [
+				{ id: "prefs.sound", action: "slider", min: 0, max: 100 },
+				{ id: "prefs.music", action: "slider", min: 0, max: 100 },
+				{ id: "prefs.arr", action: "slider", min: 0, max: 60 },
+				{ id: "prefs.das", action: "slider", min: 0, max: 60 },
+				{ id: "prefs.sdf", action: "slider", min: -1, max: 60, minLabel: "prefs.sdf.infinite" },
+				{
+					id: "menu.keys",
+					action: "nest",
+					children: [
+						{ id: "key.rotate_left", action: "key" },
+						{ id: "key.rotate_right", action: "key" },
+						{ id: "key.rotate180", action: "key" },
+						{ id: "key.rotate_special", action: "key" },
+						{ id: "key.ability", action: "key" },
+						{ id: "key.move_left", action: "key" },
+						{ id: "key.move_right", action: "key" },
+						{ id: "key.soft_drop", action: "key" },
+						{ id: "key.hard_drop", action: "key" },
+						{ id: "key.hold", action: "key" },
+						{ id: "key.restart", action: "key" },
+						{ id: "key.fail", action: "key" },
+						{ id: "key.pause", action: "key" },
+					],
+				},
+			],
+		},
 	];
 
-	const menu = new MenuManager(logic, menusEle, buttons);
+	const menu = new MenuManager(logic, input, prefs, menusEle, buttons);
 
-	menu.render()
+	menu.render();
 }
 
 document.addEventListener("DOMContentLoaded", init);
