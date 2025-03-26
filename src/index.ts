@@ -1,7 +1,7 @@
 import { InputManager, Keys } from "./game/InputManager";
 import { Logic } from "./game/Logic";
 import { Draw, DrawMode } from "./game/render/Draw";
-import { Preferences } from "./game/Preferences";
+import { Preferences, Prefs } from "./game/Preferences";
 import { PCOMode } from "./game/PCOMode";
 import { MenuEle, MenuManager } from "./menu/MenuManager";
 
@@ -9,9 +9,6 @@ const $ = <T>(s: string): T => document.querySelector(s) as T;
 
 function init() {
 	const prefs = new Preferences();
-	prefs.arr = 0;
-	prefs.das = 7;
-	prefs.sdf = -1;
 
 	const input = new InputManager(document);
 	input.setKey(Keys.RotateLeft, "z");
@@ -30,14 +27,10 @@ function init() {
 
 	const devMode = true;
 	if (devMode) {
-		input.setKey(Keys.DiscardActivePiece, "1");
-		input.setKey(Keys.ClearHoldBox, "2");
-		input.setKey(Keys.ToggleGravity, "3");
-		input.setKey(Keys.ToggleLocking, "4");
-		input.setKey(Keys.CycleActivePiece, "5");
-		input.setKey(Keys.Ghostboard, "7");
-		input.setKey(Keys.TetroMode, "9");
-		input.setKey(Keys.PentoMode, "0");
+		prefs.set(Prefs.Arr, 0);
+		prefs.set(Prefs.Das, 7);
+		prefs.set(Prefs.Sdf, -1);
+
 	}
 
 	const canvas = $<HTMLCanvasElement>("#gameCanvas");

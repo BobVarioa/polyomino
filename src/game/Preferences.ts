@@ -1,10 +1,37 @@
+import { camelToSnake } from "../utils/camelToSnake";
+
+export enum Prefs {
+	Arr,
+	Das,
+	Sdf,
+	Sound,
+	Music,
+	Length,
+}
+
+const namesToPrefs = camelToSnake(Prefs, "prefs.");
+
 export class Preferences {
-	public arr: number = 2;
-	public das: number = 10;
-	public sdf: number = 1;
+	#data: number[] = [2, 10, 1, 100, 50];
 
-	public backgroundColor: string = "#000";
-	public gridColor: string = "#505050";
+	backgroundColor: string = "#000";
+	gridColor: string = "#505050";
 
-	constructor() { }
+	constructor() {}
+
+	set(key: Prefs, value: number) {
+		this.#data[key] = value;
+	}
+
+	get(key: Prefs) {
+		return this.#data[key];
+	}
+
+	getByName(key: string) {
+		return this.get(namesToPrefs[key]);
+	}
+
+	setByName(key: string, value: number) {
+		this.set(namesToPrefs[key], value);
+	}
 }

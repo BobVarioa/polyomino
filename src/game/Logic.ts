@@ -2,7 +2,7 @@ import { ArrayMatrix } from "../utils/ArrayMatrix";
 import { GameDef, Piece, PieceFlags } from "./GameDef";
 import { InputManager, Keys } from "./InputManager";
 import { PieceState, RotState } from "./PieceState";
-import { Preferences } from "./Preferences";
+import { Preferences, Prefs } from "./Preferences";
 import { AbilityManager } from "./AbilityManager";
 import random from "secure-random";
 import { pento, tetro } from "../data/gameTypes";
@@ -93,7 +93,7 @@ export class Logic {
 			arrTimer: 0,
 			dasTimer: 0,
 			sdfTimer: 0,
-			sdfMax: Math.min(this.prefs.sdf, this.gameDef.settings.gravity),
+			sdfMax: Math.min(this.prefs.get(Prefs.Sdf), this.gameDef.settings.gravity),
 			gravityTimer: 0,
 			lockDelayTimer: 0,
 			lockDelayMoves: 0,
@@ -728,11 +728,11 @@ export class Logic {
 		}
 
 		if (this.input.isKeyPressed(Keys.SoftDrop)) {
-			if (this.prefs.sdf == -1) {
+			if (this.prefs.get(Prefs.Sdf) == -1) {
 				this.activePiece.hardDrop();
 				this.state.gravityTimer = 0;
 			} else {
-				if (this.state.sdfTimer >= this.prefs.sdf) {
+				if (this.state.sdfTimer >= this.prefs.get(Prefs.Sdf)) {
 					this.activePiece.softDrop();
 					this.state.sdfTimer = 0;
 					this.state.gravityTimer = 0;
@@ -748,7 +748,7 @@ export class Logic {
 
 		if (this.movedLastFrame) {
 			if (attemptingMovement) {
-				if (this.state.dasTimer >= this.prefs.das) {
+				if (this.state.dasTimer >= this.prefs.get(Prefs.Das)) {
 					if (this.state.arrTimer == 0) {
 						if (movingLeft) {
 							this.activePiece.moveLeft();
@@ -765,7 +765,7 @@ export class Logic {
 						}
 					}
 
-					if (this.state.arrTimer >= this.prefs.arr) {
+					if (this.state.arrTimer >= this.prefs.get(Prefs.Arr)) {
 						this.state.arrTimer = 0;
 					} else {
 						this.state.arrTimer++;
