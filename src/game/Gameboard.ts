@@ -51,7 +51,7 @@ export default class Gameboard extends ArrayMatrix<string> {
 		this.active.push({ type: "delete", x, y });
 	}
 
-	// ends the animation collection, stating it should last for the specified delay in logic frames
+	// ends the action collection, stating it should last for the specified delay in logic frames
 	out(delay: number) {
 		if (this.active.length != 0) {
 			this.actionQueue.push({ delay, list: this.active });
@@ -59,7 +59,7 @@ export default class Gameboard extends ArrayMatrix<string> {
 		this.active = undefined; // technically unnecessary, but things will throw errors if they are in an incorrect state
 	}
 
-	// will decrement the animation delay, returns true if the animation in ongoing
+	// will increment the action timer, commits actions when completed, returns true if the action in ongoing
 	step() {
 		if (this.actionQueue.length == 0) return false;
 		const actionList = this.actionQueue[0];
