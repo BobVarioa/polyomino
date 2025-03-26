@@ -11,19 +11,19 @@ function init() {
 	const prefs = new Preferences();
 
 	const input = new InputManager(document);
-	input.setKey(Keys.RotateLeft, "z");
-	input.setKey(Keys.RotateRight, "x");
-	input.setKey(Keys.Rotate180, "c");
-	input.setKey(Keys.RotateSpecial, "v");
-	input.setKey(Keys.Ability, "Shift");
-	input.setKey(Keys.MoveLeft, "ArrowLeft");
-	input.setKey(Keys.MoveRight, "ArrowRight");
-	input.setKey(Keys.SoftDrop, "ArrowDown");
-	input.setKey(Keys.HardDrop, "ArrowUp");
-	input.setKey(Keys.Hold, " ");
-	input.setKey(Keys.Restart, "r");
-	input.setKey(Keys.Fail, "f");
-	input.setKey(Keys.Pause, "Escape");
+	input.set(Keys.RotateLeft, "z");
+	input.set(Keys.RotateRight, "x");
+	input.set(Keys.Rotate180, "c");
+	input.set(Keys.RotateSpecial, "v");
+	input.set(Keys.Ability, "Shift");
+	input.set(Keys.MoveLeft, "ArrowLeft");
+	input.set(Keys.MoveRight, "ArrowRight");
+	input.set(Keys.SoftDrop, "ArrowDown");
+	input.set(Keys.HardDrop, "ArrowUp");
+	input.set(Keys.Hold, " ");
+	input.set(Keys.Restart, "r");
+	input.set(Keys.Fail, "f");
+	input.set(Keys.Pause, "Escape");
 
 	const devMode = true;
 	if (devMode) {
@@ -31,6 +31,14 @@ function init() {
 		prefs.set(Prefs.Das, 7);
 		prefs.set(Prefs.Sdf, -1);
 
+		input.set(Keys.DiscardActivePiece, "1");
+		input.set(Keys.ClearHoldBox, "2");
+		input.set(Keys.ToggleGravity, "3");
+		input.set(Keys.ToggleLocking, "4");
+		input.set(Keys.CycleActivePiece, "5");
+		input.set(Keys.Ghostboard, "7");
+		input.set(Keys.TetroMode, "9");
+		input.set(Keys.PentoMode, "0");
 	}
 
 	const canvas = $<HTMLCanvasElement>("#gameCanvas");

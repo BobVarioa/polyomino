@@ -33,6 +33,7 @@ export class MultiKeyMap<K, V>  {
 			}
 			const len = this.#keys.push(set);
 			this.#values[len - 1] = value;
+			// @ts-expect-error intentional set to a readonly prop
 			this.size = len;
 		}
 	}
@@ -46,6 +47,17 @@ export class MultiKeyMap<K, V>  {
 			}
 		}
 		return undefined;
+	}
+
+	getByValue(v: V): Set<K> {
+		for (let i = 0; i < this.#values.length; i++) {
+			const value = this.#values[i];
+
+			if (value === v) {
+				return this.#keys[i]
+			}
+		}
+		return new Set();
 	}
 
 	deleteKey(key: K): boolean {

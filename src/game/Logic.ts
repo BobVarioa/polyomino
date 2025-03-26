@@ -406,7 +406,7 @@ export class Logic {
 	 * logic loop function, should run 60 times per second
 	 */
 	frame() {
-		if (this.input.isKeyPressed(Keys.Restart)) {
+		if (this.input.isPressed(Keys.Restart)) {
 			this.input.pressedMap[Keys.Restart] = false;
 			const ghost = this.ghostboard;
 			this.restart();
@@ -414,7 +414,7 @@ export class Logic {
 			return;
 		}
 
-		if (this.input.isKeyPressed(Keys.Pause) && this.state.pauseBuffer == 0) {
+		if (this.input.isPressed(Keys.Pause) && this.state.pauseBuffer == 0) {
 			this.paused = !this.paused;
 			this.state.pauseBuffer = 60; // 0.5s
 		} else if (this.state.pauseBuffer != 0) {
@@ -429,13 +429,13 @@ export class Logic {
 				this._signal.emit("fail");
 				return;
 			}
-			if (this.input.isKeyPressed(Keys.Fail)) {
+			if (this.input.isPressed(Keys.Fail)) {
 				this.state.failTimer += 1;
 			}
 			return;
 		}
 
-		if (this.input.isKeyPressed(Keys.Fail)) {
+		if (this.input.isPressed(Keys.Fail)) {
 			this.state.failBuffer = 10;
 			if (this.state.failTimer >= 60) {
 				this.state.failTimer = -10;
@@ -518,7 +518,7 @@ export class Logic {
 			// TODO: [garbage] update garbage ?
 			// if is piece in valid location
 			if (!this.pieceIntersecting(this.activePiece)) {
-				if (canHold && !this.state.heldLast && this.input.isKeyPressed(Keys.Hold)) {
+				if (canHold && !this.state.heldLast && this.input.isPressed(Keys.Hold)) {
 					this.activePiece.invalidate();
 					this.swapHold = this.holdPiece != " ";
 					if (this.swapHold == false) {
@@ -570,29 +570,29 @@ export class Logic {
 	movedLastFrame = true;
 
 	devInputs() {
-		if (this.input.isKeyPressed(Keys.DiscardActivePiece)) {
+		if (this.input.isPressed(Keys.DiscardActivePiece)) {
 			this.activePiece.invalidate();
 			this.input.pressedMap[Keys.DiscardActivePiece] = false;
 		}
 
-		if (this.input.isKeyPressed(Keys.ClearHoldBox)) {
+		if (this.input.isPressed(Keys.ClearHoldBox)) {
 			this.holdPiece = " ";
 			this.input.pressedMap[Keys.ClearHoldBox] = false;
 		}
 
-		if (this.input.isKeyPressed(Keys.Ghostboard)) {
+		if (this.input.isPressed(Keys.Ghostboard)) {
 			const { boardSize } = this.gameDef.settings;
 			this.ghostboard = this.gameboard.copy();
 			this.gameboard = new Gameboard(boardSize[0], boardSize[1]).fill(" ");
 			this.input.pressedMap[Keys.Ghostboard] = false;
 		}
 
-		if (this.input.isKeyPressed(Keys.ToggleGravity)) {
+		if (this.input.isPressed(Keys.ToggleGravity)) {
 			this.flags.disableGravity = !this.flags.disableGravity;
 			this.input.pressedMap[Keys.ToggleGravity] = false;
 		}
 
-		if (this.input.isKeyPressed(Keys.CycleActivePiece)) {
+		if (this.input.isPressed(Keys.CycleActivePiece)) {
 			const {
 				settings: { boardSize, screenSize },
 				pieces,
@@ -611,18 +611,18 @@ export class Logic {
 			this.input.pressedMap[Keys.CycleActivePiece] = false;
 		}
 
-		if (this.input.isKeyPressed(Keys.ToggleLocking)) {
+		if (this.input.isPressed(Keys.ToggleLocking)) {
 			this.flags.disableLockDelay = !this.flags.disableLockDelay;
 			this.input.pressedMap[Keys.ToggleLocking] = false;
 		}
 
-		if (this.input.isKeyPressed(Keys.TetroMode)) {
+		if (this.input.isPressed(Keys.TetroMode)) {
 			this.swapGameDef(tetro);
 			this.restart();
 			this.input.pressedMap[Keys.TetroMode] = false;
 		}
 
-		if (this.input.isKeyPressed(Keys.PentoMode)) {
+		if (this.input.isPressed(Keys.PentoMode)) {
 			this.swapGameDef(pento);
 			this.restart();
 			this.input.pressedMap[Keys.PentoMode] = false;
@@ -635,7 +635,7 @@ export class Logic {
 
 		this.devInputs();
 
-		if (this.input.isKeyPressed(Keys.RotateLeft) && rotation) {
+		if (this.input.isPressed(Keys.RotateLeft) && rotation) {
 			const piece = this.activePiece.rotateLeft();
 			if (piece != undefined) {
 				this.activePiece = piece;
@@ -645,7 +645,7 @@ export class Logic {
 			this.lastMove = Keys.RotateLeft;
 		}
 
-		if (this.input.isKeyPressed(Keys.RotateRight) && rotation) {
+		if (this.input.isPressed(Keys.RotateRight) && rotation) {
 			const piece = this.activePiece.rotateRight();
 			if (piece != undefined) {
 				this.activePiece = piece;
@@ -655,7 +655,7 @@ export class Logic {
 			this.lastMove = Keys.RotateRight;
 		}
 
-		if (this.input.isKeyPressed(Keys.Rotate180) && rotation) {
+		if (this.input.isPressed(Keys.Rotate180) && rotation) {
 			const piece = this.activePiece.rotate180();
 			if (piece != undefined) {
 				this.activePiece = piece;
@@ -665,12 +665,12 @@ export class Logic {
 			this.lastMove = Keys.Rotate180;
 		}
 
-		if (this.input.isKeyPressed(Keys.Ability)) {
+		if (this.input.isPressed(Keys.Ability)) {
 			this.abilityManager.handleInput();
 			this.input.pressedMap[Keys.Ability] = false;
 		}
 
-		if (this.input.isKeyPressed(Keys.RotateSpecial) && specialRotation != "none") {
+		if (this.input.isPressed(Keys.RotateSpecial) && specialRotation != "none") {
 			let piece;
 			switch (specialRotation) {
 				case "flip":
@@ -720,14 +720,14 @@ export class Logic {
 			this.lastMove = Keys.RotateSpecial;
 		}
 
-		if (this.input.isKeyPressed(Keys.HardDrop)) {
+		if (this.input.isPressed(Keys.HardDrop)) {
 			this.activePiece.hardDrop();
 			this.state.lockDelayTimer = this.gameDef.settings.lockDelay;
 			updated = true;
 			this.input.pressedMap[Keys.HardDrop] = false;
 		}
 
-		if (this.input.isKeyPressed(Keys.SoftDrop)) {
+		if (this.input.isPressed(Keys.SoftDrop)) {
 			if (this.prefs.get(Prefs.Sdf) == -1) {
 				this.activePiece.hardDrop();
 				this.state.gravityTimer = 0;
@@ -742,8 +742,8 @@ export class Logic {
 			updated = true;
 		}
 
-		const movingLeft = this.input.isKeyPressed(Keys.MoveLeft);
-		const movingRight = this.input.isKeyPressed(Keys.MoveRight);
+		const movingLeft = this.input.isPressed(Keys.MoveLeft);
+		const movingRight = this.input.isPressed(Keys.MoveRight);
 		let attemptingMovement = movingLeft || movingRight;
 
 		if (this.movedLastFrame) {

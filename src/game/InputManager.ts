@@ -1,4 +1,5 @@
 import { MultiKeyMap } from "../utils/MultiKeyMap";
+import { camelToSnake } from "../utils/camelToSnake";
 
 export enum Keys {
 	RotateLeft,
@@ -27,10 +28,7 @@ export enum Keys {
 	Length,
 }
 
-const namesToKeys = Object.fromEntries((Object.entries(Keys) as [string, Keys][]).map(v => ([
-	"key" + v[0].replace(/A-Z/g, l => `_${l.toLowerCase()}`), 
-	v[1]
-])));
+const namesToKeys = camelToSnake(Keys, "key.");
 
 export class InputManager {
 	inputMap = new MultiKeyMap<string, Keys>();
@@ -41,18 +39,23 @@ export class InputManager {
 		document.addEventListener("keyup", (ev) => this.keyUp(ev.key));
 	}
 
-	setKey(id: Keys, key: string) {
+	set(id: Keys, key: string) {
 		this.inputMap.deleteKey(key);
 		this.inputMap.set([key], id);
 	}
 
-	setKeyByName(name: string, key: string) {
+	setByName(name: string, key: string) {
 		const id = namesToKeys[name];
 		this.inputMap.deleteKey(key);
 		this.inputMap.set([key], id);
 	}
 
-	isKeyPressed(key: Keys) {
+	getByName(name: string) {
+		const id = namesToKeys[name];
+		return this.inputMap.getByValue(id);
+	}
+
+	isPressed(key: Keys) {
 		return this.pressedMap[key];
 	}
 
