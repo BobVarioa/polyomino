@@ -14,6 +14,10 @@ body {
 	justify-content: center;
 }
 
+.gone {
+	display: none;
+}
+
 canvas {
 	border: 1px solid white;
 }

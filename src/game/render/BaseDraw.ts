@@ -9,7 +9,11 @@ export abstract class BaseDraw {
 	gridColor: string;
 	logic: Logic;
 
-	constructor(public canvas: HTMLCanvasElement, public holdCanvas: HTMLCanvasElement, public queueCanvas: HTMLCanvasElement) { }
+	constructor(
+		public canvas: HTMLCanvasElement,
+		public holdCanvas: HTMLCanvasElement,
+		public queueCanvas: HTMLCanvasElement
+	) {}
 
 	reset() {
 		this.grid = 32;
@@ -22,6 +26,8 @@ export abstract class BaseDraw {
 		this.backgroundColor = this.logic.prefs.backgroundColor;
 		this.gridColor = this.logic.prefs.gridColor;
 	}
+
+	abstract clear(): void;
 
 	abstract frame(deltaTime: number): void;
 }

@@ -45,6 +45,8 @@ function init() {
 	const holdCanvas = $<HTMLCanvasElement>("#holdCanvas");
 	const queueCanvas = $<HTMLCanvasElement>("#queueCanvas");
 	const draw = Draw.create(DrawMode.Canvas, canvas, holdCanvas, queueCanvas);
+	draw.clear();
+
 	draw.grid = 32;
 
 	const logic = new Logic(prefs, input, draw);

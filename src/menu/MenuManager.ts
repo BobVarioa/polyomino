@@ -43,6 +43,7 @@ export class MenuManager {
 						this.logic.swapGameDef(GameTypes[menuEle.id]);
 
 						this.logic._signal.once("fail", () => {
+							this.logic.draw.clear();
 							this.render();
 						});
 						this.logic.reset();

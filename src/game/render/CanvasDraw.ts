@@ -62,10 +62,12 @@ export class CanvasDraw extends BaseDraw {
 		this.maxHeight = maxH * this.grid;
 		this.maxWidth = maxW * this.grid;
 
+		this.holdCanvas.classList.remove("gone");
 		this.holdCanvas.width = this.maxWidth + 20; // 10px padding + piece size
 		this.holdCanvas.height = this.maxHeight + 20; // 10px padding + piece size
 		this.ctxHold = this.holdCanvas.getContext("2d");
 
+		this.queueCanvas.classList.remove("gone");
 		this.queueCanvas.width = this.maxWidth + 20; // 10px padding + piece size
 		this.queueCanvas.height =
 			this.maxHeight * gameDef.settings.queueLength + 10 * (gameDef.settings.queueLength + 2); // 10px padding top and bottom + 5x piece size + 10px padding between pieces
@@ -84,7 +86,8 @@ export class CanvasDraw extends BaseDraw {
 			for (let x = 0; x < piece.data.width; x++) {
 				const v = piece.data.atXY(x, y);
 				if (v !== 0) {
-					ctx.fillStyle = gameDef.colors.get(piece.piece.name) ?? gameDef.colors.get(gameDef.subpieces.get(v));
+					ctx.fillStyle =
+						gameDef.colors.get(piece.piece.name) ?? gameDef.colors.get(gameDef.subpieces.get(v));
 					ctx.fillRect((piece.x + x) * grid, (piece.y - sh + y) * grid, grid - 1, grid - 1);
 				}
 			}
@@ -139,6 +142,20 @@ export class CanvasDraw extends BaseDraw {
 
 	lastQueueTop: string;
 	lastHold: string;
+
+	clear(): void {
+		if (this.ctx && this.canvas) {
+			this.canvas.width = 320;
+			this.canvas.height = 640;
+			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		}
+		if (this.queueCanvas) {
+			this.queueCanvas.classList.add("gone");
+		}
+		if (this.holdCanvas) {
+			this.holdCanvas.classList.add("gone");
+		}
+	}
 
 	frame(deltaTime: number) {
 		const { ctx } = this;
