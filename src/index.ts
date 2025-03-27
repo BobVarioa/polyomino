@@ -11,18 +11,18 @@ function init() {
 	const prefs = new Preferences();
 	
 	const input = new InputManager(document);
-	input.set(Keys.RotateLeft, "z");
-	input.set(Keys.RotateRight, "x");
-	input.set(Keys.Rotate180, "c");
-	input.set(Keys.RotateSpecial, "v");
+	input.set(Keys.RotateLeft, "KeyZ");
+	input.set(Keys.RotateRight, "KeyX");
+	input.set(Keys.Rotate180, "KeyC");
+	input.set(Keys.RotateSpecial, "KeyV");
 	input.set(Keys.Ability, "Shift");
 	input.set(Keys.MoveLeft, "ArrowLeft");
 	input.set(Keys.MoveRight, "ArrowRight");
 	input.set(Keys.SoftDrop, "ArrowDown");
 	input.set(Keys.HardDrop, "ArrowUp");
-	input.set(Keys.Hold, " ");
-	input.set(Keys.Restart, "r");
-	input.set(Keys.Fail, "f");
+	input.set(Keys.Hold, "Space");
+	input.set(Keys.Restart, "KeyR");
+	input.set(Keys.Fail, "KeyF");
 	input.set(Keys.Pause, "Escape");
 
 	const devMode = true;
@@ -31,14 +31,14 @@ function init() {
 		prefs.set(Prefs.Das, 7);
 		prefs.set(Prefs.Sdf, -1);
 
-		input.set(Keys.DiscardActivePiece, "1");
-		input.set(Keys.ClearHoldBox, "2");
-		input.set(Keys.ToggleGravity, "3");
-		input.set(Keys.ToggleLocking, "4");
-		input.set(Keys.CycleActivePiece, "5");
-		input.set(Keys.Ghostboard, "7");
-		input.set(Keys.TetroMode, "9");
-		input.set(Keys.PentoMode, "0");
+		input.set(Keys.DiscardActivePiece, "Digit1");
+		input.set(Keys.ClearHoldBox, "Digit2");
+		input.set(Keys.ToggleGravity, "Digit3");
+		input.set(Keys.ToggleLocking, "Digit4");
+		input.set(Keys.CycleActivePiece, "Digit5");
+		input.set(Keys.Ghostboard, "Digit7");
+		input.set(Keys.TetroMode, "Digit9");
+		input.set(Keys.PentoMode, "Digit0");
 	}
 
 	const canvas = $<HTMLCanvasElement>("#gameCanvas");

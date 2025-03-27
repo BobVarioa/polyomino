@@ -35,8 +35,8 @@ export class InputManager {
 	pressedMap: boolean[] = new Array(Keys.Length).fill(false);
 
 	constructor(ele: Node) {
-		document.addEventListener("keydown", (ev) => this.keyDown(ev.key));
-		document.addEventListener("keyup", (ev) => this.keyUp(ev.key));
+		document.addEventListener("keydown", (ev) => this.keyDown(ev.code));
+		document.addEventListener("keyup", (ev) => this.keyUp(ev.code));
 	}
 
 	set(id: Keys, key: string) {
