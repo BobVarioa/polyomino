@@ -28,6 +28,7 @@ export class Logic {
 	public lastMove: Keys;
 	public abilityManager: AbilityManager;
 	public gameDef: GameDef;
+	public stopped: boolean = false;
 	mode: BaseMode;
 
 	constructor(public prefs: Preferences, public input: InputManager, public draw: BaseDraw) {}
@@ -51,16 +52,21 @@ export class Logic {
 		let timeout;
 
 		const func = () => {
+			if (!this.stopped) {
 			this.frame();
-
 			timeout = setTimeout(func, 1000 / fps);
+			} else {
+				this._signal.emit("stopped");
+			}
 		};
 
 		this._signal.on("stop", () => {
+			this.stopped = true;
 			cancelAnimationFrame(rAF);
 			clearTimeout(timeout);
 		});
 		this._signal.on("start", () => {
+			this.stopped = false;
 			func();
 			requestAnimationFrame(drawLoop);
 		});
@@ -70,8 +76,10 @@ export class Logic {
 
 	restart() {
 		this._signal.emit("stop");
+		this._signal.once("stopped", () => {
 		this.reset();
 		this._signal.emit("start");
+		});
 	}
 
 	swapGameDef(gameDef: GameDef) {
