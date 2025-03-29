@@ -458,6 +458,17 @@ export class Logic {
 		}
 
 		if (this.gameboard.step()) return;
+		if (this.state.checkState == CheckState.Clear) {
+			this.state.checkState = CheckState.Done;
+			this.clearLines();
+			if (this.gameDef.settings.gravityType !== "naive") {
+				this.state.checkState = CheckState.Gravity;
+			}
+		} else if (this.state.checkState == CheckState.Gravity) {
+			this.state.checkState = CheckState.Done;
+			this.gravity();
+		}
+		if (this.state.checkState != CheckState.Done) return;
 
 		const { boardSize, screenSize, are, hold: canHold, gravity, lockDelay, holdDelay } = this.gameDef.settings;
 
@@ -468,19 +479,6 @@ export class Logic {
 				this.state.areTimer++;
 				return;
 			}
-
-			if (this.state.checkState == CheckState.Clear) {
-				this.state.checkState = CheckState.Done;
-				this.clearLines();
-				if (this.gameDef.settings.gravityType !== "naive") {
-					this.state.checkState = CheckState.Gravity;
-				}
-			} else if (this.state.checkState == CheckState.Gravity) {
-				this.state.checkState = CheckState.Done;
-				this.state.timesDropped = 0;
-				this.gravity();
-			}
-			if (this.state.checkState != CheckState.Done) return;
 
 			if (canHold && this.swapHold) {
 				const pieceName = this.holdPiece;
