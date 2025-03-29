@@ -40,6 +40,13 @@
 		"queueLength": 2,
 		"pieceType": "meta",
 		"clearType": "color",
-		"dropDelay": 6
+		"dropDelay": 6,
+		"garbageLocation": "top",
+		"garbageHoles": 3,
+		"garbageCheese": 1
+	},
+	"garbage": {
+		// todo: actually build a real garbage system here
+		"lines": [1,2,3,4]
 	}
 }

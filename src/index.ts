@@ -37,8 +37,7 @@ function init() {
 		input.set(Keys.ToggleLocking, "Digit4");
 		input.set(Keys.CycleActivePiece, "Digit5");
 		input.set(Keys.Ghostboard, "Digit7");
-		input.set(Keys.TetroMode, "Digit9");
-		input.set(Keys.PentoMode, "Digit0");
+		input.set(Keys.RecieveSentGarbage, "Digit8");
 	}
 
 	const canvas = $<HTMLCanvasElement>("#gameCanvas");

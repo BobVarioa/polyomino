@@ -43,6 +43,33 @@
 		"queueLength": 5,
 		"pieceType": "normal",
 		"clearType": "line",
-		"dropDelay": 0
+		"dropDelay": 0,
+		"garbageLocation": "bottom",
+		"garbageHoles": 1,
+		"garbageCheese": 5
+	},
+	"garbage": {
+		"lines": [0, 1, 2, 4],
+		"b2b": {
+			"spins": true,
+			"lines": 4,
+			"bonus": {
+				"1": 1,
+				"4": 2,
+				"8": 3,
+				"16": 4,
+				"32": 5
+			}
+		},
+		"pc": 8,
+		"combo": {
+			"1": 1,
+			"5": 2,
+			"20": 4
+		},
+		"spin": {
+			"pieces": ["T"],
+			"bonus": [1, 2, 4]
+		}
 	}
 }

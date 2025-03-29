@@ -1,12 +1,29 @@
 import { MultiKeyMap } from "../utils/MultiKeyMap";
 import { WrappedGenerator, blackjack } from "./Blackjack";
 import { ArrayMatrix } from "../utils/ArrayMatrix";
+import { GarbageManager } from "./Garbage";
 
 export interface GameSchema {
 	pieces: Record<string, PieceDef>;
 	rotation: Record<string, { "0": string; R: string; "2": string; L: string }>;
 	randomizer: string;
 	settings: Settings;
+	garbage: GarbageSchema;
+}
+
+export interface GarbageSchema {
+	lines: number[];
+	b2b?: {
+		spins: boolean;
+		lines: number;
+		bonus: Record<string, number>;
+	};
+	pc?: number;
+	combo?: Record<string, number>;
+	spin?: {
+		pieces: string[];
+		bonus: number[];
+	};
 }
 
 export enum PieceFlags {
@@ -15,11 +32,7 @@ export enum PieceFlags {
 }
 
 export class Piece {
-	constructor(
-		public name: string, 
-		public matrix: ArrayMatrix<number>, 
-		public flags: number = 0
-	) {}
+	constructor(public name: string, public matrix: ArrayMatrix<number>, public flags: number = 0) {}
 }
 
 export interface PieceDef {
@@ -43,6 +56,9 @@ export interface Settings {
 	readonly clearType: string;
 	readonly pieceType: string;
 	readonly dropDelay: number;
+	readonly garbageLocation: string;
+	readonly garbageHoles: number;
+	readonly garbageCheese: number;
 }
 
 export interface KickTable {
@@ -59,7 +75,8 @@ export class GameDef {
 		public readonly randomizer: WrappedGenerator<string>,
 		public readonly settings: Settings,
 		public readonly colors: Map<string, string>,
-		public readonly subpieces: Map<number, string>
+		public readonly subpieces: Map<number, string>,
+		public readonly garbage: GarbageManager
 	) {}
 
 	static fromJson(json: GameSchema | string) {
@@ -137,6 +154,8 @@ export class GameDef {
 
 		const randomizer = blackjack(json.randomizer);
 
-		return new GameDef(pieces, rotations, randomizer, settings, colors, subpieces);
+		const garbageManager = GarbageManager.fromSchema(json.garbage);
+
+		return new GameDef(pieces, rotations, randomizer, settings, colors, subpieces, garbageManager);
 	}
 }

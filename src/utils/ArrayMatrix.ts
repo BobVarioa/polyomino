@@ -59,6 +59,15 @@ export class ArrayMatrix<T> extends Array<T> {
 		this[x + this.width * y] = value;
 	}
 
+	shiftUp(n: number, emptyVal) {
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				this.setXY(x,y, this.atXY(x, y + n) ?? emptyVal)
+			}
+		}
+
+	}
+
 	detectSectors(isEqual: (a: T, b: T) => boolean): [number, number][][] {
 		const sectors: [number, number][][] = [];
 		const visited = new ArrayMatrix<boolean>(this.width, this.height).fill(false);

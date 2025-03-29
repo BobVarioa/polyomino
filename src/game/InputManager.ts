@@ -22,8 +22,7 @@ export enum Keys {
 	ToggleGravity,
 	ToggleLocking,
 	CycleActivePiece,
-	TetroMode,
-	PentoMode,
+	RecieveSentGarbage,
 	// NOTE: must be last element
 	Length,
 }

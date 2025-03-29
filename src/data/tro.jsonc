@@ -23,6 +23,10 @@
 		"rotation": true,
 		"specialRotation": "cycle",
 		"lineClearDelay": 10,
-		"dropDelay": 0
+		"dropDelay": 0,
+		"garbageLocation": "bottom"
+	},
+	"garbage": {
+		"lines": []
 	}
 }

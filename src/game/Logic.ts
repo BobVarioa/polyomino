@@ -10,8 +10,9 @@ import { BaseDraw } from "./render/BaseDraw";
 import { EventEmitter } from "eventemitter3";
 import { BaseMode } from "./BaseMode";
 import Gameboard from "./Gameboard";
+import { Random } from "../utils/randomizer";
 
-enum CheckState {
+export enum CheckState {
 	Clear,
 	Gravity,
 	Done,
@@ -28,6 +29,7 @@ export class Logic {
 	public lastMove: Keys;
 	public abilityManager: AbilityManager;
 	public gameDef: GameDef;
+	public garbageRandom: Random;
 	public stopped: boolean = false;
 	mode: BaseMode;
 
@@ -53,8 +55,8 @@ export class Logic {
 
 		const func = () => {
 			if (!this.stopped) {
-			this.frame();
-			timeout = setTimeout(func, 1000 / fps);
+				this.frame();
+				timeout = setTimeout(func, 1000 / fps);
 			} else {
 				this._signal.emit("stopped");
 			}
@@ -77,8 +79,8 @@ export class Logic {
 	restart() {
 		this._signal.emit("stop");
 		this._signal.once("stopped", () => {
-		this.reset();
-		this._signal.emit("start");
+			this.reset();
+			this._signal.emit("start");
 		});
 	}
 
@@ -95,7 +97,9 @@ export class Logic {
 
 	reset() {
 		this.paused = false;
-		this.gameDef.randomizer.reset(random(1, { type: "Uint8Array" })[0]);
+		const seed = random(1, { type: "Uint8Array" })[0];
+		this.gameDef.randomizer.reset(seed);
+		this.garbageRandom = new Random(seed);
 		this.state = {
 			areTimer: 0,
 			arrTimer: 0,
@@ -108,7 +112,7 @@ export class Logic {
 			pauseBuffer: 0,
 			heldLast: false,
 			combo: 0,
-			timesDropped: 0,
+			b2b: 0,
 			dasDirection: undefined,
 			failTimer: 0,
 			failBuffer: 0,
@@ -120,13 +124,14 @@ export class Logic {
 			noLineClears: false,
 			disableGravity: false,
 			disableLockDelay: false,
+			receiveSentGarbage: false,
 		};
 
 		this.abilityManager = new AbilityManager(this);
 
 		const { boardSize } = this.gameDef.settings;
 		// clear gameboard
-		this.gameboard = new Gameboard(boardSize[0], boardSize[1]).fill(" ");
+		this.gameboard = new Gameboard(boardSize[0], boardSize[1], this).fill(" ");
 		this.ghostboard = new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
 		this.activePiece = PieceState.none;
 		this.holdPiece = " ";
@@ -185,7 +190,7 @@ export class Logic {
 		pauseBuffer: number;
 		heldLast: boolean;
 		combo: number;
-		timesDropped: number;
+		b2b: number;
 		dasDirection: Keys;
 		failTimer: number;
 		failBuffer: number;
@@ -196,10 +201,10 @@ export class Logic {
 		noLineClears: boolean;
 		disableGravity: boolean;
 		disableLockDelay: boolean;
+		receiveSentGarbage: boolean;
 	};
 
 	gravity() {
-		// console.log("grav");
 		const dropDelay = this.gameDef.settings.dropDelay;
 		switch (this.gameDef.settings.gravityType) {
 			case "naive":
@@ -310,8 +315,9 @@ export class Logic {
 						}
 					}
 
-					this.state.timesDropped++;
-					this.state.checkState = CheckState.Clear;
+					// this is a hack that im almost certain does not work, but for now is fine
+					// todo: actually rework this to use the gameboard action queuing system, which will fix this bug
+					this.state.checkState = CheckState.Done;
 				}
 				break;
 
@@ -342,7 +348,9 @@ export class Logic {
 					}
 				}
 			}
-			wasSpin = corners > 2;
+			if (corners > 2 && this.gameDef.garbage.isSpin(piece.piece.name)) {
+				wasSpin = true;
+			}
 		}
 
 		const pieces = this.gameDef.pieces;
@@ -379,7 +387,7 @@ export class Logic {
 				this.gameboard.in();
 				for (const sector of sectors) {
 					if (sector.length >= 4) {
-						clearedLines += 1;
+						clearedLines += 1 + sector.length - 4;
 						for (const [x, y] of sector) {
 							this.gameboard.delete(x, y);
 							for (const xx of [-1, 1]) {
@@ -400,14 +408,43 @@ export class Logic {
 				break;
 		}
 
+		const wasB2B = this.gameDef.garbage.isB2B(clearedLines, wasSpin);
+
+		let wasPC = true;
+		for (const ele of this.gameboard) {
+			if (ele != " ") {
+				wasPC = false;
+				break;
+			}
+		}
+
 		if (clearedLines > 0) {
-			this.state.combo += 1;
+			const garbage = this.gameDef.garbage.clear(clearedLines, this.state.combo, this.state.b2b, wasSpin, wasPC);
+			if (this.flags.receiveSentGarbage) {
+				console.log("sent garbage", garbage);
+				this.garbageQueue.push(garbage);
+			}
+
 			this.state.checkState = CheckState.Gravity;
+			if (wasB2B) {
+				this.state.b2b += 1;
+			} else {
+				this.state.b2b = 0;
+			}
+			this.state.combo += 1;
 		} else {
 			this.state.combo = 0;
 		}
 
 		this.abilityManager.charge += clearedLines;
+	}
+
+	public garbageQueue: number[] = [];
+
+	receiveGarbage(lines: number) {
+		this.gameboard.in();
+		this.gameboard.receiveGarbage(lines);
+		this.gameboard.out(0);
 	}
 
 	/**
@@ -521,7 +558,13 @@ export class Logic {
 				}
 			}
 		} else {
-			// TODO: [garbage] update garbage ?
+			if (this.garbageQueue.length > 0) {
+				let lines;
+				while ((lines = this.garbageQueue.pop()) != undefined) {
+					this.receiveGarbage(lines);
+				}
+			}
+
 			// if is piece in valid location
 			if (!this.pieceIntersecting(this.activePiece)) {
 				if (canHold && !this.state.heldLast && this.input.isPressed(Keys.Hold)) {
@@ -589,12 +632,13 @@ export class Logic {
 		if (this.input.isPressed(Keys.Ghostboard)) {
 			const { boardSize } = this.gameDef.settings;
 			this.ghostboard = this.gameboard.copy();
-			this.gameboard = new Gameboard(boardSize[0], boardSize[1]).fill(" ");
+			this.gameboard = new Gameboard(boardSize[0], boardSize[1], this).fill(" ");
 			this.input.pressedMap[Keys.Ghostboard] = false;
 		}
 
 		if (this.input.isPressed(Keys.ToggleGravity)) {
 			this.flags.disableGravity = !this.flags.disableGravity;
+			console.log("Toggled gravity, currently:", this.flags.disableGravity);
 			this.input.pressedMap[Keys.ToggleGravity] = false;
 		}
 
@@ -620,18 +664,13 @@ export class Logic {
 		if (this.input.isPressed(Keys.ToggleLocking)) {
 			this.flags.disableLockDelay = !this.flags.disableLockDelay;
 			this.input.pressedMap[Keys.ToggleLocking] = false;
+			console.log("Toggled locking, currently:", this.flags.disableLockDelay);
 		}
 
-		if (this.input.isPressed(Keys.TetroMode)) {
-			this.swapGameDef(tetro);
-			this.restart();
-			this.input.pressedMap[Keys.TetroMode] = false;
-		}
-
-		if (this.input.isPressed(Keys.PentoMode)) {
-			this.swapGameDef(pento);
-			this.restart();
-			this.input.pressedMap[Keys.PentoMode] = false;
+		if (this.input.isPressed(Keys.RecieveSentGarbage)) {
+			this.flags.receiveSentGarbage = !this.flags.receiveSentGarbage;
+			this.input.pressedMap[Keys.RecieveSentGarbage] = false;
+			console.log("Toggled receive sent garbage, currently:", this.flags.receiveSentGarbage);
 		}
 	}
 

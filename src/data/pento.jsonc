@@ -74,6 +74,13 @@
 		"queueLength": 7,
 		"pieceType": "normal",
 		"clearType": "line",
-		"dropDelay": 0
+		"dropDelay": 0,
+		"garbageLocation": "bottom",
+		"garbageHoles": 1,
+		"garbageCheese": 6
+	},
+	"garbage": {
+		// todo: actually build a real garbage system here
+		"lines": []
 	}
 }
