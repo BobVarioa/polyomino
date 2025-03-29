@@ -1,6 +1,6 @@
 # Todo / Design Doc
 
-- [ ] Gamemodes
+- [ ] Games
 	- [ ] Monomino
     	- Idea 1:
     		- Inspiration:
@@ -63,7 +63,7 @@
 			- Color matching? Problem: Too similar to domino, no idea how to make it more interesting
 			- Something about manipulating the board instead of your pieces? 
     			- [Pipe Tetris?](https://alphageneric.itch.io/pipe-tetris)
-	- [ ] Tetromino
+	- [x] Tetromino
 		- Inspiration:
 			- [Tetris](https://tetris.wiki/Tetris_Guideline)
 		- [x] Guildline rules
@@ -73,8 +73,7 @@
 			- [x] Piece preview
 			- [x] Hold box
 			- [x] Bag randomizer
-			- [ ] Levels
-			- [ ] Garbage
+			- [x] Garbage
 	- [ ] Pentomino
 		- Inspiration:
 			- Pentomino modes in jstris, Puyo Puyo Tetris, and various tetris fangames
@@ -124,7 +123,8 @@
 					- [ ] Fairies, removes n lines of garbage 
 					- [ ] Bomb, removes all tiles in an area
 					- [ ] Sword, clears all minos in a direction
-				- [ ] Send garbage to opponent but ... to you
+					- [ ] Putty, makes a piiece that can fit into any space (think O-spin)
+				- [ ] Send X lines of garbage to opponent but ... to you
 					- [ ] Double back?
 					- [ ] Unclearable garbage?
 				- [ ] Breakout? Like ball and paddle, probably your piece becomes the paddle
@@ -134,7 +134,7 @@
 	- [x] [Gravity Modes](https://tetris.wiki/Line_clear#Line_clear_gravity)
 		- [x] Naive
 		- [x] Sticky
-		- [~] Cascade
+		- [ ] Cascade
 		- [x] Linear
 	- [ ] Rotation Modes
 		- [x] Normal
@@ -150,15 +150,29 @@
     	- [x] Garbage
         	- [x] Normal
         	- [x] Unclearable
-	- [~] Actual menus 
-		- [~] Configurable preferences and keys
+	- [x] Actual menus 
+		- [x] Configurable preferences and keys
 			- [ ] Controller support
-		- [ ] i18n
+		- [x] i18n
+		- [ ] Add actual fail screen
+		- [ ] Add actual pause screen
 	- [ ] Mulitplayer
-    	- [ ] Sending garbage
-		- [ ] Rollback? Todo, research
+    	- [x] Sending garbage
+    	- [ ] Accounts
+    	- [ ] Actual connections between players
+        	- [ ] Sending garbage
+        	- [ ] Mirroring screens between players
+        	- [ ] Replays
+        	- [ ] Basic anti-cheat (ensure game state is possible)
+    	- [ ] Matchmaking
 		- [ ] Elo system
-	- [x] Prefrences
-		- [x] Soft drop factor
-	- [x] Game over
-- [ ] Mobile and Desktop version
+		- [ ] Rollback? Todo, research
+	- [ ] Game modes
+    	- [ ] Survival, last as long as possible, gravity increases with lines cleared
+    	- [ ] Line-attack, send as many lines as possible within ? minutes
+    	- [ ] Trainer, a mix between a puzzle mode and something that teaches you the mechanics of all the modes and features
+        	- [ ] This will include the PCO Mode I have already made
+    	- [ ] Custom, change flags and features to your hearts intent
+        	- [ ] I'm not sure if I want this to also be a map editor for players to upload, but I am unsure
+      	- [ ] Maps, player designed games and maps  
+- [ ] Desktop version
