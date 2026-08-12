@@ -9,13 +9,13 @@ export class GarbageManager {
 	) {}
 
 	static fromSchema(obj: GarbageSchema): GarbageManager {
-		const b2bTable = [];
+		const b2bTable: [number, number][] = [];
 		if (obj.b2b) {
 			for (const [k, v] of Object.entries(obj.b2b.bonus)) {
 				b2bTable.push([parseInt(k), v]);
 			}
 		}
-		const comboTable = [];
+		const comboTable: [number, number][]  = [];
 		if (obj.combo) {
 			for (const [k, v] of Object.entries(obj.combo)) {
 				comboTable.push([parseInt(k), v]);
@@ -32,7 +32,7 @@ export class GarbageManager {
 	}
 
 	isB2B(lines: number, spin: boolean): boolean {
-		if (this.b2bTable.length == 0) return false;
+		if (this.b2bTable.length == 0 || this.obj.b2b == undefined) return false;
 		if (lines >= this.obj.b2b.lines || (this.obj.b2b.spins && spin)) {
 			return true;
 		}
@@ -54,7 +54,7 @@ export class GarbageManager {
 		if (lines > 0) {
 			const linesBonus = this.obj.lines;
 			if (lines - 1 >= linesBonus.length) {
-				garbage += linesBonus.at(-1) + (linesBonus.length - lines);
+				garbage += linesBonus.at(-1)! + (linesBonus.length - lines);
 			} else {
 				garbage += linesBonus[lines - 1];
 			}
@@ -72,10 +72,10 @@ export class GarbageManager {
 		}
 		garbage += b2bBonus;
 
-		if (spin && lines > 0) {
+		if (spin && lines > 0 && this.obj.spin != undefined) {
 			const spinBonus = this.obj.spin.bonus;
 			if (lines - 1 >= spinBonus.length) {
-				garbage += spinBonus.at(-1) + (spinBonus.length - lines);
+				garbage += spinBonus.at(-1)! + (spinBonus.length - lines);
 			} else {
 				garbage += spinBonus[lines - 1];
 			}

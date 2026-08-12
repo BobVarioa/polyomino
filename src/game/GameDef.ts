@@ -103,7 +103,7 @@ export class GameDef {
 					const c = data[y][x];
 					if (canMetaPieces && pieces.has(c)) {
 						if (revSubpieces.has(c)) {
-							matrix.setXY(x, y, revSubpieces.get(c));
+							matrix.setXY(x, y, revSubpieces.get(c)!);
 						} else {
 							subpieces.set(subpieceIndex, c);
 							revSubpieces.set(c, subpieceIndex);

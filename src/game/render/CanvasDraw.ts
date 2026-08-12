@@ -4,14 +4,14 @@ import { PieceState } from "../PieceState";
 import { BaseDraw } from "./BaseDraw";
 
 export class CanvasDraw extends BaseDraw {
-	ctx: CanvasRenderingContext2D;
-	ctxQueue: CanvasRenderingContext2D;
-	ctxHold: CanvasRenderingContext2D;
+	ctx!: CanvasRenderingContext2D;
+	ctxQueue!: CanvasRenderingContext2D;
+	ctxHold!: CanvasRenderingContext2D;
 
-	maxWidth: number;
-	maxHeight: number;
+	maxWidth!: number;
+	maxHeight!: number;
 
-	topLeftMap: Map<string, [number, number]>;
+	topLeftMap!: Map<string, [number, number]>;
 
 	reset() {
 		super.reset();
@@ -19,7 +19,7 @@ export class CanvasDraw extends BaseDraw {
 
 		this.canvas.width = this.grid * gameDef.settings.screenSize[0];
 		this.canvas.height = this.grid * gameDef.settings.screenSize[1];
-		this.ctx = this.canvas.getContext("2d");
+		this.ctx = this.canvas.getContext("2d")!;
 
 		this.topLeftMap = new Map();
 
@@ -65,13 +65,13 @@ export class CanvasDraw extends BaseDraw {
 		this.holdCanvas.classList.remove("gone");
 		this.holdCanvas.width = this.maxWidth + 20; // 10px padding + piece size
 		this.holdCanvas.height = this.maxHeight + 20; // 10px padding + piece size
-		this.ctxHold = this.holdCanvas.getContext("2d");
+		this.ctxHold = this.holdCanvas.getContext("2d")!;
 
 		this.queueCanvas.classList.remove("gone");
 		this.queueCanvas.width = this.maxWidth + 20; // 10px padding + piece size
 		this.queueCanvas.height =
 			this.maxHeight * gameDef.settings.queueLength + 10 * (gameDef.settings.queueLength + 2); // 10px padding top and bottom + 5x piece size + 10px padding between pieces
-		this.ctxQueue = this.queueCanvas.getContext("2d");
+		this.ctxQueue = this.queueCanvas.getContext("2d")!;
 	}
 
 	private drawPieceState(piece: PieceState) {
@@ -87,7 +87,7 @@ export class CanvasDraw extends BaseDraw {
 				const v = piece.data.atXY(x, y);
 				if (v !== 0) {
 					ctx.fillStyle =
-						gameDef.colors.get(piece.piece.name) ?? gameDef.colors.get(gameDef.subpieces.get(v));
+						gameDef.colors.get(piece.piece.name) ?? gameDef.colors.get(gameDef.subpieces.get(v)!)!;
 					ctx.fillRect((piece.x + x) * grid, (piece.y - sh + y) * grid, grid - 1, grid - 1);
 				}
 			}
@@ -100,12 +100,12 @@ export class CanvasDraw extends BaseDraw {
 			logic: { gameDef },
 		} = this;
 
-		const topLeft = this.topLeftMap.get(piece.name);
+		const topLeft = this.topLeftMap.get(piece.name)!;
 		for (let y = topLeft[1]; y < piece.matrix.height; y++) {
 			for (let x = topLeft[0]; x < piece.matrix.width; x++) {
 				const v = piece.matrix.atXY(x, y);
 				if (v != 0) {
-					ctx.fillStyle = gameDef.colors.get(piece.name) ?? gameDef.colors.get(gameDef.subpieces.get(v));
+					ctx.fillStyle = gameDef.colors.get(piece.name) ?? gameDef.colors.get(gameDef.subpieces.get(v)!)!;
 					ctx.fillRect(
 						offsetX + (x - topLeft[0]) * grid,
 						offsetY + (y - topLeft[1]) * grid,
@@ -134,14 +134,14 @@ export class CanvasDraw extends BaseDraw {
 				const name = playfield.atXY(x, y);
 				if (name == " ") continue;
 
-				ctx.fillStyle = colors.get(name);
+				ctx.fillStyle = colors.get(name)!;
 				ctx.fillRect(x * grid, (y - sh) * grid, grid - 1, grid - 1);
 			}
 		}
 	}
 
-	lastQueueTop: string;
-	lastHold: string;
+	lastQueueTop!: string;
+	lastHold!: string;
 
 	clear(): void {
 		if (this.ctx && this.canvas) {
@@ -210,7 +210,7 @@ export class CanvasDraw extends BaseDraw {
 		if (this.lastQueueTop != nextPiece) {
 			this.lastQueueTop = nextPiece;
 
-			const queue = gameDef.randomizer.peek(gameDef.settings.queueLength).map((v) => gameDef.pieces.get(v));
+			const queue = gameDef.randomizer.peek(gameDef.settings.queueLength).map((v) => gameDef.pieces.get(v)!);
 			this.ctxQueue.clearRect(0, 0, this.queueCanvas.width, this.queueCanvas.height);
 			let x = 10;
 			let y = 10;
@@ -227,7 +227,7 @@ export class CanvasDraw extends BaseDraw {
 			this.ctxHold.clearRect(0, 0, this.holdCanvas.width, this.holdCanvas.height);
 
 			if (holdPiece != " ") {
-				this.drawPiece(this.ctxHold, gameDef.pieces.get(holdPiece), 10, 10);
+				this.drawPiece(this.ctxHold, gameDef.pieces.get(holdPiece)!, 10, 10);
 			}
 		}
 	}

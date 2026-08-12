@@ -1,4 +1,5 @@
 export const camelToSnake = <T>(obj: T, prefix: string) => Object.fromEntries(
+	// @ts-expect-error typescript is expecting an incredibly specific object here, but its fineeeeeeee
 	(Object.entries(obj) as [string, T[keyof T]][]).map((v) => {
 		let snake = "";
 		const camel = v[0];

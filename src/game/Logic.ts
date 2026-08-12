@@ -19,19 +19,19 @@ export enum CheckState {
 }
 
 export class Logic {
-	public gameboard: Gameboard;
-	public ghostboard: ArrayMatrix<string>;
-	public activePiece: PieceState;
-	public holdPiece: string;
-	public paused: boolean;
-	public swapHold: boolean;
-	public failed: boolean;
-	public lastMove: Keys;
-	public abilityManager: AbilityManager;
-	public gameDef: GameDef;
-	public garbageRandom: Random;
+	public gameboard!: Gameboard;
+	public ghostboard!: ArrayMatrix<string>;
+	public activePiece!: PieceState;
+	public holdPiece!: string;
+	public paused!: boolean;
+	public swapHold!: boolean;
+	public failed!: boolean;
+	public lastMove!: Keys;
+	public abilityManager!: AbilityManager;
+	public gameDef!: GameDef;
+	public garbageRandom!: Random;
 	public stopped: boolean = false;
-	mode: BaseMode;
+	mode!: BaseMode;
 
 	constructor(public prefs: Preferences, public input: InputManager, public draw: BaseDraw) {}
 
@@ -40,9 +40,9 @@ export class Logic {
 	init() {
 		this.draw.logic = this;
 
-		let rAF;
+		let rAF: number;
 		let then = 0;
-		const drawLoop = (now) => {
+		const drawLoop = (now: number) => {
 			now *= 0.001;
 			this.draw.frame(now - then);
 			then = now;
@@ -51,7 +51,8 @@ export class Logic {
 
 		const fps = 60;
 
-		let timeout;
+		// note: any because typescript desides we're in node here, and well, we're not in node, so i refuse to use NodeJS.Timeout as the type here 
+		let timeout: any; 
 
 		const func = () => {
 			if (!this.stopped) {
@@ -162,9 +163,9 @@ export class Logic {
 	}
 
 	calculateKicks(piece: Piece, from: RotState, to: RotState): [number, number][] {
-		const kicks = [];
+		const kicks: [number, number][] = [];
 
-		const kickTable = this.gameDef.rotations.get(piece.name);
+		const kickTable = this.gameDef.rotations.get(piece.name)!;
 
 		const fromK = kickTable[from.name()];
 		const toK = kickTable[to.name()];
@@ -178,7 +179,7 @@ export class Logic {
 		return kicks;
 	}
 
-	state: {
+	state!: {
 		areTimer: number;
 		arrTimer: number;
 		dasTimer: number;
@@ -191,13 +192,13 @@ export class Logic {
 		heldLast: boolean;
 		combo: number;
 		b2b: number;
-		dasDirection: Keys;
+		dasDirection: Keys | undefined;
 		failTimer: number;
 		failBuffer: number;
 		checkState: CheckState;
 	};
 
-	flags: {
+	flags!: {
 		noLineClears: boolean;
 		disableGravity: boolean;
 		disableLockDelay: boolean;
@@ -362,7 +363,7 @@ export class Logic {
 					let hole = false;
 					for (let x = 0; x < this.gameboard.width; x++) {
 						const piece = this.gameboard.atXY(x, y);
-						if (piece == " " || pieces.get(piece).flags & PieceFlags.Unclearable) {
+						if (piece == " " || pieces.get(piece)!.flags & PieceFlags.Unclearable) {
 							hole = true;
 							break;
 						}
@@ -381,7 +382,7 @@ export class Logic {
 			case "color":
 				const sectors = this.gameboard.detectSectors((a, b) => {
 					if (a === " ") return false;
-					if (pieces.get(a).flags & PieceFlags.Garbage) return false;
+					if (pieces.get(a)!.flags & PieceFlags.Garbage) return false;
 					return a === b;
 				});
 				this.gameboard.in();
@@ -394,7 +395,7 @@ export class Logic {
 								for (const yy of [-1, 1]) {
 									const piece = this.gameboard.atXY(x + xx, y + yy) ?? " ";
 									if (piece != " ") {
-										const flags = pieces.get(piece).flags;
+										const flags = pieces.get(piece)!.flags;
 										if (flags & PieceFlags.Garbage && !(flags & PieceFlags.Unclearable)) {
 											this.gameboard.delete(x + xx, y + yy);
 										}
@@ -519,7 +520,7 @@ export class Logic {
 
 			if (canHold && this.swapHold) {
 				const pieceName = this.holdPiece;
-				const piece = this.gameDef.pieces.get(pieceName);
+				const piece = this.gameDef.pieces.get(pieceName)!;
 				// x = ceil((BW - n) / 2)
 				const x = Math.ceil((boardSize[0] - piece.matrix.width) / 2);
 				let y = screenSize[1] + 1;
@@ -531,7 +532,7 @@ export class Logic {
 			} else {
 				// generate piece
 				const pieceName = this.gameDef.randomizer.next();
-				const piece = this.gameDef.pieces.get(pieceName);
+				const piece = this.gameDef.pieces.get(pieceName)!;
 				// x = ceil((BW - n) / 2)
 				let x = Math.ceil((boardSize[0] - piece.matrix.width) / 2);
 				let y = screenSize[1] + 1;
@@ -651,7 +652,7 @@ export class Logic {
 			const piecesKeys = [...pieces.keys()];
 			const nextPieceName = piecesKeys[(piecesKeys.indexOf(this.activePiece.piece.name) + 1) % piecesKeys.length];
 
-			const piece = pieces.get(nextPieceName);
+			const piece = pieces.get(nextPieceName)!;
 			// x = ceil((BW - n) / 2)
 			const x = Math.ceil((boardSize[0] - piece.matrix.width) / 2);
 			let y = screenSize[1] + 1;

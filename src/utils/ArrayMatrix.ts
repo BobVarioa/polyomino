@@ -59,7 +59,7 @@ export class ArrayMatrix<T> extends Array<T> {
 		this[x + this.width * y] = value;
 	}
 
-	shiftUp(n: number, emptyVal) {
+	shiftUp(n: number, emptyVal: T) {
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
 				this.setXY(x,y, this.atXY(x, y + n) ?? emptyVal)

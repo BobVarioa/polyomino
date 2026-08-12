@@ -7,7 +7,7 @@ export class MultiKeyMap<K, V>  {
 
 	set(keys: K[], value: V) {
 		let index = -1;
-		let keyset: Set<K>
+		let keyset!: Set<K>
 		for (let i = 0; i < this.#keys.length; i++) {
 			keyset = this.#keys[i];
 			if (this.#values[i] == value) {
@@ -38,7 +38,7 @@ export class MultiKeyMap<K, V>  {
 		}
 	}
 
-	get(key: K): V {
+	get(key: K): V | undefined {
 		for (let i = 0; i < this.#keys.length; i++) {
 			const keyset = this.#keys[i];
 

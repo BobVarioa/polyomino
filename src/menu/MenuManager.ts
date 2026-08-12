@@ -4,6 +4,7 @@ import { hasOwn } from "../utils/types";
 import { InputManager } from "../game/InputManager";
 import { Preferences } from "../game/Preferences";
 import { l } from "../utils/lang";
+import { GameDef } from "../game/GameDef";
 
 interface BaseMenuEle {
 	id: string;
@@ -73,6 +74,7 @@ export class MenuManager {
 					ele.textContent = l(menuEle.id);
 					ele.addEventListener("click", () => {
 						this.parentEle.replaceChildren();
+						// @ts-expect-error ts doesn't like that we index a string to a string set
 						this.logic.swapGameDef(GameTypes[menuEle.id.slice("game.".length)]);
 
 						this.logic._signal.once("fail", () => {
@@ -96,7 +98,7 @@ export class MenuManager {
 
 					setEle.textContent = l(menuEle.id);
 					setEle.addEventListener("click", () => {
-						const cb = (ev) => {
+						const cb = (ev: KeyboardEvent) => {
 							if (this.input.inputMap.has(ev.key)) {
 								this.input.inputMap.deleteKey(ev.key);
 							} else {

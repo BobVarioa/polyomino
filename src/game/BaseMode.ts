@@ -2,7 +2,7 @@ import { ArrayMatrix } from "../utils/ArrayMatrix";
 import { Logic } from "./Logic";
 
 export abstract class BaseMode {
-	public logic: Logic
+	public logic!: Logic
 	
 	constructor() {}
 

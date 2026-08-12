@@ -2,20 +2,20 @@ import { mat4 } from "gl-matrix";
 import { BaseDraw } from "./BaseDraw";
 
 export class GlDraw extends BaseDraw {
-	gl: WebGL2RenderingContext;
-	clientWidth: number;
-	clientHeight: number;
-	programInfo: {
+	gl!: WebGL2RenderingContext;
+	clientWidth!: number;
+	clientHeight!: number;
+	programInfo!: {
 		program: WebGLProgram;
 		attribLocations: { vertexPosition: number; vertexColor: number };
 		uniformLocations: { projectionMatrix: WebGLUniformLocation; modelViewMatrix: WebGLUniformLocation };
 	};
-	buffers: { position: WebGLBuffer; color: WebGLBuffer };
+	buffers!: { position: WebGLBuffer; color: WebGLBuffer };
 
 	reset(): (deltaTime: number) => void {
 		super.reset();
 
-		this.gl = this.canvas.getContext("webgl2");
+		this.gl = this.canvas.getContext("webgl2")!;
 		this.clientWidth = this.canvas.clientWidth;
 		this.clientHeight = this.canvas.clientHeight;
 
@@ -79,8 +79,8 @@ export class GlDraw extends BaseDraw {
 				vertexColor: gl.getAttribLocation(shaderProgram, "aVertexColor"),
 			},
 			uniformLocations: {
-				projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix"),
-				modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix"),
+				projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix")!,
+				modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix")!,
 			},
 		};
 
@@ -154,7 +154,7 @@ export class GlDraw extends BaseDraw {
 	 */
 	loadShader(type: number, source: string) {
 		const gl = this.gl;
-		const shader = gl.createShader(type);
+		const shader = gl.createShader(type)!;
 
 		// Send the source to the shader object
 
@@ -169,7 +169,7 @@ export class GlDraw extends BaseDraw {
 		if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
 			alert(`An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`);
 			gl.deleteShader(shader);
-			return null;
+			throw 0;
 		}
 
 		return shader;
@@ -191,7 +191,7 @@ export class GlDraw extends BaseDraw {
 
 		if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
 			alert(`Unable to initialize the shader program: ${gl.getProgramInfoLog(shaderProgram)}`);
-			return null;
+			throw 0;
 		}
 
 		return shaderProgram;
@@ -211,7 +211,7 @@ export class GlDraw extends BaseDraw {
 		gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
 	}
 
-	drawScene(squareRotation) {
+	drawScene(squareRotation: number) {
 		const { gl, programInfo, buffers } = this;
 
 		gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
@@ -304,7 +304,7 @@ export class GlDraw extends BaseDraw {
 		gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
 	}
 
-	state: {
+	state!: {
 		squareRotation: number;
 	};
 

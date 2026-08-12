@@ -154,7 +154,7 @@ const solutions = new MultiKeyMap<string, string[]>();
 export class PCOMode extends BaseMode {
 
 	state = 0;
-	solution: string[];
+	solution!: string[];
 
 	frame() {
 		if (this.state == 0) {

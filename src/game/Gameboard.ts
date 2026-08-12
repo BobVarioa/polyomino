@@ -38,9 +38,9 @@ export default class Gameboard extends ArrayMatrix<string> {
 
 	actionQueue: ActionList[] = [];
 	delayTimer: number = 0;
-	active: Action[];
+	active!: Action[];
 
-	// creates a list of animations to perform
+	// creates a list of actions to perform
 	// in()
 	in() {
 		this.active = [];
@@ -66,7 +66,7 @@ export default class Gameboard extends ArrayMatrix<string> {
 		if (this.active.length != 0) {
 			this.actionQueue.push({ delay, list: this.active });
 		}
-		this.active = undefined; // technically unnecessary, but things will throw errors if they are in an incorrect state
+		this.active = []; // clear action list
 	}
 
 	// will increment the action timer, commits actions when completed, returns true if the action in ongoing

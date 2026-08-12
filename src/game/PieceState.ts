@@ -37,6 +37,7 @@ export class RotState {
 			case 3:
 				return "R";
 		}
+		throw new RangeError("Invalid state of this.value.")
 	}
 }
 
@@ -44,7 +45,8 @@ export class PieceState {
 	public data: ArrayMatrix<number>;
 	public invalid = false;
 
-	static none = new PieceState(undefined, undefined, RotState.Initial, 0, 0).invalidate();
+	// note: this is special, its fine if everything is null here
+	static none = new PieceState(undefined!, undefined!, RotState.Initial, 0, 0).invalidate();
 
 	constructor(public parent: Logic, public piece: Piece, public rot: RotState, public x: number, public y: number) {
 		this.data = piece?.matrix;

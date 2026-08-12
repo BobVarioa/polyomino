@@ -34,7 +34,7 @@ function wrapGenerator<T>(gen: (rng: Random) => Generator<T>): WrappedGenerator<
 	return {
 		next(): T {
 			if (peekCache.length > 0) {
-				return peekCache.shift();
+				return peekCache.shift()!;
 			}
 			return iter.next().value as T;
 		},
@@ -117,12 +117,12 @@ function createRandomizer(str: string): (rng: Random) => Generator<string> {
 					if (!bag.length) {
 						if (bonus) {
 							if (!bonusBag.length) bonusBag = rng.shuffleArray(list.slice());
-							yield bonusBag.pop();
+							yield bonusBag.pop()!;
 						} else {
-							yield rng.chooseRandom(list);
+							yield rng.chooseRandom(list)!;
 						}
 					} else {
-						yield bag.pop();
+						yield bag.pop()!;
 					}
 				}
 				bag = rng.shuffleArray(list.slice());

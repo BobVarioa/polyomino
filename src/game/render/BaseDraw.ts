@@ -1,13 +1,13 @@
 import { Logic } from "../Logic";
 
 export abstract class BaseDraw {
-	grid: number;
-	sw: number;
-	sh: number;
+	grid!: number;
+	sw!: number;
+	sh!: number;
 
-	backgroundColor: string;
-	gridColor: string;
-	logic: Logic;
+	backgroundColor!: string;
+	gridColor!: string;
+	logic!: Logic;
 
 	constructor(
 		public canvas: HTMLCanvasElement,
