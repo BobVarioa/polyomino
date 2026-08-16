@@ -18,7 +18,7 @@
         		- [Stackitect](https://farly.itch.io/stackitect)
         		- [C::Reactris](https://hdms.itch.io/c4r)
       		- [ ] Blocks with special abilities that interact in dynamic ways
-        		- [ ] Rest`ricted placement mechanics
+        		- [ ] Restricted placement mechanics
         		- [ ] Mainipulating the playfield (pushing blocks, creating new blocks, destroying them, etc.)
         		- [ ] Special clear mechanics (if near X block and Y block, destroy this one)
         		- [ ] Liquids? (this works in C::Reactris because there's proper tetraminos with this ability, unsure how this would work with monominos)
@@ -55,7 +55,10 @@
 			- [Puyo Puyo](https://puyonexus.com/wiki/Tsu_(rule))
 		- [x] Multicolor pieces that clear based on the color
 		- [x] Linear gravity
-		- [ ] Falling garbage
+		- [ ] Garbage
+    		- [x] Falling garbage
+    		- [ ] Actually create garbage table
+		- [ ] Verify piece generation is fair and good
 	- [ ] Tromino
 		- Inspiration:
 			- None (as of yet)
@@ -89,6 +92,7 @@
 			- [Puyo Puyo Tetris: Party](https://puyonexus.com/wiki/Party)
 			- [Tetris Effect Conected: Zone](https://tetris.wiki/Tetris_Effect#Zone_mechanic)
 			- [Pac-Attack](https://en.wikipedia.org/wiki/Pac-Attack)
+			- ...and the various games listed below
 		- [ ] Special Effects
 			- These are obtained via an XP like system, or maybe an ingame currency to give more agency to the player
 			- [ ] Characters
@@ -104,13 +108,11 @@
 					- Maybe something like [Combo Postage](https://kirklindsay.itch.io/combo-postage)?
 					- Player could be crushed by blocks, but could do something to clear them
 					- Blocks would increase in speed much more rapidly
-				- [ ] Manipulating your garbage
+				- [ ] Manipulating your sent garbage
 					- [ ] Multi hole garbage
-					- [ ] Garbage which requires some condition?
+					- [ ] Garbage which requires some condition to be cleared
 				- [ ] Something that requires you to both move pieces and a cursor
-					- Maybe something like [Tetrisweeper](https://kertisjones.itch.io/tetrisweeper)? 
-				- [ ] Something like [Scrabble Tetris](https://htwins.net/scrabbletetris/)?
-					- Not sure if I like this one because i18n
+					- Maybe something like [Tetrisweeper](https://kertisjones.itch.io/tetrisweeper)?
 				- [ ] Something unlike the other things mentioned
 					- [Sandtris](https://sandtris.com/)
 					- [Soft Body Tetris](https://newbie-indie-game-dev.itch.io/softbody-tetris)
