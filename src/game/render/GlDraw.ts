@@ -26,6 +26,8 @@ export class GlDraw extends BaseDraw {
 			textureSampler: WebGLUniformLocation;
 			normalSampler: WebGLUniformLocation;
 			lightDirection: WebGLUniformLocation;
+			lightColor: WebGLUniformLocation;
+			ambientLight: WebGLUniformLocation;
 		};
 	};
 	buffers!: {
@@ -53,11 +55,11 @@ export class GlDraw extends BaseDraw {
 		this.gl = this.canvas.getContext("webgl2")!;
 		this.initGl();
 
-		const ele = this.canvas.parentElement!;
-		ele.addEventListener("mousemove", (e) => {
-			this.state.mouseX = e.clientX / ele.clientWidth;
-			this.state.mouseY = e.clientY / ele.clientHeight;
-		});
+		// const ele = this.canvas.parentElement!;
+		// ele.addEventListener("mousemove", (e) => {
+		// 	this.state.mouseX = e.clientX / ele.clientWidth;
+		// 	this.state.mouseY = e.clientY / ele.clientHeight;
+		// });
 	}
 
 	reset() {
@@ -116,25 +118,21 @@ export class GlDraw extends BaseDraw {
 			uniform sampler2D uTextureSampler;
 			uniform sampler2D uNormalSampler;
 			uniform vec3 uLightDirection;
+			uniform vec3 uLightColor;
+			uniform vec3 uAmbientLight;
 			
 			varying vec4 vColor;
 			varying vec2 vTextureCoord;
 
 			void main(void) {
-				vec3 ambientLight = vec3(0.3, 0.3, 0.3);
-				vec3 directionalLightColor = vec3(1, 1, 1);
-				vec3 directionalVector = uLightDirection;
-
 				vec3 vertexNormal = texture2D(uNormalSampler, vTextureCoord.xy / 4.0).xyz;
-
 				vec4 transformedNormal = uNormalMatrix * vec4(vertexNormal, 1.0);
-
-				float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
-				vec3 light = ambientLight + (directionalLightColor * directional);
-
+				float directional = max(dot(transformedNormal.xyz, uLightDirection), 0.0);
+				
+				vec3 light = uAmbientLight + (uLightColor * directional);
 				vec4 texel = texture2D(uTextureSampler, vTextureCoord.xy / 4.0);
 
-				gl_FragColor = vec4(texel.rgb * light.rgb, texel.a * vColor.a);
+				gl_FragColor = vec4(texel.rgb * light.rgb, vColor.a);
 			}
 		`;
 
@@ -154,12 +152,17 @@ export class GlDraw extends BaseDraw {
 				textureCoord: gl.getAttribLocation(shaderProgram, "aTextureCoord"),
 			},
 			uniformLocations: {
+				// general
 				projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix")!,
 				modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix")!,
-				normalMatrix: gl.getUniformLocation(shaderProgram, "uNormalMatrix")!,
+				// texture
 				textureSampler: gl.getUniformLocation(shaderProgram, "uTextureSampler")!,
+				normalMatrix: gl.getUniformLocation(shaderProgram, "uNormalMatrix")!,
 				normalSampler: gl.getUniformLocation(shaderProgram, "uNormalSampler")!,
+				// light
 				lightDirection: gl.getUniformLocation(shaderProgram, "uLightDirection")!,
+				lightColor: gl.getUniformLocation(shaderProgram, "uLightColor")!,
+				ambientLight: gl.getUniformLocation(shaderProgram, "uAmbientLight")!,
 			},
 		};
 
@@ -374,8 +377,7 @@ export class GlDraw extends BaseDraw {
 			const piece = this.logic.activePiece;
 			const ghostPiece = this.logic.activePiece.copy().hardDrop();
 
-			this.drawPieceState(ghostPiece, 0.4);
-
+			this.drawPieceState(ghostPiece, 0.2);
 			this.drawPieceState(piece);
 		}
 
@@ -421,7 +423,8 @@ export class GlDraw extends BaseDraw {
 		mat4.invert(normalMatrix, modelViewMatrix);
 		mat4.transpose(normalMatrix, normalMatrix);
 
-		const lightPos = [1 - this.state.mouseX * 2, 1 - this.state.mouseY * 2, 0.75];
+		// const lightPos = [1 - this.state.mouseX * 2, 1 - this.state.mouseY * 2, 0.75];
+		const lightPos = [0.8, 0.8, 0.75];
 		vec3.normalize(lightPos, lightPos);
 
 		this.setPositionAttribute();
@@ -436,6 +439,8 @@ export class GlDraw extends BaseDraw {
 		gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 		gl.uniformMatrix4fv(programInfo.uniformLocations.normalMatrix, false, normalMatrix);
 		gl.uniform3fv(programInfo.uniformLocations.lightDirection, lightPos);
+		gl.uniform3fv(programInfo.uniformLocations.ambientLight, [0.1, 0.1, 0.1]);
+		gl.uniform3fv(programInfo.uniformLocations.lightColor, [1, 1, 1]);
 
 		// Load the texture into WebGL
 		gl.activeTexture(gl.TEXTURE0);
