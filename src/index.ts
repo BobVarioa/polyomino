@@ -43,14 +43,10 @@ function init() {
 	const canvas = $<HTMLCanvasElement>("#gameCanvas");
 	const holdCanvas = $<HTMLCanvasElement>("#holdCanvas");
 	const queueCanvas = $<HTMLCanvasElement>("#queueCanvas");
-	const draw = Draw.create(DrawMode.Canvas, canvas, holdCanvas, queueCanvas);
-	draw.clear();
-
-	draw.grid = 32;
-
+	const draw = Draw.create(DrawMode.WebGL, canvas, holdCanvas, queueCanvas);
 	const logic = new Logic(prefs, input, draw);
 	logic.init();
-
+	
 	// init menus
 	const menusEle = $<HTMLDivElement>("#menus");
 

@@ -8,11 +8,6 @@ export class CanvasDraw extends BaseDraw {
 	ctxQueue!: CanvasRenderingContext2D;
 	ctxHold!: CanvasRenderingContext2D;
 
-	maxWidth!: number;
-	maxHeight!: number;
-
-	topLeftMap!: Map<string, [number, number]>;
-
 	reset() {
 		super.reset();
 		const gameDef = this.logic.gameDef;
@@ -20,47 +15,6 @@ export class CanvasDraw extends BaseDraw {
 		this.canvas.width = this.grid * gameDef.settings.screenSize[0];
 		this.canvas.height = this.grid * gameDef.settings.screenSize[1];
 		this.ctx = this.canvas.getContext("2d")!;
-
-		this.topLeftMap = new Map();
-
-		let maxW = 0;
-		let maxH = 0;
-		for (const piece of gameDef.pieces.values()) {
-			let topLeftPoint: [number, number] = [0, 0];
-			let realWidth = 0;
-			let realHeight = 0;
-			// NOTE: you probably don't need two loops here but pieces are so small, and this only happens once, so this really shouldn't be a big deal
-			column: for (let x = 0; x < piece.matrix.width; x++) {
-				for (let y = 0; y < piece.matrix.height; y++) {
-					if (piece.matrix.atXY(x, y) != 0) {
-						if (realWidth == 0) {
-							topLeftPoint[0] = x;
-						}
-						realWidth++;
-						continue column;
-					}
-				}
-			}
-
-			row: for (let y = 0; y < piece.matrix.height; y++) {
-				for (let x = 0; x < piece.matrix.width; x++) {
-					if (piece.matrix.atXY(x, y) != 0) {
-						if (realHeight == 0) {
-							topLeftPoint[1] = y;
-						}
-						realHeight++;
-						continue row;
-					}
-				}
-			}
-
-			this.topLeftMap.set(piece.name, topLeftPoint);
-
-			maxW = Math.max(realWidth, maxW);
-			maxH = Math.max(realHeight, maxH);
-		}
-		this.maxHeight = maxH * this.grid;
-		this.maxWidth = maxW * this.grid;
 
 		this.holdCanvas.classList.remove("gone");
 		this.holdCanvas.width = this.maxWidth + 20; // 10px padding + piece size

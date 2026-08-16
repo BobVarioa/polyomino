@@ -38,6 +38,7 @@ export class Piece {
 export interface PieceDef {
 	readonly def: string;
 	readonly color: string;
+	readonly uv: [number, number];
 }
 
 export interface Settings {
@@ -75,6 +76,7 @@ export class GameDef {
 		public readonly randomizer: WrappedGenerator<string>,
 		public readonly settings: Settings,
 		public readonly colors: Map<string, string>,
+		public readonly uvs: Map<string, [number, number]>,
 		public readonly subpieces: Map<number, string>,
 		public readonly garbage: GarbageManager
 	) {}
@@ -92,6 +94,7 @@ export class GameDef {
 		const subpieces = new Map<number, string>();
 		const revSubpieces = new Map<string, number>();
 		const colors = new Map<string, string>();
+		const uvs = new Map<string, [number, number]>();
 
 		for (const [key, value] of Object.entries(json.pieces)) {
 			const data = value.def.split("/");
@@ -118,6 +121,7 @@ export class GameDef {
 
 			pieces.set(key, new Piece(key, matrix));
 			if (value.color) colors.set(key, value.color);
+			if (value.uv) uvs.set(key, value.uv);
 		}
 
 		// prettier-ignore
@@ -156,6 +160,6 @@ export class GameDef {
 
 		const garbageManager = GarbageManager.fromSchema(json.garbage);
 
-		return new GameDef(pieces, rotations, randomizer, settings, colors, subpieces, garbageManager);
+		return new GameDef(pieces, rotations, randomizer, settings, colors, uvs, subpieces, garbageManager);
 	}
 }

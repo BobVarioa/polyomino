@@ -32,17 +32,23 @@ canvas {
 #holdCanvas {
 	grid-row: 1;
 	grid-column: 1;
+	image-rendering: crisp-edges; /* for firefox */
+	image-rendering: pixelated; 
 }
 
 #queueCanvas {
 	grid-row: 1;
 	grid-column: 3;
+	image-rendering: crisp-edges; /* for firefox */
+	image-rendering: pixelated; 
 }
 
 #gameCanvas {
 	grid-row: 1;
 	grid-column: 2;
 	background: linear-gradient(in hsl, black, hsl(263, 76%, 8%));
+	image-rendering: crisp-edges; /* for firefox */
+	image-rendering: pixelated; 
 }
 
 #menus {
