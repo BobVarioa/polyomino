@@ -15,7 +15,7 @@ sequence of [list]
 	Keep a list called history of the last len pieces dealt. (Repeated pieces in list are separate pieces for purpose of the history.) Choose a piece at random from list which is not in history and deal it. Then put the piece in history and remove the oldest piece from history.
 [list] with [len] history [number] rolls
 	Keep a list called history of the last len pieces dealt. (Repeated pieces in list are separate pieces for purpose of the history.) Up to number times, choose a piece at random from list, and if it is not in history, deal it. Otherwise, deal the last piece chosen. Then put the piece in history and remove the oldest piece from history.
-[spec] first [list]
+[spec] but first [list]
 	Follow spec, except choose the first piece from list.
 */
 
