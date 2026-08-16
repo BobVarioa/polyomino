@@ -467,8 +467,6 @@ export class Logic {
 			this.state.pauseBuffer--;
 		}
 
-		if (this.paused) return;
-
 		if (this.failed) {
 			if (this.state.failTimer >= 60) {
 				this._signal.emit("stop");
@@ -478,7 +476,6 @@ export class Logic {
 			if (this.input.isPressed(Keys.Fail)) {
 				this.state.failTimer += 1;
 			}
-			return;
 		}
 
 		if (this.input.isPressed(Keys.Fail)) {
@@ -494,6 +491,8 @@ export class Logic {
 		} else {
 			this.state.failBuffer--;
 		}
+
+		if (this.paused) return;
 
 		if (this.gameboard.step()) return;
 		if (this.state.checkState == CheckState.Clear) {
