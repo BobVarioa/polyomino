@@ -1,4 +1,4 @@
-import { mat4 } from "gl-matrix";
+import { mat4, vec3 } from "gl-matrix";
 import { BaseDraw } from "./BaseDraw";
 import { PieceState } from "../PieceState";
 import { Piece } from "../GameDef";
@@ -25,7 +25,7 @@ export class GlDraw extends BaseDraw {
 			normalMatrix: WebGLUniformLocation;
 			textureSampler: WebGLUniformLocation;
 			normalSampler: WebGLUniformLocation;
-			directionalVector: WebGLUniformLocation;
+			lightDirection: WebGLUniformLocation;
 		};
 	};
 	buffers!: {
@@ -57,7 +57,7 @@ export class GlDraw extends BaseDraw {
 		ele.addEventListener("mousemove", (e) => {
 			this.state.mouseX = e.clientX / ele.clientWidth;
 			this.state.mouseY = e.clientY / ele.clientHeight;
-		})
+		});
 	}
 
 	reset() {
@@ -115,7 +115,7 @@ export class GlDraw extends BaseDraw {
 			uniform mat4 uNormalMatrix;
 			uniform sampler2D uTextureSampler;
 			uniform sampler2D uNormalSampler;
-			uniform vec3 uDirectionalVector;
+			uniform vec3 uLightDirection;
 			
 			varying vec4 vColor;
 			varying vec2 vTextureCoord;
@@ -123,7 +123,7 @@ export class GlDraw extends BaseDraw {
 			void main(void) {
 				vec3 ambientLight = vec3(0.3, 0.3, 0.3);
 				vec3 directionalLightColor = vec3(1, 1, 1);
-				vec3 directionalVector = normalize(uDirectionalVector);
+				vec3 directionalVector = uLightDirection;
 
 				vec3 vertexNormal = texture2D(uNormalSampler, vTextureCoord.xy / 4.0).xyz;
 
@@ -159,7 +159,7 @@ export class GlDraw extends BaseDraw {
 				normalMatrix: gl.getUniformLocation(shaderProgram, "uNormalMatrix")!,
 				textureSampler: gl.getUniformLocation(shaderProgram, "uTextureSampler")!,
 				normalSampler: gl.getUniformLocation(shaderProgram, "uNormalSampler")!,
-				directionalVector: gl.getUniformLocation(shaderProgram, "uDirectionalVector")!,
+				lightDirection: gl.getUniformLocation(shaderProgram, "uLightDirection")!,
 			},
 		};
 
@@ -337,7 +337,7 @@ export class GlDraw extends BaseDraw {
 				if (name == " ") continue;
 
 				const [u, v] = gameDef.uvs.get(name)!;
-				this.drawBlock(x, y - sh, u, v, a = 1.0);
+				this.drawBlock(x, y - sh, u, v, a);
 			}
 		}
 	}
@@ -411,27 +411,18 @@ export class GlDraw extends BaseDraw {
 		const zFar = 100.0;
 		const projectionMatrix = mat4.create();
 
-		mat4.ortho(projectionMatrix, 0, this.sw, -this.sh + 1, 0, zNear, zFar)
+		mat4.ortho(projectionMatrix, 0, this.sw, -this.sh + 1, 0, zNear, zFar);
 
 		const modelViewMatrix = mat4.create();
-		mat4.translate(
-			modelViewMatrix, // destination matrix
-			modelViewMatrix, // matrix to translate
-			[0, 0, -1.0], // amount to translate
-		);
-		// mat4.rotate(
-		// 	modelViewMatrix, // destination matrix
-		// 	modelViewMatrix, // matrix to rotate
-		// 	0, // amount to rotate in radians
-		// 	[0, 0, 1],
-		// ); // axis to rotate around
+		mat4.translate(modelViewMatrix, modelViewMatrix, [0, 0, -1.0]);
+		// mat4.rotate(modelViewMatrix, modelViewMatrix, 0, [0, 0, 1]);
 
 		const normalMatrix = mat4.create();
 		mat4.invert(normalMatrix, modelViewMatrix);
 		mat4.transpose(normalMatrix, normalMatrix);
 
-		// [ 0.85, 0.8, 0.75 ]
-		const lightPos = [1 - (this.state.mouseX * 2), 1 - (this.state.mouseY * 2), 0.75];
+		const lightPos = [1 - this.state.mouseX * 2, 1 - this.state.mouseY * 2, 0.75];
+		vec3.normalize(lightPos, lightPos);
 
 		this.setPositionAttribute();
 		this.setTextureAttribute();
@@ -444,7 +435,7 @@ export class GlDraw extends BaseDraw {
 		gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
 		gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 		gl.uniformMatrix4fv(programInfo.uniformLocations.normalMatrix, false, normalMatrix);
-		gl.uniform3fv(programInfo.uniformLocations.directionalVector, lightPos);
+		gl.uniform3fv(programInfo.uniformLocations.lightDirection, lightPos);
 
 		// Load the texture into WebGL
 		gl.activeTexture(gl.TEXTURE0);
@@ -465,7 +456,6 @@ export class GlDraw extends BaseDraw {
 		this.state.positions = [];
 		this.state.textureCoords = [];
 		this.state.masks = [];
-
 		this.buffers = this.initBuffers();
 
 		this.drawScene();
