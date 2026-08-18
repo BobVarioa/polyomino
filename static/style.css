@@ -19,34 +19,15 @@ body {
 	display: none;
 }
 
-canvas {
-	border: 1px solid white;
-}
-
 .gameContainer {
 	display: grid;
 	grid-template-columns: 0.5fr 1fr 0.5fr;
 	grid-template-rows: 1fr;
 }
 
-#holdCanvas {
-	grid-row: 1;
-	grid-column: 1;
-	image-rendering: crisp-edges; /* for firefox */
-	image-rendering: pixelated; 
-}
-
-#queueCanvas {
-	grid-row: 1;
-	grid-column: 3;
-	image-rendering: crisp-edges; /* for firefox */
-	image-rendering: pixelated; 
-}
-
 #gameCanvas {
 	grid-row: 1;
-	grid-column: 2;
-	background: linear-gradient(in hsl, black, hsl(263, 76%, 8%));
+	grid-column: 1 / 4;
 	image-rendering: crisp-edges; /* for firefox */
 	image-rendering: pixelated; 
 }

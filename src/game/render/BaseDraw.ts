@@ -9,15 +9,13 @@ export abstract class BaseDraw {
 	gridColor!: string;
 	logic!: Logic;
 
-	maxWidth!: number;
-	maxHeight!: number;
+	maxPieceWidth!: number;
+	maxPieceHeight!: number;
 
 	topLeftMap!: Map<string, [number, number]>;
 
 	constructor(
 		public canvas: HTMLCanvasElement,
-		public holdCanvas: HTMLCanvasElement,
-		public queueCanvas: HTMLCanvasElement,
 	) {}
 
 	reset() {
@@ -25,8 +23,7 @@ export abstract class BaseDraw {
 
 		const { settings: { boardSize, screenSize }, pieces } = this.logic.gameDef;
 		this.sw = screenSize[0];
-		// i.e 40 - 20 = 20, row 20 is our 0
-		this.sh = boardSize[1] - screenSize[1];
+		this.sh = screenSize[1];
 
 		this.backgroundColor = this.logic.prefs.backgroundColor;
 		this.gridColor = this.logic.prefs.gridColor;
@@ -69,8 +66,13 @@ export abstract class BaseDraw {
 			maxW = Math.max(realWidth, maxW);
 			maxH = Math.max(realHeight, maxH);
 		}
-		this.maxHeight = maxH * this.grid;
-		this.maxWidth = maxW * this.grid;
+
+		
+		this.maxPieceHeight = maxH;
+		this.maxPieceWidth = maxW;
+		
+		console.log(this.topLeftMap);
+		console.log(this.maxPieceHeight, this.maxPieceWidth)
 	}
 
 	abstract clear(): void;

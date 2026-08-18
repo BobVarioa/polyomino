@@ -12,12 +12,12 @@ export class GlDraw extends BaseDraw {
 	gl!: WebGL2RenderingContext;
 	clientWidth!: number;
 	clientHeight!: number;
-	programInfo!: {
+	triProgram!: {
 		program: WebGLProgram;
 		attribLocations: {
-			vertexPosition: number;
-			vertexColor: number;
-			textureCoord: number;
+			position: number;
+			mask: number;
+			uvPosition: number;
 		};
 		uniformLocations: {
 			projectionMatrix: WebGLUniformLocation;
@@ -30,29 +30,47 @@ export class GlDraw extends BaseDraw {
 			ambientLight: WebGLUniformLocation;
 		};
 	};
+	lineProgram!: {
+		program: WebGLProgram;
+		attribLocations: {
+			position: number;
+			color: number;
+		};
+		uniformLocations: {
+			projectionMatrix: WebGLUniformLocation;
+			modelViewMatrix: WebGLUniformLocation;
+		};
+	};
 	buffers!: {
-		position: WebGLBuffer;
+		positions: WebGLBuffer;
 		mask: WebGLBuffer;
-		textureCoord: WebGLBuffer;
+		uvPostions: WebGLBuffer;
+		simplePositions: WebGLBuffer;
+		simpleColors: WebGLBuffer;
 	};
 	textures!: {
 		pieces: WebGLTexture;
 		pieceNormals: WebGLTexture;
 	};
 	state!: {
-		squareRotation: number;
-		vertexes: number;
+		triVertexes: number;
 		positions: number[];
-		textureCoords: number[];
+		uvPositions: number[];
+		lineVertexes: number;
+		linePositions: number[];
+		lineColors: number[];
+		rectVertexes: number;
+		rectPositions: number[];
+		rectColors: number[];
 		masks: number[];
-		mouseX: number;
-		mouseY: number;
 	};
 
-	constructor(canvas: HTMLCanvasElement, holdCanvas: HTMLCanvasElement, queueCanvas: HTMLCanvasElement) {
-		super(canvas, holdCanvas, queueCanvas);
+	constructor(canvas: HTMLCanvasElement) {
+		super(canvas);
 
-		this.gl = this.canvas.getContext("webgl2")!;
+		this.gl = this.canvas.getContext("webgl2", {
+			premultipliedAlpha: false,
+		})!;
 		this.initGl();
 
 		// const ele = this.canvas.parentElement!;
@@ -65,17 +83,26 @@ export class GlDraw extends BaseDraw {
 	reset() {
 		super.reset();
 
+		this.canvas.width = this.grid * (this.sw + this.maxPieceWidth * 2 + 4);
+		this.canvas.height = this.grid * (this.sh + 2);
+
 		this.clientWidth = this.canvas.clientWidth;
 		this.clientHeight = this.canvas.clientHeight;
 
+		this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+
 		this.state = {
-			squareRotation: 0,
-			vertexes: 0,
+			triVertexes: 0,
 			positions: [],
-			textureCoords: [],
+			uvPositions: [],
 			masks: [],
-			mouseX: 0,
-			mouseY: 0,
+
+			lineVertexes: 0,
+			linePositions: [],
+			rectPositions: [],
+			rectVertexes: 0,
+			lineColors: [],
+			rectColors: [],
 		};
 	}
 
@@ -92,27 +119,31 @@ export class GlDraw extends BaseDraw {
 		// Clear the color buffer with specified clear color
 		gl.clear(gl.COLOR_BUFFER_BIT);
 
-		const vsSource = /*glsl*/ `
-			precision mediump float;
-			attribute vec4 aVertexPosition;
-    		attribute vec2 aTextureCoord;
-			attribute vec4 aVertexColor;
+		// prettier-ignore
+		const triProgram = this.initShaderProgram(
+		// vertex
+		/*glsl*/ `
+			precision highp float;
+
+			attribute vec4 aPosition;
+    		attribute vec2 aUVPosition;
+			attribute vec4 aMask;
 		
 			uniform mat4 uModelViewMatrix;
 			uniform mat4 uProjectionMatrix;
 		
-			varying vec4 vColor;
-			varying vec2 vTextureCoord;
+			varying vec4 vMask;
+			varying vec2 vUVPosition;
 
 			void main(void) {
-				gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-				vTextureCoord = aTextureCoord;
-				vColor = aVertexColor;
+				gl_Position = uProjectionMatrix * uModelViewMatrix * aPosition;
+				vUVPosition = vec2(aUVPosition.x, aUVPosition.y) / 4.0;
+				vMask = aMask;
 			}
-		`;
-
-		const fsSource = /*glsl*/ `
-			precision mediump float;
+		`,
+		// fragement
+		/*glsl*/`
+			precision highp float;
 
 			uniform mat4 uNormalMatrix;
 			uniform sampler2D uTextureSampler;
@@ -121,60 +152,94 @@ export class GlDraw extends BaseDraw {
 			uniform vec3 uLightColor;
 			uniform vec3 uAmbientLight;
 			
-			varying vec4 vColor;
-			varying vec2 vTextureCoord;
+			varying vec4 vMask;
+			varying vec2 vUVPosition;
 
 			void main(void) {
-				vec3 vertexNormal = texture2D(uNormalSampler, vTextureCoord.xy / 4.0).xyz;
+				vec3 vertexNormal = texture2D(uNormalSampler, vUVPosition).xyz;
 				vec4 transformedNormal = uNormalMatrix * vec4(vertexNormal, 1.0);
 				float directional = max(dot(transformedNormal.xyz, uLightDirection), 0.0);
 				
 				vec3 light = uAmbientLight + (uLightColor * directional);
-				vec4 texel = texture2D(uTextureSampler, vTextureCoord.xy / 4.0);
+				vec4 texel = texture2D(uTextureSampler, vUVPosition);
 
-				gl_FragColor = vec4(texel.rgb * light.rgb, vColor.a);
+				gl_FragColor = vec4(texel.rgb * light.rgb, texel.a * vMask.a);
 			}
-		`;
-
-		// Initialize a shader program; this is where all the lighting
-		// for the vertices and so forth is established.
-		const shaderProgram = this.initShaderProgram(vsSource, fsSource);
-
-		// Collect all the info needed to use the shader program.
-		// Look up which attributes our shader program is using
-		// for aVertexPosition, aVertexColor and also
-		// look up uniform locations.
-		this.programInfo = {
-			program: shaderProgram,
+		`);
+		this.triProgram = {
+			program: triProgram,
 			attribLocations: {
-				vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
-				vertexColor: gl.getAttribLocation(shaderProgram, "aVertexColor"),
-				textureCoord: gl.getAttribLocation(shaderProgram, "aTextureCoord"),
+				position: gl.getAttribLocation(triProgram, "aPosition"),
+				uvPosition: gl.getAttribLocation(triProgram, "aUVPosition"),
+				mask: gl.getAttribLocation(triProgram, "aMask"),
 			},
 			uniformLocations: {
 				// general
-				projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix")!,
-				modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix")!,
+				projectionMatrix: gl.getUniformLocation(triProgram, "uProjectionMatrix")!,
+				modelViewMatrix: gl.getUniformLocation(triProgram, "uModelViewMatrix")!,
 				// texture
-				textureSampler: gl.getUniformLocation(shaderProgram, "uTextureSampler")!,
-				normalMatrix: gl.getUniformLocation(shaderProgram, "uNormalMatrix")!,
-				normalSampler: gl.getUniformLocation(shaderProgram, "uNormalSampler")!,
+				textureSampler: gl.getUniformLocation(triProgram, "uTextureSampler")!,
+				normalMatrix: gl.getUniformLocation(triProgram, "uNormalMatrix")!,
+				normalSampler: gl.getUniformLocation(triProgram, "uNormalSampler")!,
 				// light
-				lightDirection: gl.getUniformLocation(shaderProgram, "uLightDirection")!,
-				lightColor: gl.getUniformLocation(shaderProgram, "uLightColor")!,
-				ambientLight: gl.getUniformLocation(shaderProgram, "uAmbientLight")!,
+				lightDirection: gl.getUniformLocation(triProgram, "uLightDirection")!,
+				lightColor: gl.getUniformLocation(triProgram, "uLightColor")!,
+				ambientLight: gl.getUniformLocation(triProgram, "uAmbientLight")!,
 			},
 		};
 
+		// prettier-ignore
+		const lineProgram = this.initShaderProgram(
+		// vertex
+		/*glsl*/ `
+			precision mediump float;
+
+			attribute vec4 aPosition;
+			attribute vec4 aColor;
+		
+			uniform mat4 uModelViewMatrix;
+			uniform mat4 uProjectionMatrix;
+		
+			varying vec4 vColor;
+
+			void main(void) {
+				gl_Position = uProjectionMatrix * uModelViewMatrix * aPosition;
+				vColor = aColor;
+			}
+		`,
+		// fragement
+		/*glsl*/`
+			precision mediump float;
+
+			varying vec4 vColor;
+
+			void main(void) {
+				gl_FragColor = vColor;
+			}
+		`);
+		this.lineProgram = {
+			program: lineProgram,
+			attribLocations: {
+				position: gl.getAttribLocation(lineProgram, "aPosition"),
+				color: gl.getAttribLocation(lineProgram, "aColor"),
+			},
+			uniformLocations: {
+				projectionMatrix: gl.getUniformLocation(lineProgram, "uProjectionMatrix")!,
+				modelViewMatrix: gl.getUniformLocation(lineProgram, "uModelViewMatrix")!,
+			},
+		};
+		
 		this.textures = {
 			pieces: this.loadTexture("./img/pieces.png"),
 			pieceNormals: this.loadTexture("./img/pieces_normal.png"),
 		};
+
+		// @ts-expect-error we fill this out later
+		this.buffers = {};
 	}
 
 	/**
-	 * Creates a shader of the given type, uploads the source and
-	 * compiles it.
+	 * Creates a shader of the given type, uploads the source and compiles it.
 	 */
 	loadShader(type: number, source: string) {
 		const gl = this.gl;
@@ -218,11 +283,7 @@ export class GlDraw extends BaseDraw {
 		const texture = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, texture);
 
-		// Because images have to be downloaded over the internet
-		// they might take a moment until they are ready.
-		// Until then put a single pixel in the texture so we can
-		// use it immediately. When the image has finished downloading
-		// we'll update the texture with the contents of the image.
+		// temporarily load a blue pixel while we wait for textures to load
 		const level = 0;
 		const internalFormat = gl.RGBA;
 		const srcFormat = gl.RGBA;
@@ -236,7 +297,7 @@ export class GlDraw extends BaseDraw {
 			0, // border
 			srcFormat,
 			srcType,
-			new Uint8Array([0, 0, 255, 255]), // opaque blue
+			new Uint8Array([0, 0, 255, 255]),
 		);
 
 		const image = new Image();
@@ -253,48 +314,32 @@ export class GlDraw extends BaseDraw {
 		return texture;
 	}
 
-	setColorAttribute() {
-		const { gl, programInfo, buffers } = this;
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.mask);
-		gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, 4, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
+	setAttr4fv(attr: number, buffer: WebGLBuffer) {
+		const { gl } = this;
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+		gl.vertexAttribPointer(attr, 4, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(attr);
 	}
 
-	setPositionAttribute() {
-		const { gl, programInfo, buffers } = this;
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-		gl.vertexAttribPointer(
-			programInfo.attribLocations.vertexPosition,
-			2, // pull out 2 values per iteration
-			gl.FLOAT, // the data in the buffer is 32bit floats
-			false, // don't normalize
-			0, // how many bytes to get from one set of values to the next
-			0, // how many bytes inside the buffer to start from
-		);
-		gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
-	}
-
-	setTextureAttribute() {
-		const { gl, programInfo, buffers } = this;
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
-		gl.vertexAttribPointer(
-			programInfo.attribLocations.textureCoord,
-			2, // every coordinate composed of 2 values
-			gl.FLOAT, // the data in the buffer is 32bit floats
-			false, // don't normalize
-			0, // how many bytes to get from one set of values to the next
-			0, // how many bytes inside the buffer to start from
-		);
-		gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
+	setAttr2fv(attr: number, buffer: WebGLBuffer) {
+		const { gl } = this;
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+		gl.vertexAttribPointer(attr, 2, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(attr);
 	}
 
 	private drawPieceState(piece: PieceState, a = 1.0) {
 		const {
 			sh,
-			logic: { gameDef },
+			logic: {
+				gameDef,
+				gameDef: {
+					settings: { boardSize },
+				},
+			},
 		} = this;
+
+		const yStart = boardSize[1] - sh;
 
 		for (let y = 0; y < piece.data.height; y++) {
 			for (let x = 0; x < piece.data.width; x++) {
@@ -302,13 +347,13 @@ export class GlDraw extends BaseDraw {
 				if (b !== 0) {
 					const [u, v] = gameDef.uvs.get(piece.piece.name) ?? gameDef.uvs.get(gameDef.subpieces.get(b)!)!;
 
-					this.drawBlock(piece.x + x, piece.y - sh + y, u, v, a);
+					this.drawBlock(piece.x + x, piece.y - yStart + 1 + y, u, v, a);
 				}
 			}
 		}
 	}
 
-	private drawPiece(piece: Piece, offsetX: number, offsetY: number) {
+	private drawPiece(piece: Piece, offsetX: number, offsetY: number, grid = false) {
 		const {
 			logic: { gameDef },
 		} = this;
@@ -319,28 +364,37 @@ export class GlDraw extends BaseDraw {
 				const b = piece.matrix.atXY(x, y);
 				if (b != 0) {
 					const [u, v] = gameDef.uvs.get(piece.name) ?? gameDef.uvs.get(gameDef.subpieces.get(b)!)!;
-					this.drawBlock(offsetX + (x - topLeft[0]), offsetY + (y - topLeft[1]), u, v);
+					const xx = offsetX + x - topLeft[0];
+					const yy = offsetY + y - topLeft[1];
+
+					this.drawBlock(xx, yy - this.maxPieceHeight + 1, u, v);
+					if (grid) this.drawRect(xx, yy);
 				}
 			}
 		}
 	}
 
-	private drawBoard(playfield: ArrayMatrix<string>, height: number, a = 1.0) {
+	private drawBoard(playfield: ArrayMatrix<string>, a = 1.0) {
 		const {
-			grid,
 			sh,
 			sw,
-			logic: { gameDef },
+			logic: {
+				gameDef,
+				gameDef: {
+					settings: { boardSize },
+				},
+			},
 		} = this;
 		// todo: display half of the row above the screen if boardSize is bigger than screenSize
 
-		for (let y = sh; y < height; y++) {
+		const yStart = boardSize[1] - sh;
+		for (let y = yStart; y < boardSize[1]; y++) {
 			for (let x = 0; x < sw; x++) {
 				const name = playfield.atXY(x, y);
 				if (name == " ") continue;
 
 				const [u, v] = gameDef.uvs.get(name)!;
-				this.drawBlock(x, y - sh, u, v, a);
+				this.drawBlock(x, y - yStart + 1, u, v, a);
 			}
 		}
 	}
@@ -348,17 +402,26 @@ export class GlDraw extends BaseDraw {
 	drawBlock(x: number, y: number, u: number, v: number, a = 1.0) {
 		y = -y;
 
-		this.state.vertexes += 6;
-		// prettier-ignore
-		this.state.positions.push(
-			x + 0.0, y + 0.0, x + 1.0, y + 0.0, x + 0.0, y + 1.0, // bottom left
-			x + 0.0, y + 1.0, x + 1.0, y + 1.0, x + 1.0, y + 0.0, // top right
-		)
+		this.state.triVertexes += 6;
+
+		// basically the size of the piece
+		const l1 = 0.0;
+		const h1 = 1.0;
 
 		// prettier-ignore
-		this.state.textureCoords.push(
-			u + 0.0, v + 0.0, u + 1.0, v + 0.0, u + 0.0, v + 1.0, // bottom left
-			u + 0.0, v + 1.0, u + 1.0, v + 1.0, u + 1.0, v + 0.0, // top right
+		this.state.positions.push(
+			x + l1, y + l1, x + h1, y + l1, x + l1, y + h1, // bottom left
+			x + l1, y + h1, x + h1, y + h1, x + h1, y + l1, // top right
+		)
+
+		// uv bodge factor to dodge seams
+		const l2 = 0.02;
+		const h2 = 0.98;
+
+		// prettier-ignore
+		this.state.uvPositions.push(
+			u + h2, v + h2, u + l2, v + h2, u + h2, v + l2, // bottom left
+			u + h2, v + l2, u + l2, v + l2, u + l2, v + h2, // top right
 		)
 
 		// prettier-ignore
@@ -368,52 +431,128 @@ export class GlDraw extends BaseDraw {
 		);
 	}
 
-	initBuffers() {
-		const boardSize = this.logic.gameDef.settings.boardSize;
-		this.drawBoard(this.logic.ghostboard, boardSize[1], 0.4);
-		this.drawBoard(this.logic.gameboard, boardSize[1]);
+	drawRect(x: number, y: number, w = 1.0, h = 1.0, r = 1.0, g = 1.0, b = 1.0, a = 0.2) {
+		y = -y;
+
+		this.state.lineVertexes += 8;
+
+		// z here is a fudge factor
+		const z = 0.01;
+		w += z;
+
+		// prettier-ignore
+		this.state.linePositions.push(
+			x + z, y + z,  x + w, y + z, // bottom
+			x + w, y + z,  x + w, y + h, // right
+			x + w, y + h,  x + z, y + h, // top
+			x + z, y + h,  x + z, y + z, // left
+		);
+
+		// prettier-ignore
+		this.state.lineColors.push(
+			r, g, b, a,  r, g, b, a, 
+			r, g, b, a,  r, g, b, a, 
+			r, g, b, a,  r, g, b, a, 
+			r, g, b, a,  r, g, b, a, 
+		);
+	}
+
+	fillBoardBuffers() {
+		const {
+			logic: {
+				gameDef: {
+					settings: { boardSize },
+				},
+			},
+			sw,
+			sh,
+		} = this;
+
+		// draw the tetris pieces
+		this.drawBoard(this.logic.ghostboard, 0.4);
+		this.drawBoard(this.logic.gameboard);
 
 		if (!this.logic.activePiece.invalid) {
 			const piece = this.logic.activePiece;
 			const ghostPiece = this.logic.activePiece.copy().hardDrop();
 
-			this.drawPieceState(ghostPiece, 0.2);
+			this.drawPieceState(ghostPiece, 0.4);
 			this.drawPieceState(piece);
 		}
 
-		return {
-			position: this.createBuffer(this.state.positions),
-			textureCoord: this.createBuffer(this.state.textureCoords),
-			mask: this.createBuffer(this.state.masks),
-		};
+		// draw the grid
+		const yStart = boardSize[1] - sh;
+		for (let y = yStart; y < boardSize[1]; y++) {
+			for (let x = 0; x < sw; x++) {
+				this.drawRect(x, y - yStart + 1);
+			}
+		}
+		this.drawRect(0, 0, sw, -sh, 1.0, 1.0, 1.0, 0.8);
 	}
 
-	createBuffer(data: number[]) {
+	fillUIBuffers() {
+		const {
+			logic: { gameDef },
+			sw,
+		} = this;
+
+		const queue = gameDef.randomizer.peek(gameDef.settings.queueLength).map((v) => gameDef.pieces.get(v)!);
+		let y = -0.25;
+		for (const piece of queue) {
+			y += this.maxPieceHeight + 0.5;
+			this.drawPiece(piece, sw + 1, y);
+		}
+		this.drawRect(sw + 1 - 0.25, 0, this.maxPieceWidth + 0.5, -y - 0.25, 1.0, 1.0, 1.0, 0.8);
+
+		const holdPiece = this.logic.holdPiece;
+		if (holdPiece != " ") {
+			this.drawPiece(gameDef.pieces.get(holdPiece)!, -this.maxPieceWidth - 1, this.maxPieceHeight + 0.25);
+		}
+		this.drawRect(
+			-this.maxPieceWidth - 1 - 0.25,
+			0,
+			this.maxPieceWidth + 0.5,
+			-this.maxPieceHeight - 0.5,
+			1.0,
+			1.0,
+			1.0,
+			0.8,
+		);
+	}
+
+	createBuffer(data: number[], usage: GLenum) {
 		const gl = this.gl;
 
 		const buffer = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), usage);
 
 		return buffer;
 	}
 
 	drawScene() {
-		const { gl, programInfo } = this;
+		const { gl, triProgram, lineProgram } = this;
 
-		gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
-		gl.clearDepth(1.0); // Clear everything
-		gl.enable(gl.DEPTH_TEST); // Enable depth testing
-		gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+		gl.clearColor(0.0, 0.0, 0.0, 1.0); // clear to black, fully opaque
+		gl.clearDepth(1.0); // clear everything
+		gl.enable(gl.DEPTH_TEST); // enable depth testing
+		gl.depthFunc(gl.LEQUAL); // near things obscure far things
 
-		// Clear the canvas
+		// clear the canvas
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 		const zNear = 0.1;
 		const zFar = 100.0;
 		const projectionMatrix = mat4.create();
 
-		mat4.ortho(projectionMatrix, 0, this.sw, -this.sh + 1, 0, zNear, zFar);
+		// layout is lr margins of the max piece width + 2, and dimensions of sw by sh + 2
+
+		const left = -this.maxPieceWidth - 2;
+		const right = this.sw + this.maxPieceWidth + 2;
+		const top = -this.sh - 2;
+		const bottom = 1;
+
+		mat4.ortho(projectionMatrix, left, right, top, bottom, zNear, zFar);
 
 		const modelViewMatrix = mat4.create();
 		mat4.translate(modelViewMatrix, modelViewMatrix, [0, 0, -1.0]);
@@ -427,44 +566,106 @@ export class GlDraw extends BaseDraw {
 		const lightPos = [0.8, 0.8, 0.75];
 		vec3.normalize(lightPos, lightPos);
 
-		this.setPositionAttribute();
-		this.setTextureAttribute();
-		this.setColorAttribute();
+		const boardViewMatrix = mat4.clone(modelViewMatrix);
 
-		// Tell WebGL to use our program when drawing
-		gl.useProgram(programInfo.program);
+		// set up everything for the tris
+		gl.useProgram(triProgram.program);
 
-		// Set the shader uniforms
-		gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
-		gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
-		gl.uniformMatrix4fv(programInfo.uniformLocations.normalMatrix, false, normalMatrix);
-		gl.uniform3fv(programInfo.uniformLocations.lightDirection, lightPos);
-		gl.uniform3fv(programInfo.uniformLocations.ambientLight, [0.1, 0.1, 0.1]);
-		gl.uniform3fv(programInfo.uniformLocations.lightColor, [1, 1, 1]);
+		this.fillBoardBuffers();
+		const boardTriVertexes = this.state.triVertexes;
+		const boardLineVertexes = this.state.lineVertexes;
+		const boardRectVertexes = this.state.rectVertexes;
+		this.fillUIBuffers();
+		const uiTriVertexes = this.state.triVertexes - boardTriVertexes;
+		const uiLineVertexes = this.state.lineVertexes - boardLineVertexes;
+		const uiRectVertexes = this.state.rectVertexes - boardRectVertexes;
 
-		// Load the texture into WebGL
+		this.buffers.positions = this.createBuffer(this.state.positions, gl.DYNAMIC_DRAW);
+		this.buffers.uvPostions = this.createBuffer(this.state.uvPositions, gl.DYNAMIC_DRAW);
+		this.buffers.mask = this.createBuffer(this.state.masks, gl.DYNAMIC_DRAW);
+
+		this.buffers.simplePositions = this.createBuffer(
+			[...this.state.linePositions, ...this.state.rectPositions],
+			gl.DYNAMIC_DRAW,
+		);
+		this.buffers.simpleColors = this.createBuffer(
+			[...this.state.lineColors, ...this.state.rectColors],
+			gl.DYNAMIC_DRAW,
+		);
+
+		this.setAttr4fv(triProgram.attribLocations.mask, this.buffers.mask);
+		this.setAttr2fv(triProgram.attribLocations.uvPosition, this.buffers.uvPostions);
+		this.setAttr2fv(triProgram.attribLocations.position, this.buffers.positions);
+
+		// set the shader uniforms
+		gl.uniformMatrix4fv(triProgram.uniformLocations.projectionMatrix, false, projectionMatrix);
+		gl.uniformMatrix4fv(triProgram.uniformLocations.modelViewMatrix, false, boardViewMatrix);
+		gl.uniformMatrix4fv(triProgram.uniformLocations.normalMatrix, false, normalMatrix);
+		gl.uniform3fv(triProgram.uniformLocations.lightDirection, lightPos);
+		gl.uniform3fv(triProgram.uniformLocations.ambientLight, [0.1, 0.1, 0.1]);
+		gl.uniform3fv(triProgram.uniformLocations.lightColor, [1, 1, 1]);
+
+		// load the texture into WebGL
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, this.textures.pieces);
-		gl.uniform1i(programInfo.uniformLocations.textureSampler, 0);
+		gl.uniform1i(triProgram.uniformLocations.textureSampler, 0);
 
 		gl.activeTexture(gl.TEXTURE1);
 		gl.bindTexture(gl.TEXTURE_2D, this.textures.pieceNormals);
-		gl.uniform1i(programInfo.uniformLocations.normalSampler, 1);
+		gl.uniform1i(triProgram.uniformLocations.normalSampler, 1);
 
-		{
-			gl.drawArrays(gl.TRIANGLES, 0, this.state.vertexes);
-		}
+		// draw the board (tris)
+		gl.drawArrays(gl.TRIANGLES, 0, boardTriVertexes);
+
+		// reset the non-board transforms, draw the rest
+		gl.uniformMatrix4fv(triProgram.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+		gl.drawArrays(gl.TRIANGLES, boardTriVertexes, uiTriVertexes);
+
+		// set up everything for the lines
+		gl.useProgram(lineProgram.program);
+
+		// draw lines 1 unit behind the pieces
+		mat4.translate(modelViewMatrix, modelViewMatrix, [0, 0, -1.0]);
+		mat4.translate(boardViewMatrix, boardViewMatrix, [0, 0, -1.0]);
+
+		this.setAttr2fv(lineProgram.attribLocations.position, this.buffers.simplePositions);
+		this.setAttr4fv(lineProgram.attribLocations.color, this.buffers.simpleColors);
+
+		gl.uniformMatrix4fv(lineProgram.uniformLocations.projectionMatrix, false, projectionMatrix);
+		gl.uniformMatrix4fv(lineProgram.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+
+		// draw the board (lines)
+		gl.drawArrays(gl.LINES, 0, boardLineVertexes);
+
+		// draw the board (tris)
+		gl.drawArrays(gl.TRIANGLES, boardLineVertexes + uiLineVertexes, boardRectVertexes);
+
+		// reset the non-board transforms
+		gl.uniformMatrix4fv(lineProgram.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+		
+		// draw the rest (lines)
+		gl.drawArrays(gl.LINES, boardLineVertexes, uiLineVertexes);
+		// draw the rest (tris)
+		gl.drawArrays(gl.TRIANGLES, boardLineVertexes + uiLineVertexes + boardRectVertexes, uiRectVertexes);
+
 	}
 
 	frame(deltaTime: number) {
-		this.state.vertexes = 0;
-		this.state.positions = [];
-		this.state.textureCoords = [];
-		this.state.masks = [];
-		this.buffers = this.initBuffers();
+		this.state = {
+			triVertexes: 0,
+			positions: [],
+			uvPositions: [],
+			masks: [],
+
+			lineVertexes: 0,
+			linePositions: [],
+			lineColors: [],
+			rectVertexes: 0,
+			rectPositions: [],
+			rectColors: [],
+		};
 
 		this.drawScene();
-		this.state.squareRotation += deltaTime;
 	}
 
 	clear(): void {
