@@ -462,7 +462,7 @@ export class Logic {
 
 		if (this.input.isPressed(Keys.Pause) && this.state.pauseBuffer == 0) {
 			this.paused = !this.paused;
-			this.state.pauseBuffer = 60; // 0.5s
+			this.state.pauseBuffer = 30; // 0.25s
 		} else if (this.state.pauseBuffer != 0) {
 			this.state.pauseBuffer--;
 		}
