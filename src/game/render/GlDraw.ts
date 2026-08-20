@@ -1,12 +1,185 @@
-import { mat4, vec3 } from "gl-matrix";
+import { glMatrix, mat4, vec3 } from "gl-matrix";
 import { BaseDraw } from "./BaseDraw";
 import { PieceState } from "../PieceState";
 import { Piece } from "../GameDef";
 import { ArrayMatrix } from "../../utils/ArrayMatrix";
+import { Keys } from "../InputManager";
 
 const isPowerOf2 = (value: number) => {
 	return (value & (value - 1)) === 0;
 };
+
+enum Layers {
+	UI,
+	BOARD,
+	GRID,
+	LENGTH,
+}
+
+enum RenderTypes {
+	PBR_XY,
+	PBR_UV,
+	PBR_MASK,
+	LINE_XY,
+	LINE_COLOR,
+	TRI_XY,
+	TRI_COLOR,
+	SIMPLE_XY,
+	SIMPLE_COLOR,
+	LENGTH,
+}
+
+interface LayerData {
+	data: number[][];
+	translate: vec3;
+	rotate: number;
+	rotationOrigin: vec3;
+}
+
+class LayerManager {
+	layers: Map<Layers, LayerData> = new Map();
+	currentLayer: Layers = Layers.UI;
+	buffers: Map<RenderTypes, WebGLBuffer> = new Map();
+	vertexes: Map<Layers, number[]> = new Map();
+
+	use(layer: Layers) {
+		this.currentLayer = layer;
+	}
+
+	clear(layer: Layers) {
+		this.layers.set(layer, {
+			data: new Array(RenderTypes.LENGTH).fill(0).map(() => []),
+			translate: [0, 0, 0],
+			rotate: 0,
+			rotationOrigin: [0, 0, 0],
+		});
+		this.vertexes.set(layer, new Array(RenderTypes.LENGTH).fill(0));
+	}
+
+	translate(vec: vec3) {
+		const out = this.layers.get(this.currentLayer)!.translate;
+		vec3.add(out, out, vec);
+	}
+
+	rotate(angle: number) {
+		this.layers.get(this.currentLayer)!.rotate += angle;
+	}
+
+	setRotationOrigin(origin: vec3) {
+		this.layers.get(this.currentLayer)!.rotationOrigin = origin;
+	}
+
+	addPBRTriVertexes(count: number) {
+		const layer = this.vertexes.get(this.currentLayer)!;
+		layer[RenderTypes.PBR_XY] += count;
+	}
+
+	pushPBRTriXY(...data: number[]) {
+		const layer = this.layers.get(this.currentLayer)!;
+		layer.data[RenderTypes.PBR_XY].push(...data);
+	}
+
+	pushPBRTriUV(...data: number[]) {
+		const layer = this.layers.get(this.currentLayer)!;
+		layer.data[RenderTypes.PBR_UV].push(...data);
+	}
+
+	pushPBRTriMask(...data: number[]) {
+		const layer = this.layers.get(this.currentLayer)!;
+		layer.data[RenderTypes.PBR_MASK].push(...data);
+	}
+
+	addLineVertexes(count: number) {
+		const layer = this.vertexes.get(this.currentLayer)!;
+		layer[RenderTypes.LINE_XY] += count;
+	}
+
+	pushLineXY(...data: number[]) {
+		const layer = this.layers.get(this.currentLayer)!;
+		layer.data[RenderTypes.LINE_XY].push(...data);
+	}
+
+	pushLineColor(...data: number[]) {
+		const layer = this.layers.get(this.currentLayer)!;
+		layer.data[RenderTypes.LINE_COLOR].push(...data);
+	}
+
+	addTriVertexes(count: number) {
+		const layer = this.vertexes.get(this.currentLayer)!;
+		layer[RenderTypes.TRI_XY] += count;
+	}
+
+	pushTriXY(...data: number[]) {
+		const layer = this.layers.get(this.currentLayer)!;
+		layer.data[RenderTypes.TRI_XY].push(...data);
+	}
+
+	pushTriColor(...data: number[]) {
+		const layer = this.layers.get(this.currentLayer)!;
+		layer.data[RenderTypes.TRI_COLOR].push(...data);
+	}
+
+	fillBuffer(gl: WebGL2RenderingContext, renderType: RenderTypes) {
+		const data: number[] = [];
+		for (let layerType = 0; layerType < Layers.LENGTH; layerType++) {
+			const layer = this.layers.get(layerType)!;
+			data.push(...layer.data[renderType]);
+		}
+
+		const buffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.DYNAMIC_DRAW);
+
+		this.buffers.set(renderType, buffer);
+	}
+
+	fillBufferCombined(gl: WebGL2RenderingContext, parent: RenderTypes, ...renderTypes: RenderTypes[]) {
+		const data: number[] = [];
+		for (const renderType of renderTypes) {
+			for (let layerType = 0; layerType < Layers.LENGTH; layerType++) {
+				const layer = this.layers.get(layerType)!;
+				data.push(...layer.data[renderType]);
+			}
+		}
+
+		const buffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.DYNAMIC_DRAW);
+
+		this.buffers.set(parent, buffer);
+	}
+
+	commit(gl: WebGL2RenderingContext) {
+		this.fillBuffer(gl, RenderTypes.PBR_XY);
+		this.fillBuffer(gl, RenderTypes.PBR_UV);
+		this.fillBuffer(gl, RenderTypes.PBR_MASK);
+
+		this.fillBufferCombined(gl, RenderTypes.SIMPLE_XY, RenderTypes.LINE_XY, RenderTypes.TRI_XY);
+		this.fillBufferCombined(gl, RenderTypes.SIMPLE_COLOR, RenderTypes.LINE_COLOR, RenderTypes.TRI_COLOR);
+	}
+
+	applyTransforms(layer: Layers, viewMatrix: mat4) {
+		const l = this.layers.get(layer)!;
+		if (l.translate[0] != 0 || l.translate[1] != 0 || l.translate[2] != 0) {
+			mat4.translate(viewMatrix, viewMatrix, l.translate);
+		}
+		if (l.rotate != 0) {
+			const negRot = vec3.clone(l.rotationOrigin);
+			vec3.negate(negRot, negRot);
+			mat4.translate(viewMatrix, viewMatrix, l.rotationOrigin);
+			mat4.rotate(viewMatrix, viewMatrix, glMatrix.toRadian(l.rotate), [0, 0, 1]);
+			mat4.translate(viewMatrix, viewMatrix, negRot);
+		}
+	}
+
+	getBuffer(renderType: RenderTypes) {
+		return this.buffers.get(renderType)!;
+	}
+
+	length(layer: Layers, renderType: RenderTypes) {
+		return this.vertexes.get(layer)![renderType];
+	}
+}
 
 export class GlDraw extends BaseDraw {
 	gl!: WebGL2RenderingContext;
@@ -41,33 +214,20 @@ export class GlDraw extends BaseDraw {
 			modelViewMatrix: WebGLUniformLocation;
 		};
 	};
-	buffers!: {
-		positions: WebGLBuffer;
-		mask: WebGLBuffer;
-		uvPostions: WebGLBuffer;
-		simplePositions: WebGLBuffer;
-		simpleColors: WebGLBuffer;
-	};
 	textures!: {
 		pieces: WebGLTexture;
 		pieceNormals: WebGLTexture;
 	};
 	state!: {
-		triVertexes: number;
-		positions: number[];
-		uvPositions: number[];
-		lineVertexes: number;
-		linePositions: number[];
-		lineColors: number[];
-		rectVertexes: number;
-		rectPositions: number[];
-		rectColors: number[];
-		masks: number[];
+		dirShift: number;
+		dirTimer: number;
 	};
+	layers: LayerManager;
 
 	constructor(canvas: HTMLCanvasElement) {
 		super(canvas);
 
+		this.layers = new LayerManager();
 		this.gl = this.canvas.getContext("webgl2", {
 			premultipliedAlpha: false,
 		})!;
@@ -92,17 +252,8 @@ export class GlDraw extends BaseDraw {
 		this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 
 		this.state = {
-			triVertexes: 0,
-			positions: [],
-			uvPositions: [],
-			masks: [],
-
-			lineVertexes: 0,
-			linePositions: [],
-			rectPositions: [],
-			rectVertexes: 0,
-			lineColors: [],
-			rectColors: [],
+			dirShift: 0,
+			dirTimer: 0,
 		};
 	}
 
@@ -228,7 +379,7 @@ export class GlDraw extends BaseDraw {
 				modelViewMatrix: gl.getUniformLocation(lineProgram, "uModelViewMatrix")!,
 			},
 		};
-		
+
 		this.textures = {
 			pieces: this.loadTexture("./img/pieces.png"),
 			pieceNormals: this.loadTexture("./img/pieces_normal.png"),
@@ -402,14 +553,14 @@ export class GlDraw extends BaseDraw {
 	drawBlock(x: number, y: number, u: number, v: number, a = 1.0) {
 		y = -y;
 
-		this.state.triVertexes += 6;
-
 		// basically the size of the piece
 		const l1 = 0.0;
 		const h1 = 1.0;
 
+		this.layers.addPBRTriVertexes(6);
+
 		// prettier-ignore
-		this.state.positions.push(
+		this.layers.pushPBRTriXY(
 			x + l1, y + l1, x + h1, y + l1, x + l1, y + h1, // bottom left
 			x + l1, y + h1, x + h1, y + h1, x + h1, y + l1, // top right
 		)
@@ -419,13 +570,13 @@ export class GlDraw extends BaseDraw {
 		const h2 = 0.98;
 
 		// prettier-ignore
-		this.state.uvPositions.push(
+		this.layers.pushPBRTriUV(
 			u + h2, v + h2, u + l2, v + h2, u + h2, v + l2, // bottom left
 			u + h2, v + l2, u + l2, v + l2, u + l2, v + h2, // top right
 		)
 
 		// prettier-ignore
-		this.state.masks.push(
+		this.layers.pushPBRTriMask(
 			1.0, 1.0, 1.0, a,  1.0, 1.0, 1.0, a,  1.0, 1.0, 1.0, a,
 			1.0, 1.0, 1.0, a,  1.0, 1.0, 1.0, a,  1.0, 1.0, 1.0, a,
 		);
@@ -434,14 +585,15 @@ export class GlDraw extends BaseDraw {
 	drawRect(x: number, y: number, w = 1.0, h = 1.0, r = 1.0, g = 1.0, b = 1.0, a = 0.2) {
 		y = -y;
 
-		this.state.lineVertexes += 8;
-
 		// z here is a fudge factor
 		const z = 0.01;
-		w += z;
+		w -= z;
+		h -= z;
+
+		this.layers.addLineVertexes(8);
 
 		// prettier-ignore
-		this.state.linePositions.push(
+		this.layers.pushLineXY(
 			x + z, y + z,  x + w, y + z, // bottom
 			x + w, y + z,  x + w, y + h, // right
 			x + w, y + h,  x + z, y + h, // top
@@ -449,11 +601,34 @@ export class GlDraw extends BaseDraw {
 		);
 
 		// prettier-ignore
-		this.state.lineColors.push(
+		this.layers.pushLineColor(
 			r, g, b, a,  r, g, b, a, 
 			r, g, b, a,  r, g, b, a, 
 			r, g, b, a,  r, g, b, a, 
 			r, g, b, a,  r, g, b, a, 
+		);
+	}
+
+	drawFilledRect(x: number, y: number, w = 1.0, h = 1.0, r = 1.0, g = 1.0, b = 1.0, a = 0.2) {
+		y = -y;
+
+		// z here is a fudge factor
+		const z = 0.01;
+		w -= z;
+		h -= z;
+
+		this.layers.addTriVertexes(6);
+
+		// prettier-ignore
+		this.layers.pushTriXY(
+			x + z, y + z,  x + w, y + z,  x + z, y + h, // bottom left
+			x + z, y + h,  x + w, y + h,  x + w, y + z, // top right
+		)
+
+		// prettier-ignore
+		this.layers.pushTriColor(
+			r, g, b, a,  r, g, b, a,  r, g, b, a, 
+			r, g, b, a,  r, g, b, a,  r, g, b, a, 
 		);
 	}
 
@@ -468,6 +643,7 @@ export class GlDraw extends BaseDraw {
 			sh,
 		} = this;
 
+		this.layers.use(Layers.BOARD);
 		// draw the tetris pieces
 		this.drawBoard(this.logic.ghostboard, 0.4);
 		this.drawBoard(this.logic.gameboard);
@@ -480,6 +656,7 @@ export class GlDraw extends BaseDraw {
 			this.drawPieceState(piece);
 		}
 
+		this.layers.use(Layers.GRID);
 		// draw the grid
 		const yStart = boardSize[1] - sh;
 		for (let y = yStart; y < boardSize[1]; y++) {
@@ -487,6 +664,7 @@ export class GlDraw extends BaseDraw {
 				this.drawRect(x, y - yStart + 1);
 			}
 		}
+		this.layers.use(Layers.UI);
 		this.drawRect(0, 0, sw, -sh, 1.0, 1.0, 1.0, 0.8);
 	}
 
@@ -496,6 +674,7 @@ export class GlDraw extends BaseDraw {
 			sw,
 		} = this;
 
+		this.layers.use(Layers.UI);
 		const queue = gameDef.randomizer.peek(gameDef.settings.queueLength).map((v) => gameDef.pieces.get(v)!);
 		let y = -0.25;
 		for (const piece of queue) {
@@ -518,6 +697,12 @@ export class GlDraw extends BaseDraw {
 			1.0,
 			0.8,
 		);
+
+		this.layers.use(Layers.GRID);
+		const failTimer = this.logic.state.failTimer;
+		if (failTimer > 0) {
+			this.drawFilledRect(0, this.sh, this.sw, (this.sh * this.logic.state.failTimer) / 60, 1.0, 0.0, 0.0, 0.1);
+		}
 	}
 
 	createBuffer(data: number[], usage: GLenum) {
@@ -540,6 +725,9 @@ export class GlDraw extends BaseDraw {
 
 		// clear the canvas
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+		gl.enable(gl.BLEND);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
 		const zNear = 0.1;
 		const zFar = 100.0;
@@ -566,40 +754,25 @@ export class GlDraw extends BaseDraw {
 		const lightPos = [0.8, 0.8, 0.75];
 		vec3.normalize(lightPos, lightPos);
 
-		const boardViewMatrix = mat4.clone(modelViewMatrix);
+		this.fillBoardBuffers();
+		this.fillUIBuffers();
+
+		this.layers.commit(this.gl);
+
+		this.layers.use(Layers.BOARD);
+		this.layers.translate([this.state.dirShift, 0, 0]);
+		this.layers.use(Layers.GRID);
+		this.layers.translate([this.state.dirShift, 0, 0]);
 
 		// set up everything for the tris
 		gl.useProgram(triProgram.program);
 
-		this.fillBoardBuffers();
-		const boardTriVertexes = this.state.triVertexes;
-		const boardLineVertexes = this.state.lineVertexes;
-		const boardRectVertexes = this.state.rectVertexes;
-		this.fillUIBuffers();
-		const uiTriVertexes = this.state.triVertexes - boardTriVertexes;
-		const uiLineVertexes = this.state.lineVertexes - boardLineVertexes;
-		const uiRectVertexes = this.state.rectVertexes - boardRectVertexes;
-
-		this.buffers.positions = this.createBuffer(this.state.positions, gl.DYNAMIC_DRAW);
-		this.buffers.uvPostions = this.createBuffer(this.state.uvPositions, gl.DYNAMIC_DRAW);
-		this.buffers.mask = this.createBuffer(this.state.masks, gl.DYNAMIC_DRAW);
-
-		this.buffers.simplePositions = this.createBuffer(
-			[...this.state.linePositions, ...this.state.rectPositions],
-			gl.DYNAMIC_DRAW,
-		);
-		this.buffers.simpleColors = this.createBuffer(
-			[...this.state.lineColors, ...this.state.rectColors],
-			gl.DYNAMIC_DRAW,
-		);
-
-		this.setAttr4fv(triProgram.attribLocations.mask, this.buffers.mask);
-		this.setAttr2fv(triProgram.attribLocations.uvPosition, this.buffers.uvPostions);
-		this.setAttr2fv(triProgram.attribLocations.position, this.buffers.positions);
+		this.setAttr2fv(triProgram.attribLocations.position, this.layers.getBuffer(RenderTypes.PBR_XY));
+		this.setAttr2fv(triProgram.attribLocations.uvPosition, this.layers.getBuffer(RenderTypes.PBR_UV));
+		this.setAttr4fv(triProgram.attribLocations.mask, this.layers.getBuffer(RenderTypes.PBR_MASK));
 
 		// set the shader uniforms
 		gl.uniformMatrix4fv(triProgram.uniformLocations.projectionMatrix, false, projectionMatrix);
-		gl.uniformMatrix4fv(triProgram.uniformLocations.modelViewMatrix, false, boardViewMatrix);
 		gl.uniformMatrix4fv(triProgram.uniformLocations.normalMatrix, false, normalMatrix);
 		gl.uniform3fv(triProgram.uniformLocations.lightDirection, lightPos);
 		gl.uniform3fv(triProgram.uniformLocations.ambientLight, [0.1, 0.1, 0.1]);
@@ -615,55 +788,117 @@ export class GlDraw extends BaseDraw {
 		gl.uniform1i(triProgram.uniformLocations.normalSampler, 1);
 
 		// draw the board (tris)
-		gl.drawArrays(gl.TRIANGLES, 0, boardTriVertexes);
+		let triIndex = 0;
+		const triViewMatrix = mat4.clone(modelViewMatrix);
+		for (let i = 0; i < Layers.LENGTH; i++) {
+			const length = this.layers.length(i, RenderTypes.PBR_XY);
 
-		// reset the non-board transforms, draw the rest
-		gl.uniformMatrix4fv(triProgram.uniformLocations.modelViewMatrix, false, modelViewMatrix);
-		gl.drawArrays(gl.TRIANGLES, boardTriVertexes, uiTriVertexes);
+			if (length != 0) {
+				const viewMatrix = mat4.clone(triViewMatrix);
+				this.layers.applyTransforms(i, viewMatrix);
+
+				gl.uniformMatrix4fv(triProgram.uniformLocations.modelViewMatrix, false, viewMatrix);
+				gl.drawArrays(gl.TRIANGLES, triIndex, length);
+			}
+
+			mat4.translate(triViewMatrix, triViewMatrix, [0, 0, -1]);
+			triIndex += length;
+		}
 
 		// set up everything for the lines
 		gl.useProgram(lineProgram.program);
 
-		// draw lines 1 unit behind the pieces
-		mat4.translate(modelViewMatrix, modelViewMatrix, [0, 0, -1.0]);
-		mat4.translate(boardViewMatrix, boardViewMatrix, [0, 0, -1.0]);
+		// draw lines 0.5 unit behind the rest
+		mat4.translate(modelViewMatrix, modelViewMatrix, [0, 0, -0.5]);
 
-		this.setAttr2fv(lineProgram.attribLocations.position, this.buffers.simplePositions);
-		this.setAttr4fv(lineProgram.attribLocations.color, this.buffers.simpleColors);
+		this.setAttr2fv(lineProgram.attribLocations.position, this.layers.getBuffer(RenderTypes.SIMPLE_XY));
+		this.setAttr4fv(lineProgram.attribLocations.color, this.layers.getBuffer(RenderTypes.SIMPLE_COLOR));
 
 		gl.uniformMatrix4fv(lineProgram.uniformLocations.projectionMatrix, false, projectionMatrix);
-		gl.uniformMatrix4fv(lineProgram.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 
 		// draw the board (lines)
-		gl.drawArrays(gl.LINES, 0, boardLineVertexes);
+		let simpleIndex = 0;
+		const simpleViewMatrix = mat4.clone(modelViewMatrix);
+		for (let i = 0; i < Layers.LENGTH; i++) {
+			const length = this.layers.length(i, RenderTypes.LINE_XY);
+
+			if (length != 0) {
+				const viewMatrix = mat4.clone(simpleViewMatrix);
+				this.layers.applyTransforms(i, viewMatrix);
+
+				gl.uniformMatrix4fv(lineProgram.uniformLocations.modelViewMatrix, false, viewMatrix);
+				gl.drawArrays(gl.LINES, simpleIndex, length);
+			}
+
+			mat4.translate(simpleViewMatrix, simpleViewMatrix, [0, 0, -1]);
+			simpleIndex += length;
+		}
 
 		// draw the board (tris)
-		gl.drawArrays(gl.TRIANGLES, boardLineVertexes + uiLineVertexes, boardRectVertexes);
+		mat4.copy(simpleViewMatrix, modelViewMatrix);
+		for (let i = 0; i < Layers.LENGTH; i++) {
+			const length = this.layers.length(i, RenderTypes.TRI_XY);
 
-		// reset the non-board transforms
-		gl.uniformMatrix4fv(lineProgram.uniformLocations.modelViewMatrix, false, modelViewMatrix);
-		
-		// draw the rest (lines)
-		gl.drawArrays(gl.LINES, boardLineVertexes, uiLineVertexes);
-		// draw the rest (tris)
-		gl.drawArrays(gl.TRIANGLES, boardLineVertexes + uiLineVertexes + boardRectVertexes, uiRectVertexes);
+			if (length != 0) {
+				const viewMatrix = mat4.clone(simpleViewMatrix);
+				this.layers.applyTransforms(i, viewMatrix);
 
+				gl.uniformMatrix4fv(lineProgram.uniformLocations.modelViewMatrix, false, viewMatrix);
+				gl.drawArrays(gl.TRIANGLES, simpleIndex, length);
+			}
+
+			mat4.translate(simpleViewMatrix, simpleViewMatrix, [0, 0, -1]);
+			simpleIndex += length;
+		}
 	}
 
 	frame(deltaTime: number) {
-		this.state = {
-			triVertexes: 0,
-			positions: [],
-			uvPositions: [],
-			masks: [],
+		this.layers.clear(Layers.BOARD);
+		this.layers.clear(Layers.GRID);
+		this.layers.clear(Layers.UI);
 
-			lineVertexes: 0,
-			linePositions: [],
-			lineColors: [],
-			rectVertexes: 0,
-			rectPositions: [],
-			rectColors: [],
-		};
+		if (!1) {
+			// todo: idk how i feel about this effect...
+			const factor = 0.2;
+			const max = 0.025;
+			const delay = 4;
+			let moved = false;
+			if (!this.logic.activePiece.invalid) {
+				const p = this.logic.activePiece.copy();
+
+				if (this.logic.input.isPressed(Keys.MoveLeft)) {
+					p.x -= 1;
+					if (p.parent.pieceIntersecting(p)) {
+						if (this.state.dirTimer > delay) {
+							this.state.dirShift -= factor * deltaTime;
+							this.state.dirShift = Math.max(this.state.dirShift, -max);
+						} else {
+							this.state.dirTimer += 1;
+						}
+						moved = true;
+					}
+				} else if (this.logic.input.isPressed(Keys.MoveRight)) {
+					p.x += 1;
+					if (p.parent.pieceIntersecting(p)) {
+						if (this.state.dirTimer > delay) {
+							this.state.dirShift += factor * deltaTime;
+							this.state.dirShift = Math.min(this.state.dirShift, max);
+						} else {
+							this.state.dirTimer += 1;
+						}
+						moved = true;
+					}
+				}
+			}
+			if (!moved) {
+				if (this.state.dirShift > 0) {
+					this.state.dirShift -= factor * deltaTime;
+				} else if (this.state.dirShift < 0) {
+					this.state.dirShift += factor * deltaTime;
+				}
+				this.state.dirTimer = 0;
+			}
+		}
 
 		this.drawScene();
 	}
