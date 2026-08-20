@@ -221,6 +221,7 @@ export class GlDraw extends BaseDraw {
 	state!: {
 		dirShift: number;
 		dirTimer: number;
+		pauseFade: number;
 	};
 	layers: LayerManager;
 
@@ -254,6 +255,7 @@ export class GlDraw extends BaseDraw {
 		this.state = {
 			dirShift: 0,
 			dirTimer: 0,
+			pauseFade: 0,
 		};
 	}
 
@@ -703,6 +705,11 @@ export class GlDraw extends BaseDraw {
 		if (failTimer > 0) {
 			this.drawFilledRect(0, this.sh, this.sw, (this.sh * this.logic.state.failTimer) / 60, 1.0, 0.0, 0.0, 0.1);
 		}
+
+		this.layers.use(Layers.UI);
+		if (this.state.pauseFade > 0) {
+			this.drawFilledRect(0, this.sh, this.sw, this.sh, 0.1, 0.1, 0.1, 0.5 * (this.state.pauseFade / 10));
+		}
 	}
 
 	createBuffer(data: number[], usage: GLenum) {
@@ -898,6 +905,12 @@ export class GlDraw extends BaseDraw {
 				}
 				this.state.dirTimer = 0;
 			}
+		}
+
+		if (this.logic.paused) {
+			this.state.pauseFade = 10;
+		} else if (this.state.pauseFade > 0) {
+			this.state.pauseFade -= 1;
 		}
 
 		this.drawScene();
