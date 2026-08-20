@@ -481,8 +481,8 @@ export class Logic {
 		if (this.input.isPressed(Keys.Fail)) {
 			this.state.failBuffer = 10;
 			if (this.state.failTimer >= 60) {
-				this.state.failTimer = -10;
 				this.gameOver();
+				return;
 			} else {
 				this.state.failTimer += 1;
 			}
