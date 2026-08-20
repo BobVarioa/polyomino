@@ -11,6 +11,7 @@ import { EventEmitter } from "eventemitter3";
 import { BaseMode } from "./BaseMode";
 import Gameboard from "./Gameboard";
 import { Random } from "../utils/randomizer";
+import { SoundManager, Sounds } from "./SoundManager";
 
 export enum CheckState {
 	Clear,
@@ -33,7 +34,12 @@ export class Logic {
 	public stopped: boolean = false;
 	mode!: BaseMode;
 
-	constructor(public prefs: Preferences, public input: InputManager, public draw: BaseDraw) {}
+	constructor(
+		public prefs: Preferences,
+		public input: InputManager,
+		public draw: BaseDraw,
+		public sound: SoundManager,
+	) {}
 
 	_signal = new EventEmitter();
 
@@ -51,8 +57,8 @@ export class Logic {
 
 		const fps = 60;
 
-		// note: any because typescript desides we're in node here, and well, we're not in node, so i refuse to use NodeJS.Timeout as the type here 
-		let timeout: any; 
+		// note: any because typescript desides we're in node here, and well, we're not in node, so i refuse to use NodeJS.Timeout as the type here
+		let timeout: any;
 
 		const func = () => {
 			if (!this.stopped) {
@@ -420,6 +426,8 @@ export class Logic {
 		}
 
 		if (clearedLines > 0) {
+			this.sound.play(Sounds.Clear);
+
 			const garbage = this.gameDef.garbage.clear(clearedLines, this.state.combo, this.state.b2b, wasSpin, wasPC);
 			if (this.flags.receiveSentGarbage) {
 				console.log("sent garbage", garbage);
@@ -601,6 +609,7 @@ export class Logic {
 					this.state.heldLast = false;
 					this.state.lockDelayTimer = 0;
 					this.state.checkState = CheckState.Clear;
+					this.sound.play(Sounds.Lock);
 				}
 			} else {
 				// TODO: [garbage] below

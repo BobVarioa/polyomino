@@ -4,10 +4,11 @@ import { Draw, DrawMode } from "./game/render/Draw";
 import { Preferences, Prefs } from "./game/Preferences";
 import { PCOMode } from "./game/PCOMode";
 import { MenuEle, MenuManager } from "./menu/MenuManager";
+import { SoundManager, Sounds } from "./game/SoundManager";
 
 const $ = <T>(s: string): T => document.querySelector(s) as T;
 
-function init() {
+async function init() {
 	const prefs = new Preferences();
 	
 	const input = new InputManager(document);
@@ -40,9 +41,15 @@ function init() {
 		input.set(Keys.RecieveSentGarbage, "Digit8");
 	}
 
+	const sound = new SoundManager();
+	await Promise.all([
+		sound.load(Sounds.Lock, "./snd/lock.wav"),
+		sound.load(Sounds.Clear, "./snd/clear.wav")
+	])
+
 	const canvas = $<HTMLCanvasElement>("#gameCanvas");
 	const draw = Draw.create(DrawMode.WebGL, canvas);
-	const logic = new Logic(prefs, input, draw);
+	const logic = new Logic(prefs, input, draw, sound);
 	logic.init();
 	
 	// init menus
