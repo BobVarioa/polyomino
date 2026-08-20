@@ -135,6 +135,8 @@ export class GameDef {
 			pieces.set("!", new Piece("!", new ArrayMatrix<number>(1, 1).fill(1), PieceFlags.Garbage | PieceFlags.Unclearable));
 			colors.set("?", "#707070")
 			colors.set("!", "#202020")
+			uvs.set("?", [0, 3])
+			uvs.set("!", [1, 3])
 		}
 
 		const rotations = new MultiKeyMap<string, KickTable>();
