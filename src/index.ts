@@ -41,7 +41,7 @@ async function init() {
 		input.set(Keys.RecieveSentGarbage, "Digit8");
 	}
 
-	const sound = new SoundManager();
+	const sound = new SoundManager(prefs);
 	await Promise.all([
 		sound.load(Sounds.Lock, "./snd/lock.wav"),
 		sound.load(Sounds.Clear, "./snd/clear.wav")
