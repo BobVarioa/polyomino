@@ -245,7 +245,7 @@ export class GlDraw extends BaseDraw {
 		super.reset();
 
 		this.canvas.width = this.grid * (this.sw + this.maxPieceWidth * 2 + 4);
-		this.canvas.height = this.grid * (this.sh + 2);
+		this.canvas.height = this.grid * (this.sh + 2 + 2);
 
 		this.clientWidth = this.canvas.clientWidth;
 		this.clientHeight = this.canvas.clientHeight;
@@ -538,16 +538,22 @@ export class GlDraw extends BaseDraw {
 				},
 			},
 		} = this;
-		// todo: display half of the row above the screen if boardSize is bigger than screenSize
 
-		const yStart = boardSize[1] - sh;
+		let yStart = boardSize[1] - sh;
+		let yOffset = 0;
+		
+		if (boardSize[1] > sh) {
+			yStart -= 2;
+			yOffset -= 2;
+		}
+
 		for (let y = yStart; y < boardSize[1]; y++) {
 			for (let x = 0; x < sw; x++) {
 				const name = playfield.atXY(x, y);
 				if (name == " ") continue;
 
 				const [u, v] = gameDef.uvs.get(name)!;
-				this.drawBlock(x, y - yStart + 1, u, v, a);
+				this.drawBlock(x, y - yStart + 1 + yOffset, u, v, a);
 			}
 		}
 	}
@@ -740,12 +746,12 @@ export class GlDraw extends BaseDraw {
 		const zFar = 100.0;
 		const projectionMatrix = mat4.create();
 
-		// layout is lr margins of the max piece width + 2, and dimensions of sw by sh + 2
+		// layout is lr margins of the max piece width + 2, and dimensions of sw by sh + 2 + 2
 
 		const left = -this.maxPieceWidth - 2;
 		const right = this.sw + this.maxPieceWidth + 2;
 		const top = -this.sh - 2;
-		const bottom = 1;
+		const bottom = 3;
 
 		mat4.ortho(projectionMatrix, left, right, top, bottom, zNear, zFar);
 

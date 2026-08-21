@@ -530,11 +530,11 @@ export class Logic {
 				const piece = this.gameDef.pieces.get(pieceName)!;
 				// x = ceil((BW - n) / 2)
 				const x = Math.ceil((boardSize[0] - piece.matrix.width) / 2);
-				let y = screenSize[1] + 1;
-				if (y > boardSize[1]) y = boardSize[1];
+				let y = screenSize[1] - 1;
+				if (screenSize[1] + y > boardSize[1]) y = boardSize[1];
 
 				this.holdPiece = this.activePiece.piece.name;
-				this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y - 1);
+				this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y);
 				this.swapHold = false;
 			} else {
 				// generate piece
@@ -542,15 +542,12 @@ export class Logic {
 				const piece = this.gameDef.pieces.get(pieceName)!;
 				// x = ceil((BW - n) / 2)
 				let x = Math.ceil((boardSize[0] - piece.matrix.width) / 2);
-				let y = screenSize[1] + 1;
-				if (piece.matrix.height > 3) {
-					y -= 1;
-				}
-				if (y > boardSize[1]) y = boardSize[1];
+				let y = screenSize[1] - 1;
+				if (screenSize[1] + y > boardSize[1]) y = boardSize[1];
 				if (x < 1) x = 1;
 				if (y < 1) y = 1;
 
-				this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y - 1);
+				this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y);
 			}
 
 			// check if player is trying to rotate piece, rotate
