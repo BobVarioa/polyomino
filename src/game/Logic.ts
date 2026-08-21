@@ -500,7 +500,7 @@ export class Logic {
 			this.state.failBuffer--;
 		}
 
-		if (this.paused) return;
+		if (this.paused || this.failed) return;
 
 		if (this.gameboard.step()) return;
 		if (this.state.checkState == CheckState.Clear) {
@@ -562,6 +562,7 @@ export class Logic {
 				if (!this.pieceIntersecting(piece)) {
 					this.activePiece = piece;
 				} else {
+					this.activePiece.invalidate();
 					this.gameOver();
 				}
 			}
