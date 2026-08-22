@@ -1,9 +1,9 @@
 {
 	"pieces": {
-		"R": { "def": "1", "color": "red" },
-		"B": { "def": "1", "color": "blue" },
-		"G": { "def": "1", "color": "green" },
-		"Y": { "def": "1", "color": "yellow" },
+		"R": { "def": "1", "color": "red", "parent": true, "uv": [1, 0] },
+		"B": { "def": "1", "color": "blue", "parent": true, "uv": [0, 0] },
+		"G": { "def": "1", "color": "green", "parent": true, "uv": [1, 1] },
+		"Y": { "def": "1", "color": "yellow", "parent": true, "uv": [2, 1] },
 		// 1-color
 		"I": { "def": "0R0/0R0/000" },
 		"J": { "def": "0B0/0B0/000" },
