@@ -421,7 +421,7 @@ export class GlDraw extends BaseDraw {
 		gl.attachShader(shaderProgram, fragmentShader);
 		gl.linkProgram(shaderProgram);
 
-		// If creating the shader program failed, alert
+		// todo: probably don't alert
 		if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
 			alert(`Unable to initialize the shader program: ${gl.getProgramInfoLog(shaderProgram)}`);
 			throw 0;

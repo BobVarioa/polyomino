@@ -332,8 +332,7 @@ export class Logic {
 				break;
 
 			case "cascade":
-				// NOTE: this is going to require a *lot* of state, so for right now i'm going to avoid this
-				// well, okay it might not, because we do store which piece is which for colors, but i don't think reversing these is trival
+
 				break;
 		}
 	}
@@ -346,7 +345,7 @@ export class Logic {
 
 		// clearedLines
 		// three corner rule
-		// TODO: scoring
+		// todo: scoring
 		if (this.lastMove == Keys.RotateLeft || this.lastMove == Keys.RotateRight || this.lastMove == Keys.Rotate180) {
 			let corners = 0;
 			const piece = this.activePiece;
@@ -600,7 +599,7 @@ export class Logic {
 					this.sound.play(Sounds.Lock);
 				}
 			} else {
-				// TODO: [garbage] below
+				// todo: [garbage] piece placement
 				// eventually we will probably push the piece up because
 				// the only way to get in this state is probably garbage?
 				// and then only if the piece can't be pushed up then we game over
