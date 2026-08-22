@@ -481,6 +481,7 @@ export class Logic {
 					this.activePiece.write();
 					this.state.heldLast = false;
 					this.state.lockDelayTimer = 0;
+					this.state.lockDelayMoves = 0;
 					this.state.checkState = CheckState.Clear;
 					this.sound.play(Sounds.Lock);
 				}
