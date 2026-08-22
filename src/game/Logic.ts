@@ -50,7 +50,6 @@ export class Logic {
 		let then = 0;
 		const drawLoop = (now: number) => {
 			now *= 0.001;
-			console.log("draw frame");
 			this.draw.frame(now - then);
 			then = now;
 			rAF = requestAnimationFrame(drawLoop);
@@ -63,7 +62,6 @@ export class Logic {
 
 		const func = () => {
 			if (!this.stopped) {
-				console.log("logic frame");
 				this.frame();
 				timeout = setTimeout(func, 1000 / fps);
 			} else {
@@ -213,130 +211,6 @@ export class Logic {
 		receiveSentGarbage: boolean;
 	};
 
-	gravity() {
-		const dropDelay = this.gameDef.settings.dropDelay;
-		switch (this.gameDef.settings.gravityType) {
-			case "naive":
-				for (let y = this.gameboard.height - 1; y > 0; y--) {
-					let lines = 0;
-					upper: while (true) {
-						for (let x = 0; x < this.gameboard.width; x++) {
-							const piece = this.gameboard.pieceXY(x, y - lines);
-							if (piece != 0) {
-								break upper;
-							}
-						}
-						lines++;
-					}
-
-					// if this whole board above is empty, continue
-					if (y - lines < 0) continue;
-
-					if (lines > 0) {
-						this.gameboard.in();
-						for (let x = 0; x < this.gameboard.width; x++) {
-							this.gameboard.drop(x, 0, y, lines);
-						}
-						this.gameboard.out(dropDelay);
-						this.state.checkState = CheckState.Gravity;
-						return;
-					}
-				}
-				break;
-
-			case "linear":
-				let dropped = false;
-				this.gameboard.in();
-				for (let x = 0; x < this.gameboard.width; x++) {
-					for (let y = this.gameboard.height - 1; y > 0; y--) {
-						let lines = 0;
-						while (this.gameboard.pieceXY(x, y - lines) === 0) {
-							lines++;
-						}
-						// if this whole column is empty, break
-						if (y - lines < 0) break;
-						if (lines != 0) {
-							this.gameboard.drop(x, 0, y, lines);
-							dropped = true;
-							break;
-						}
-					}
-				}
-				this.gameboard.out(dropDelay);
-				if (dropped) {
-					this.state.checkState = CheckState.Clear;
-				}
-				break;
-
-			case "sticky":
-				for (let y = this.gameboard.height - 1; y > 0; y--) {
-					// X XX
-					//
-					//  x
-					// XXX
-					// detect empty lines
-					let empty = true;
-					for (let x = 0; x < this.gameboard.width; x++) {
-						const piece = this.gameboard.pieceXY(x, y);
-						if (piece != 0) {
-							empty = false;
-							break;
-						}
-					}
-
-					if (empty) continue;
-
-					// 1 22
-					//
-					//  3
-					// 333
-					// detect sectors
-					const sectors = this.gameboard.detectSectors((a, b) => a != 0 && b != 0);
-
-					//
-					//
-					// 1322
-					// 333
-					// make sectors fall
-					for (const sector of sectors) {
-						// just so typescript doesn't complain...
-						const sector2 = sector as any as [number, number, number, number][];
-						sector2.sort((a, b) => b[1] - a[1]);
-						for (const point of sector2) {
-							point[2] = this.gameboard.pieceXY(point[0], point[1])!;
-							point[3] = this.gameboard.flagXY(point[0], point[1])!;
-							this.gameboard.setXY(point[0], point[1], 0, PieceFlags.None);
-						}
-
-						let yy = 1;
-						loop: while (true) {
-							for (const [px, py] of sector2) {
-								const extracted = this.gameboard.pieceXY(px, py + yy);
-								if (extracted != 0) {
-									yy -= 1;
-									break loop;
-								}
-							}
-							yy += 1;
-						}
-
-						for (const [px, py, p, f] of sector2) {
-							this.gameboard.setXY(px, py + yy, p, f);
-						}
-					}
-
-					// this is a hack that im almost certain does not work, but for now is fine
-					// todo: actually rework this to use the gameboard action queuing system, which will fix this bug
-					this.state.checkState = CheckState.Done;
-				}
-				break;
-
-			case "cascade":
-
-				break;
-		}
-	}
-
 	clearLines() {
 		if (this.flags.noLineClears) return;
 
@@ -388,9 +262,14 @@ export class Logic {
 				break;
 
 			case "color":
-				const sectors = this.gameboard.detectSectors((a, b, af, bf) => {
-					if (a === 0) return false;
-					if (af & PieceFlags.Garbage) return false;
+				const sectors = this.gameboard.detectSectors((ax, ay, bx, by) => {
+					const a = this.gameboard.pieceXY(ax, ay)!;
+					const b = this.gameboard.pieceXY(bx, by)!;
+					const af = this.gameboard.flagXY(ax, ay)!;
+					const bf = this.gameboard.flagXY(bx, by)!;
+
+					if (a === 0 || b === 0) return false;
+					if ((af & PieceFlags.Garbage) != 0 || (bf & PieceFlags.Garbage) != 0) return false;
 					return a === b;
 				});
 				this.gameboard.in();
@@ -417,8 +296,7 @@ export class Logic {
 		}
 
 		const wasB2B = this.gameDef.garbage.isB2B(clearedLines, wasSpin);
-
-		let wasPC = this.gameboard.isEmpty();
+		const wasPC = this.gameboard.isEmpty();
 
 		if (clearedLines > 0) {
 			this.sound.play(Sounds.Clear);
@@ -497,20 +375,28 @@ export class Logic {
 
 		if (this.paused || this.failed) return;
 
+		const {
+			boardSize,
+			screenSize,
+			are,
+			hold: canHold,
+			gravity,
+			lockDelay,
+			holdDelay,
+			gravityType,
+		} = this.gameDef.settings;
+
 		if (this.gameboard.step()) return;
 		if (this.state.checkState == CheckState.Clear) {
 			this.state.checkState = CheckState.Done;
 			this.clearLines();
-			if (this.gameDef.settings.gravityType !== "naive") {
+			if (gravityType !== "naive") {
 				this.state.checkState = CheckState.Gravity;
 			}
 		} else if (this.state.checkState == CheckState.Gravity) {
-			this.state.checkState = CheckState.Done;
-			this.gravity();
+			this.state.checkState = this.gameboard.gravity();
 		}
 		if (this.state.checkState != CheckState.Done) return;
-
-		const { boardSize, screenSize, are, hold: canHold, gravity, lockDelay, holdDelay } = this.gameDef.settings;
 
 		// if no piece,
 		if (this.activePiece.invalid) {
@@ -520,7 +406,7 @@ export class Logic {
 				return;
 			}
 
-			let pieceIdx = 0
+			let pieceIdx = 0;
 			if (canHold && this.swapHold) {
 				pieceIdx = this.holdPiece;
 				this.holdPiece = this.activePiece.piece.index;

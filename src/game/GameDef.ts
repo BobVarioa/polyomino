@@ -31,10 +31,10 @@ export enum PieceFlags {
 	Normal = 1,
 	Garbage = 2,
 	Unclearable = 4,
-	Left = 8,
-	Top = 16,
-	Right = 32,
-	Bottom = 64,
+	L = 8,
+	U = 16,
+	R = 32,
+	D = 64,
 }
 
 export class Piece {
@@ -151,16 +151,16 @@ export class GameDef {
 				let v = PieceFlags.Normal;
 
 				if (p == matrix.atXY(x - 1, y)) {
-					v |= PieceFlags.Left;
+					v |= PieceFlags.L;
 				}
 				if (p == matrix.atXY(x + 1, y)) {
-					v |= PieceFlags.Right;
+					v |= PieceFlags.R;
 				}
 				if (p == matrix.atXY(x, y - 1)) {
-					v |= PieceFlags.Top;
+					v |= PieceFlags.U;
 				}
 				if (p == matrix.atXY(x, y + 1)) {
-					v |= PieceFlags.Bottom;
+					v |= PieceFlags.D;
 				}
 
 				flags.setXY(x, y, v);

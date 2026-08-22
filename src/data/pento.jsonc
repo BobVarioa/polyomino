@@ -63,7 +63,7 @@
 		"boardSize": [12, 42],
 		"screenSize": [12, 22],
 		"are": 6,
-		"gravityType": "sticky",
+		"gravityType": "cascade",
 		"gravity": 64,
 		"lockDelay": 30,
 		"hold": true,

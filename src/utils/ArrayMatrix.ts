@@ -1,3 +1,5 @@
+import { PieceFlags } from "../game/GameDef";
+
 export class ArrayMatrix<T> extends Array<T> {
 	constructor(public width: number, public height: number) {
 		super(width * height);
@@ -81,6 +83,64 @@ export class ArrayMatrix<T> extends Array<T> {
 			for (let x = 0; x < this.width; x++) {
 				str += this.atXY(x, y);
 				str += " ";
+			}
+			if (y == 0) str += "⎤\n";
+			else if (y == this.height - 1) str += "⎦\n";
+			else str += "|\n";
+		}
+		return str;
+	}
+
+
+	flagsToString() {
+		let str = "";
+		for (let y = 0; y < this.height; y++) {
+			if (y == 0) str += "⎡ ";
+			else if (y == this.height - 1) str += "⎣ ";
+			else str += "| ";
+			for (let x = 0; x < this.width; x++) {
+				const f = this.atXY(x, y)! as number;
+
+				if ((f & PieceFlags.Normal) === 0) {
+					str += " ";
+					continue;
+				}
+
+				const pairs: [PieceFlags[], string][] = [
+					[[PieceFlags.L, PieceFlags.R, PieceFlags.U, PieceFlags.D], "┼"],
+
+					[[PieceFlags.D, PieceFlags.U, PieceFlags.L], "┤"],
+					[[PieceFlags.D, PieceFlags.U, PieceFlags.R], "├"],
+					[[PieceFlags.L, PieceFlags.R, PieceFlags.D], "┬"],
+					[[PieceFlags.L, PieceFlags.R, PieceFlags.U], "┴"],
+
+					[[PieceFlags.D, PieceFlags.R], "┌"],
+					[[PieceFlags.U, PieceFlags.R], "└"],
+					[[PieceFlags.D, PieceFlags.L], "┐"],
+					[[PieceFlags.U, PieceFlags.L], "┘"],
+
+					[[PieceFlags.U, PieceFlags.D], "│"],
+					[[PieceFlags.R, PieceFlags.R], "─"],
+
+					[[PieceFlags.D], "╷"],
+					[[PieceFlags.U], "╵"],
+					[[PieceFlags.L], "╴"],
+					[[PieceFlags.R], "╶"],
+				];
+
+				let passed = false;
+				top: for (const [tests, char] of pairs) {
+					for (const flag of tests) {
+						if ((f & flag) === 0) continue top;
+					}
+					str += char;
+					passed = true;
+					break;
+				}
+
+				if (!passed) {
+					str += "?";
+				}
 			}
 			if (y == 0) str += "⎤\n";
 			else if (y == this.height - 1) str += "⎦\n";

@@ -1,5 +1,5 @@
 import { ArrayMatrix } from "../utils/ArrayMatrix";
-import { Piece } from "./GameDef";
+import { Piece, PieceFlags } from "./GameDef";
 import { Logic } from "./Logic";
 
 export class RotState {
@@ -110,6 +110,28 @@ export class PieceState {
 	rotate90deg() {
 		this.data = this.data.rotate90deg();
 		this.flags = this.flags.rotate90deg();
+		for (let i = 0; i < this.flags.length; i++) {
+			const p = this.flags[i];
+			if (p == 0) continue;
+
+			let v = PieceFlags.Normal;
+			
+			if ((p & PieceFlags.L) !== 0) {
+				v |= PieceFlags.U;
+			}
+			if ((p & PieceFlags.U) !== 0) {
+				v |= PieceFlags.R;
+			}
+			if ((p & PieceFlags.R) !== 0) {
+				v |= PieceFlags.D;
+			}
+			if ((p & PieceFlags.D) !== 0) {
+				v |= PieceFlags.L;
+			}
+
+			this.flags[i] = v;
+		}
+
 		this.rot = this.rot.right();
 		return this;
 	}
@@ -117,6 +139,28 @@ export class PieceState {
 	rotate90degcc() {
 		this.data = this.data.rotate90degcc();
 		this.flags = this.flags.rotate90degcc();
+		for (let i = 0; i < this.flags.length; i++) {
+			const f = this.flags[i];
+			if (f == 0) continue;
+
+			let v = PieceFlags.Normal;
+			
+			if ((f & PieceFlags.L) !== 0) {
+				v |= PieceFlags.D;
+			}
+			if ((f & PieceFlags.D) !== 0) {
+				v |= PieceFlags.R;
+			}
+			if ((f & PieceFlags.R) !== 0) {
+				v |= PieceFlags.U;
+			}
+			if ((f & PieceFlags.U) !== 0) {
+				v |= PieceFlags.L;
+			}
+
+			this.flags[i] = v;
+		}
+		
 		this.rot = this.rot.left();
 		return this;
 	}
