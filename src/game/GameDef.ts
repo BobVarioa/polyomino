@@ -91,6 +91,7 @@ export class GameDef {
 	pieceIndex: number = 1;
 
 	readonly topLeftMap: Map<number, [number, number]> = new Map();
+	readonly widthHeightMap: Map<number, [number, number]> = new Map();
 	readonly rotations: MultiKeyMap<number, KickTable> = new MultiKeyMap();
 	readonly settings: Settings;
 	readonly garbage: GarbageManager;
@@ -283,6 +284,7 @@ export class GameDef {
 			}
 
 			gamedef.topLeftMap.set(i, topLeftPoint);
+			gamedef.widthHeightMap.set(i, [realWidth, realHeight]);
 
 			maxW = Math.max(realWidth, maxW);
 			maxH = Math.max(realHeight, maxH);

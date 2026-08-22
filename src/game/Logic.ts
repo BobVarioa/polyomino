@@ -521,30 +521,24 @@ export class Logic {
 				return;
 			}
 
+			let pieceIdx = 0
 			if (canHold && this.swapHold) {
-				const pieceName = this.holdPiece;
-				const piece = this.gameDef.getPiece(pieceName);
-				// x = ceil((BW - n) / 2)
-				const x = Math.ceil((boardSize[0] - piece.data.width) / 2);
-				let y = screenSize[1] - 1;
-				if (y > boardSize[1]) y = boardSize[1] - 1;
-
+				pieceIdx = this.holdPiece;
 				this.holdPiece = this.activePiece.piece.index;
-				this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y);
 				this.swapHold = false;
 			} else {
-				// generate piece
-				const pieceName = this.gameDef.randomizer.next();
-				const piece = this.gameDef.getPiece(pieceName);
-				// x = ceil((BW - n) / 2)
-				let x = Math.ceil((boardSize[0] - piece.data.width) / 2);
-				let y = screenSize[1] - 1;
-				if (y > boardSize[1]) y = boardSize[1] - 1;
-				if (x < 1) x = 1;
-				if (y < 1) y = 1;
-
-				this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y);
+				pieceIdx = this.gameDef.randomizer.next();
 			}
+
+			const piece = this.gameDef.getPiece(pieceIdx);
+			const pieceWidth = this.gameDef.widthHeightMap.get(pieceIdx)![0];
+			const topLeft = this.gameDef.topLeftMap.get(pieceIdx)!;
+			let x = Math.floor((boardSize[0] - pieceWidth) / 2);
+			let y = boardSize[1] - screenSize[1] - 1;
+			if (y > boardSize[1]) y = boardSize[1] - 1;
+			if (x < 1) x = 1;
+			if (y < 1) y = 1;
+			this.activePiece = new PieceState(this, piece, RotState.Initial, x - topLeft[0], y - topLeft[1]);
 
 			// check if player is trying to rotate piece, rotate
 			this.handleInputs();
