@@ -16,15 +16,18 @@ export class CanvasDraw extends BaseDraw {
 		this.canvas.height = this.grid * gameDef.settings.screenSize[1];
 		this.ctx = this.canvas.getContext("2d")!;
 
+		this.maxPieceHeight *= this.grid;
+		this.maxPieceWidth *= this.grid;
+
 		this.holdCanvas.classList.remove("gone");
-		this.holdCanvas.width = this.maxWidth + 20; // 10px padding + piece size
-		this.holdCanvas.height = this.maxHeight + 20; // 10px padding + piece size
+		this.holdCanvas.width = this.maxPieceWidth + 20; // 10px padding + piece size
+		this.holdCanvas.height = this.maxPieceHeight + 20; // 10px padding + piece size
 		this.ctxHold = this.holdCanvas.getContext("2d")!;
 
 		this.queueCanvas.classList.remove("gone");
-		this.queueCanvas.width = this.maxWidth + 20; // 10px padding + piece size
+		this.queueCanvas.width = this.maxPieceWidth + 20; // 10px padding + piece size
 		this.queueCanvas.height =
-			this.maxHeight * gameDef.settings.queueLength + 10 * (gameDef.settings.queueLength + 2); // 10px padding top and bottom + 5x piece size + 10px padding between pieces
+			this.maxPieceHeight * gameDef.settings.queueLength + 10 * (gameDef.settings.queueLength + 2); // 10px padding top and bottom + 5x piece size + 10px padding between pieces
 		this.ctxQueue = this.queueCanvas.getContext("2d")!;
 	}
 
@@ -55,9 +58,9 @@ export class CanvasDraw extends BaseDraw {
 		} = this;
 
 		const topLeft = this.topLeftMap.get(piece.name)!;
-		for (let y = topLeft[1]; y < piece.matrix.height; y++) {
-			for (let x = topLeft[0]; x < piece.matrix.width; x++) {
-				const v = piece.matrix.atXY(x, y);
+		for (let y = topLeft[1]; y < piece.data.height; y++) {
+			for (let x = topLeft[0]; x < piece.data.width; x++) {
+				const v = piece.data.atXY(x, y);
 				if (v != 0) {
 					ctx.fillStyle = gameDef.colors.get(piece.name) ?? gameDef.colors.get(gameDef.subpieces.get(v)!)!;
 					ctx.fillRect(
@@ -170,7 +173,7 @@ export class CanvasDraw extends BaseDraw {
 			let y = 10;
 			for (const piece of queue) {
 				this.drawPiece(this.ctxQueue, piece, x, y);
-				y += 10 + this.maxHeight;
+				y += 10 + this.maxPieceHeight;
 			}
 		}
 

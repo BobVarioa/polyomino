@@ -68,44 +68,52 @@ const withRegex = /^(.*) with (\d+) history(?: (\d+) rolls)?(?: starting with (.
 const listItemRegex = /^(\d*)?\*?(.*)$/;
 const firstRegex = /^(.*) but first (.*)$/;
 
-function listNormalize(list: string): string[] {
-	return list.split(",").flatMap((x: string) => {
-		const str = x.trim();
-		if (str.length === 0) return [];
-		const match = listItemRegex.exec(str);
-		if (!match) return [];
-		const [, count, item] = match;
-		if (!count) return item;
-		else return Array<string>(parseInt(count, 10)).fill(item);
-	});
+function listNormalize(list: string, pieceRegistry: Map<string, number>): number[] {
+	return list
+		.split(",")
+		.flatMap((x: string) => {
+			const str = x.trim();
+			if (str.length === 0) return [];
+
+			const match = listItemRegex.exec(str);
+			if (!match) return [];
+
+			const [, count, item] = match;
+			if (!count) {
+				return item;
+			} else {
+				return Array<string>(parseInt(count, 10)).fill(item);
+			}
+		})
+		.map((v) => pieceRegistry.get(v)!);
 }
 
 const whitespaceRegex = /\s+/g;
 
-function createRandomizer(str: string): (rng: Random) => Generator<string> {
+function createRandomizer(str: string, pieceRegistry: Map<string, number>): (rng: Random) => Generator<number> {
 	str = str.replace(whitespaceRegex, " ");
 
-	let first: string[] | undefined;
+	let first: number[] | undefined;
 
 	let res: RegExpExecArray | null = null;
 
 	res = firstRegex.exec(str);
 	if (res) {
 		const [, list, firstList] = res;
-		first = listNormalize(firstList);
+		first = listNormalize(firstList, pieceRegistry);
 		str = list;
 	}
 
 	res = bagOfRegex.exec(str);
 	if (res) {
-		const list = listNormalize(res[3]);
+		const list = listNormalize(res[3], pieceRegistry);
 		const count = res[1] ? parseInt(res[1], 10) : list.length;
 		const bonus = res[2] ? parseInt(res[2], 10) : 0;
 
 		const len = count + bonus;
 		return function* (rng: Random) {
 			let bag = rng.shuffleArray(list.slice());
-			let bonusBag: string[] = [];
+			let bonusBag: number[] = [];
 			if (first) {
 				const piece = rng.chooseRandom(first);
 				yield piece;
@@ -132,7 +140,7 @@ function createRandomizer(str: string): (rng: Random) => Generator<string> {
 
 	res = sequenceOfRegex.exec(str);
 	if (res) {
-		const list = listNormalize(res[3]);
+		const list = listNormalize(res[3], pieceRegistry);
 		const len = res[1] ? parseInt(res[1]) : undefined;
 		const random = res[2] === "random";
 		return function* (rng: Random) {
@@ -157,10 +165,10 @@ function createRandomizer(str: string): (rng: Random) => Generator<string> {
 
 	res = withRegex.exec(str);
 	if (res) {
-		const list = listNormalize(res[1]);
+		const list = listNormalize(res[1], pieceRegistry);
 		const historyLen = parseInt(res[2]);
 		const rolls = res[3] ? parseInt(res[3]) : undefined;
-		const history = res[4] ? listNormalize(res[4]) : [];
+		const history = res[4] ? listNormalize(res[4], pieceRegistry) : [];
 		return function* (rng: Random) {
 			if (first) {
 				const piece = rng.chooseRandom(first);
@@ -183,7 +191,7 @@ function createRandomizer(str: string): (rng: Random) => Generator<string> {
 		};
 	}
 
-	const list = listNormalize(str);
+	const list = listNormalize(str, pieceRegistry);
 	return function* (rng: Random) {
 		if (first) yield rng.chooseRandom(first);
 		while (true) {
@@ -192,7 +200,8 @@ function createRandomizer(str: string): (rng: Random) => Generator<string> {
 	};
 }
 
-export const blackjack = (str: string) => wrapGenerator(createRandomizer(str));
+export const blackjack = (str: string, pieceRegistry: Map<string, number>) =>
+	wrapGenerator(createRandomizer(str, pieceRegistry));
 
 // export const tgm1 = rand(
 // 	`I,J,L,O,S,T,Z

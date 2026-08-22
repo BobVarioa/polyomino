@@ -1,4 +1,5 @@
 import { ArrayMatrix } from "../utils/ArrayMatrix";
+import { PieceFlags } from "./GameDef";
 import { CheckState, Logic } from "./Logic";
 
 interface BaseAction {
@@ -31,14 +32,97 @@ export interface ActionList {
 	list: Action[];
 }
 
-export default class Gameboard extends ArrayMatrix<string> {
-	constructor(width: number, height: number, public logic: Logic) {
-		super(width, height);
+export default class Gameboard {
+	pieces: ArrayMatrix<number>;
+	flags: ArrayMatrix<number>;
+
+	readonly garbageIdx: number;
+
+	constructor(
+		public width: number,
+		public height: number,
+		public logic: Logic,
+	) {
+		this.pieces = ArrayMatrix.create(width, height, 0);
+		this.flags = ArrayMatrix.create(width, height, 0);
+
+		this.garbageIdx = this.logic.gameDef.getPieceIdx("?");
 	}
 
 	actionQueue: ActionList[] = [];
 	delayTimer: number = 0;
 	active!: Action[];
+
+	isOoB(x: number, y: number) {
+		if (x < 0 || y >= this.height || x < 0 || x >= this.width) {
+			return true;
+		}
+		return false;
+	}
+
+	pieceXY(x: number, y: number) {
+		if (this.isOoB(x, y)) return undefined;
+		return this.pieces.atXY(x, y);
+	}
+
+	flagXY(x: number, y: number) {
+		if (this.isOoB(x, y)) return undefined;
+		return this.flags.atXY(x, y);
+	}
+
+	setXY(x: number, y: number, p: number, f: number) {
+		this.pieces.setXY(x, y, p);
+		this.flags.setXY(x, y, f);
+	}
+
+	shiftUp(lines: number) {
+		this.pieces.shiftUp(lines, 0);
+		this.flags.shiftUp(lines, 0);
+	}
+
+	isEmpty() {
+		for (let i = 0; i < this.pieces.length; i++) {
+			if (this.pieces[i] != 0) return false;
+		}
+		return true;
+	}
+
+	detectSectors(isEqual: (a: number, b: number, af: number, bf: number) => boolean): [number, number][][] {
+		const sectors: [number, number][][] = [];
+		const visited = new ArrayMatrix<boolean>(this.width, this.height).fill(false);
+
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				if (!visited.atXY(x, y)) {
+					const p = this.pieceXY(x, y)!;
+					const f = this.flagXY(x, y)!;
+					const sector: [number, number][] = [];
+					let queue = [[x, y]];
+					let item;
+
+					while ((item = queue.pop())) {
+						const [xx, yy] = item;
+						if (yy < 0 || yy >= this.height || xx < 0 || xx >= this.width) {
+							continue;
+						}
+
+						if (visited.atXY(xx, yy) || !isEqual(this.pieceXY(xx, yy)!, p, this.flagXY(xx, yy)!, f)) {
+							continue;
+						}
+
+						visited.setXY(xx, yy, true);
+						sector.push([xx, yy]);
+
+						// Explore neighbors
+						queue.push([xx + 0, yy + 1], [xx + 0, yy - 1], [xx + 1, yy + 0], [xx - 1, yy + 0]);
+					}
+					if (sector.length > 0) sectors.push(sector);
+				}
+			}
+		}
+
+		return sectors;
+	}
 
 	// creates a list of actions to perform
 	// in()
@@ -78,11 +162,16 @@ export default class Gameboard extends ArrayMatrix<string> {
 				console.log(item);
 				switch (item.type) {
 					case "delete":
-						this.setXY(item.x, item.y, " ");
+						this.setXY(item.x, item.y, 0, PieceFlags.None);
 						break;
 					case "drop":
 						for (let yy = item.y_2; yy >= item.y_1; yy--) {
-							this.setXY(item.x, yy, this.atXY(item.x, yy - item.n) ?? " ");
+							this.setXY(
+								item.x,
+								yy,
+								this.pieceXY(item.x, yy - item.n) ?? 0,
+								this.flagXY(item.x, yy - item.n) ?? PieceFlags.None,
+							);
 						}
 						break;
 					case "garbage":
@@ -103,19 +192,20 @@ export default class Gameboard extends ArrayMatrix<string> {
 	private doGarbage(lines: number) {
 		const { garbageHoles, garbageLocation, garbageCheese: cheeseN } = this.logic.gameDef.settings;
 		let holes: Set<number> = new Set();
+		const f = PieceFlags.Normal | PieceFlags.Garbage;
 		switch (garbageLocation) {
 			case "bottom":
-				this.shiftUp(lines, " ");
+				this.shiftUp(lines);
 				for (let y = 0; y < lines; y++) {
 					if (y % cheeseN === 0) {
-						holes.clear()
+						holes.clear();
 						while (holes.size < garbageHoles) {
 							holes.add(this.logic.garbageRandom.randomInt(0, this.width - 1));
 						}
 					}
 					for (let x = 0; x < this.width; x++) {
 						if (holes.has(x)) continue;
-						this.setXY(x, this.height - 1 - y, "?");
+						this.setXY(x, this.height - 1 - y, this.garbageIdx, f);
 					}
 				}
 
@@ -123,14 +213,14 @@ export default class Gameboard extends ArrayMatrix<string> {
 			case "top":
 				for (let y = 0; y < lines; y++) {
 					if (y % cheeseN === 0) {
-						holes.clear()
+						holes.clear();
 						while (holes.size < garbageHoles) {
 							holes.add(this.logic.garbageRandom.randomInt(0, this.width - 1));
 						}
 					}
 					for (let x = 0; x < this.width; x++) {
 						if (holes.has(x)) continue;
-						this.setXY(x, y, "?");
+						this.setXY(x, y, this.garbageIdx, f);
 					}
 				}
 				// this seems pretty brittle

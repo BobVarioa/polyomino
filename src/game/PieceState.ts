@@ -9,7 +9,11 @@ export class RotState {
 	static Right = new RotState(3);
 
 	constructor(public value: number) {}
-	
+
+	equals(other: RotState) {
+		return this.value === other.value;
+	}
+
 	left() {
 		let value = this.value + 1;
 		if (value > 3) value = 0;
@@ -37,19 +41,27 @@ export class RotState {
 			case 3:
 				return "R";
 		}
-		throw new RangeError("Invalid state of this.value.")
+		throw new RangeError("Invalid state of this.value.");
 	}
 }
 
 export class PieceState {
 	public data: ArrayMatrix<number>;
+	public flags: ArrayMatrix<number>;
 	public invalid = false;
 
 	// note: this is special, its fine if everything is null here
 	static none = new PieceState(undefined!, undefined!, RotState.Initial, 0, 0).invalidate();
 
-	constructor(public parent: Logic, public piece: Piece, public rot: RotState, public x: number, public y: number) {
-		this.data = piece?.matrix;
+	constructor(
+		public parent: Logic,
+		public piece: Piece,
+		public rot: RotState,
+		public x: number,
+		public y: number,
+	) {
+		this.data = piece?.data;
+		this.flags = piece?.flags;
 	}
 
 	invalidate() {
@@ -97,12 +109,14 @@ export class PieceState {
 
 	rotate90deg() {
 		this.data = this.data.rotate90deg();
+		this.flags = this.flags.rotate90deg();
 		this.rot = this.rot.right();
 		return this;
 	}
 
 	rotate90degcc() {
 		this.data = this.data.rotate90degcc();
+		this.flags = this.flags.rotate90degcc();
 		this.rot = this.rot.left();
 		return this;
 	}
@@ -146,7 +160,8 @@ export class PieceState {
 
 	copy() {
 		let piece = new PieceState(this.parent, this.piece, this.rot, this.x, this.y);
-		piece.data = this.data;
+		piece.data = this.data.copy();
+		piece.flags = this.flags.copy();
 		return piece;
 	}
 
@@ -165,22 +180,11 @@ export class PieceState {
 	 * writes piece to gameboard then invalidates self
 	 */
 	write() {
-		const gameDef = this.parent.gameDef;
-		const canMetaPiece = gameDef.settings.pieceType == "meta"
 		for (let y = 0; y < this.data.height; y++) {
 			for (let x = 0; x < this.data.width; x++) {
-				const v = this.data.atXY(x, y);
+				const v = this.data.atXY(x, y)!;
 				if (v != 0) {
-					if (!canMetaPiece) {
-						this.parent.gameboard.setXY(this.x + x, this.y + y, this.piece.name);
-					} else {
-						const c = gameDef.subpieces.get(v);
-						if (c === undefined) {
-							this.parent.gameboard.setXY(this.x + x, this.y + y, this.piece.name);
-						} else {
-							this.parent.gameboard.setXY(this.x + x, this.y + y, c);
-						}
-					}
+					this.parent.gameboard.setXY(this.x + x, this.y + y, v, this.flags.atXY(x, y)!);
 				}
 			}
 		}

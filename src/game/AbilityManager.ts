@@ -51,7 +51,7 @@ export class AbilityManager {
 				const linesCleared = 4;
 				for (let y = gameboard.height - 1; y > 0; y--) {
 					for (let x = 0; x < gameboard.width; x++) {
-						gameboard.setXY(x, y, gameboard.atXY(x, y - linesCleared) ?? " ");
+						gameboard.setXY(x, y, gameboard.pieceXY(x, y - linesCleared) ?? " ");
 					}
 				}
 				break;
@@ -63,7 +63,7 @@ export class AbilityManager {
 				for (let y = gameboard.height - 1; y > 0; y--) {
 					for (let x = 0; x < gameboard.width; x++) {
 						if (holes <= 0) break main;
-						if (gameboard.atXY(x, y) == " ") {
+						if (gameboard.pieceXY(x, y) == " ") {
 							gameboard.setXY(x, y, "?");
 							holes--;
 						}

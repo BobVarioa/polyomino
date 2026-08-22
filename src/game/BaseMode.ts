@@ -85,10 +85,10 @@ export abstract class BaseMode {
 		return false;
 	}
 
-	replaceAll(board: ArrayMatrix<string>, predicate: (target: string) => boolean, replace: string) {
+	replaceAll(board: ArrayMatrix<number>, predicate: (target: number) => boolean, replace: number) {
 		for (let y = 0; y < board.height; y++) {
 			for (let x = 0; x < board.width; x++) {
-				if (predicate(board.atXY(x, y))) board.setXY(x, y, replace);
+				if (predicate(board.atXY(x, y)!)) board.setXY(x, y, replace);
 			}
 		}
 	}

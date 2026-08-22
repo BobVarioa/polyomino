@@ -3,12 +3,16 @@ export class ArrayMatrix<T> extends Array<T> {
 		super(width * height);
 	}
 
+	static create<T>(width: number, height: number, fill: T): ArrayMatrix<T> {
+		return new ArrayMatrix<T>(width, height).fill(fill);
+	}
+
 	copy() {
 		const arr = new ArrayMatrix<T>(this.width, this.height)
 
 		for (let x = 0; x < this.width; x++) {
 			for (let y = 0; y < this.height; y++) {
-				arr.setXY(x, y, this.atXY(x, y));
+				arr.setXY(x, y, this.atXY(x, y)!);
 			}
 		}
 
@@ -25,7 +29,7 @@ export class ArrayMatrix<T> extends Array<T> {
 
 		for (let x = 0; x < this.width; x++) {
 			for (let y = 0; y < this.height; y++) {
-				result.setXY(x, y, this.atXY(this.height - y - 1, x));
+				result.setXY(x, y, this.atXY(this.height - y - 1, x)!);
 			}
 		}
 
@@ -42,14 +46,14 @@ export class ArrayMatrix<T> extends Array<T> {
 
 		for (let x = 0; x < this.width; x++) {
 			for (let y = 0; y < this.height; y++) {
-				result.setXY(x, y, this.atXY(y, this.width - x - 1));
+				result.setXY(x, y, this.atXY(y, this.width - x - 1)!);
 			}
 		}
 
 		return result;
 	}
 
-	atXY(x: number, y: number): T {
+	atXY(x: number, y: number): T | undefined {
 		if (x < 0 || y < 0 || x >= this.width || y >= this.height) return;
 		return this[x + this.width * y];
 	}
@@ -66,42 +70,6 @@ export class ArrayMatrix<T> extends Array<T> {
 			}
 		}
 
-	}
-
-	detectSectors(isEqual: (a: T, b: T) => boolean): [number, number][][] {
-		const sectors: [number, number][][] = [];
-		const visited = new ArrayMatrix<boolean>(this.width, this.height).fill(false);
-
-		for (let y = 0; y < this.height; y++) {
-			for (let x = 0; x < this.width; x++) {
-				if (!visited.atXY(x, y)) {
-					const value = this.atXY(x, y);
-					const sector: [number, number][] = [];
-					let queue = [[x, y]];
-					let item;
-
-					while ((item = queue.pop())) {
-						const [xx, yy] = item;
-						if (yy < 0 || yy >= this.height || xx < 0 || xx >= this.width) {
-							continue;
-						}
-
-						if (visited.atXY(xx, yy) || !isEqual(this.atXY(xx, yy), value)) {
-							continue;
-						}
-
-						visited.setXY(xx, yy, true);
-						sector.push([xx, yy]);
-
-						// Explore neighbors
-						queue.push([xx + 0, yy + 1], [xx + 0, yy - 1], [xx + 1, yy + 0], [xx - 1, yy + 0]);
-					}
-					if (sector.length > 0) sectors.push(sector);
-				}
-			}
-		}
-
-		return sectors;
 	}
 
 	toString() {

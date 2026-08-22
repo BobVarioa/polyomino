@@ -21,9 +21,9 @@ export enum CheckState {
 
 export class Logic {
 	public gameboard!: Gameboard;
-	public ghostboard!: ArrayMatrix<string>;
+	public ghostboard!: ArrayMatrix<number>;
 	public activePiece!: PieceState;
-	public holdPiece!: string;
+	public holdPiece!: number;
 	public paused!: boolean;
 	public swapHold!: boolean;
 	public failed!: boolean;
@@ -50,6 +50,7 @@ export class Logic {
 		let then = 0;
 		const drawLoop = (now: number) => {
 			now *= 0.001;
+			console.log("draw frame");
 			this.draw.frame(now - then);
 			then = now;
 			rAF = requestAnimationFrame(drawLoop);
@@ -62,6 +63,7 @@ export class Logic {
 
 		const func = () => {
 			if (!this.stopped) {
+				console.log("logic frame");
 				this.frame();
 				timeout = setTimeout(func, 1000 / fps);
 			} else {
@@ -138,10 +140,10 @@ export class Logic {
 
 		const { boardSize } = this.gameDef.settings;
 		// clear gameboard
-		this.gameboard = new Gameboard(boardSize[0], boardSize[1], this).fill(" ");
-		this.ghostboard = new ArrayMatrix<string>(boardSize[0], boardSize[1]).fill(" ");
+		this.gameboard = new Gameboard(boardSize[0], boardSize[1], this);
+		this.ghostboard = ArrayMatrix.create(boardSize[0], boardSize[1], 0);
 		this.activePiece = PieceState.none;
-		this.holdPiece = " ";
+		this.holdPiece = 0;
 		this.swapHold = false;
 		this.paused = false;
 		this.lastMove = Keys.Pause; // used as a placeholder empty value
@@ -153,8 +155,8 @@ export class Logic {
 		for (let x = 0; x < piece.data.width; x++) {
 			for (let y = 0; y < piece.data.height; y++) {
 				if (piece.data.atXY(x, y) != 0) {
-					const extracted = this.gameboard.atXY(piece.x + x, piece.y + y);
-					if (extracted != " ") {
+					const p = this.gameboard.pieceXY(piece.x + x, piece.y + y);
+					if (p !== 0 || p == undefined) {
 						return true;
 					}
 				}
@@ -171,7 +173,7 @@ export class Logic {
 	calculateKicks(piece: Piece, from: RotState, to: RotState): [number, number][] {
 		const kicks: [number, number][] = [];
 
-		const kickTable = this.gameDef.rotations.get(piece.name)!;
+		const kickTable = this.gameDef.rotations.get(piece.index)!;
 
 		const fromK = kickTable[from.name()];
 		const toK = kickTable[to.name()];
@@ -219,8 +221,8 @@ export class Logic {
 					let lines = 0;
 					upper: while (true) {
 						for (let x = 0; x < this.gameboard.width; x++) {
-							const piece = this.gameboard.atXY(x, y - lines);
-							if (piece != " ") {
+							const piece = this.gameboard.pieceXY(x, y - lines);
+							if (piece != 0) {
 								break upper;
 							}
 						}
@@ -248,7 +250,7 @@ export class Logic {
 				for (let x = 0; x < this.gameboard.width; x++) {
 					for (let y = this.gameboard.height - 1; y > 0; y--) {
 						let lines = 0;
-						while (this.gameboard.atXY(x, y - lines) === " ") {
+						while (this.gameboard.pieceXY(x, y - lines) === 0) {
 							lines++;
 						}
 						// if this whole column is empty, break
@@ -275,8 +277,8 @@ export class Logic {
 					// detect empty lines
 					let empty = true;
 					for (let x = 0; x < this.gameboard.width; x++) {
-						const piece = this.gameboard.atXY(x, y);
-						if (piece != " ") {
+						const piece = this.gameboard.pieceXY(x, y);
+						if (piece != 0) {
 							empty = false;
 							break;
 						}
@@ -289,7 +291,7 @@ export class Logic {
 					//  3
 					// 333
 					// detect sectors
-					const sectors = this.gameboard.detectSectors((a, b) => a != " " && b != " ");
+					const sectors = this.gameboard.detectSectors((a, b) => a != 0 && b != 0);
 
 					//
 					//
@@ -298,18 +300,19 @@ export class Logic {
 					// make sectors fall
 					for (const sector of sectors) {
 						// just so typescript doesn't complain...
-						const sector2 = sector as any as [number, number, string][];
+						const sector2 = sector as any as [number, number, number, number][];
 						sector2.sort((a, b) => b[1] - a[1]);
 						for (const point of sector2) {
-							point[2] = this.gameboard.atXY(point[0], point[1]);
-							this.gameboard.setXY(point[0], point[1], " ");
+							point[2] = this.gameboard.pieceXY(point[0], point[1])!;
+							point[3] = this.gameboard.flagXY(point[0], point[1])!;
+							this.gameboard.setXY(point[0], point[1], 0, PieceFlags.None);
 						}
 
 						let yy = 1;
 						loop: while (true) {
 							for (const [px, py] of sector2) {
-								const extracted = this.gameboard.atXY(px, py + yy);
-								if (extracted != " ") {
+								const extracted = this.gameboard.pieceXY(px, py + yy);
+								if (extracted != 0) {
 									yy -= 1;
 									break loop;
 								}
@@ -317,8 +320,8 @@ export class Logic {
 							yy += 1;
 						}
 
-						for (const [px, py, pt] of sector2) {
-							this.gameboard.setXY(px, py + yy, pt);
+						for (const [px, py, p, f] of sector2) {
+							this.gameboard.setXY(px, py + yy, p, f);
 						}
 					}
 
@@ -347,10 +350,10 @@ export class Logic {
 		if (this.lastMove == Keys.RotateLeft || this.lastMove == Keys.RotateRight || this.lastMove == Keys.Rotate180) {
 			let corners = 0;
 			const piece = this.activePiece;
-			const matrix = piece.piece.matrix;
+			const matrix = piece.piece.data;
 			for (const x of [0, matrix.width - 1]) {
 				for (const y of [0, matrix.height - 1]) {
-					if (this.gameboard.atXY(piece.x + x, piece.y + y) != " ") {
+					if (this.gameboard.pieceXY(piece.x + x, piece.y + y) != 0) {
 						corners++;
 					}
 				}
@@ -360,7 +363,6 @@ export class Logic {
 			}
 		}
 
-		const pieces = this.gameDef.pieces;
 		const lineClearDelay = this.gameDef.settings.lineClearDelay;
 		switch (this.gameDef.settings.clearType) {
 			case "line":
@@ -368,8 +370,9 @@ export class Logic {
 				for (let y = this.gameboard.height - 1; y > 0; y--) {
 					let hole = false;
 					for (let x = 0; x < this.gameboard.width; x++) {
-						const piece = this.gameboard.atXY(x, y);
-						if (piece == " " || pieces.get(piece)!.flags & PieceFlags.Unclearable) {
+						const piece = this.gameboard.pieceXY(x, y);
+						const flags = this.gameboard.flagXY(x, y)!;
+						if (piece === 0 || (flags & PieceFlags.Unclearable) !== 0) {
 							hole = true;
 							break;
 						}
@@ -386,26 +389,25 @@ export class Logic {
 				break;
 
 			case "color":
-				const sectors = this.gameboard.detectSectors((a, b) => {
-					if (a === " ") return false;
-					if (pieces.get(a)!.flags & PieceFlags.Garbage) return false;
+				const sectors = this.gameboard.detectSectors((a, b, af, bf) => {
+					if (a === 0) return false;
+					if (af & PieceFlags.Garbage) return false;
 					return a === b;
 				});
 				this.gameboard.in();
 				for (const sector of sectors) {
-					if (sector.length >= 4) {
-						clearedLines += 1 + sector.length - 4;
-						for (const [x, y] of sector) {
-							this.gameboard.delete(x, y);
-							for (const xx of [-1, 1]) {
-								for (const yy of [-1, 1]) {
-									const piece = this.gameboard.atXY(x + xx, y + yy) ?? " ";
-									if (piece != " ") {
-										const flags = pieces.get(piece)!.flags;
-										if (flags & PieceFlags.Garbage && !(flags & PieceFlags.Unclearable)) {
-											this.gameboard.delete(x + xx, y + yy);
-										}
-									}
+					if (sector.length < 4) continue;
+
+					clearedLines += 1 + sector.length - 4;
+					for (const [x, y] of sector) {
+						this.gameboard.delete(x, y);
+						for (const xx of [-1, 1]) {
+							for (const yy of [-1, 1]) {
+								const piece = this.gameboard.pieceXY(x + xx, y + yy) ?? 0;
+								if (piece == 0) continue;
+								const flags = this.gameboard.flagXY(x + xx, y + yy) ?? 0;
+								if ((flags & PieceFlags.Garbage) !== 0 && (flags & PieceFlags.Unclearable) === 0) {
+									this.gameboard.delete(x + xx, y + yy);
 								}
 							}
 						}
@@ -417,13 +419,7 @@ export class Logic {
 
 		const wasB2B = this.gameDef.garbage.isB2B(clearedLines, wasSpin);
 
-		let wasPC = true;
-		for (const ele of this.gameboard) {
-			if (ele != " ") {
-				wasPC = false;
-				break;
-			}
-		}
+		let wasPC = this.gameboard.isEmpty();
 
 		if (clearedLines > 0) {
 			this.sound.play(Sounds.Clear);
@@ -527,23 +523,23 @@ export class Logic {
 
 			if (canHold && this.swapHold) {
 				const pieceName = this.holdPiece;
-				const piece = this.gameDef.pieces.get(pieceName)!;
+				const piece = this.gameDef.getPiece(pieceName);
 				// x = ceil((BW - n) / 2)
-				const x = Math.ceil((boardSize[0] - piece.matrix.width) / 2);
+				const x = Math.ceil((boardSize[0] - piece.data.width) / 2);
 				let y = screenSize[1] - 1;
-				if (screenSize[1] + y > boardSize[1]) y = boardSize[1];
+				if (y > boardSize[1]) y = boardSize[1] - 1;
 
-				this.holdPiece = this.activePiece.piece.name;
+				this.holdPiece = this.activePiece.piece.index;
 				this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y);
 				this.swapHold = false;
 			} else {
 				// generate piece
 				const pieceName = this.gameDef.randomizer.next();
-				const piece = this.gameDef.pieces.get(pieceName)!;
+				const piece = this.gameDef.getPiece(pieceName);
 				// x = ceil((BW - n) / 2)
-				let x = Math.ceil((boardSize[0] - piece.matrix.width) / 2);
+				let x = Math.ceil((boardSize[0] - piece.data.width) / 2);
 				let y = screenSize[1] - 1;
-				if (screenSize[1] + y > boardSize[1]) y = boardSize[1];
+				if (y > boardSize[1]) y = boardSize[1] - 1;
 				if (x < 1) x = 1;
 				if (y < 1) y = 1;
 
@@ -575,9 +571,9 @@ export class Logic {
 			if (!this.pieceIntersecting(this.activePiece)) {
 				if (canHold && !this.state.heldLast && this.input.isPressed(Keys.Hold)) {
 					this.activePiece.invalidate();
-					this.swapHold = this.holdPiece != " ";
+					this.swapHold = this.holdPiece != 0;
 					if (this.swapHold == false) {
-						this.holdPiece = this.activePiece.piece.name;
+						this.holdPiece = this.activePiece.piece.index;
 					}
 					// make are longer for holds
 					this.state.areTimer = -holdDelay;
@@ -632,14 +628,14 @@ export class Logic {
 		}
 
 		if (this.input.isPressed(Keys.ClearHoldBox)) {
-			this.holdPiece = " ";
+			this.holdPiece = 0;
 			this.input.pressedMap[Keys.ClearHoldBox] = false;
 		}
 
 		if (this.input.isPressed(Keys.Ghostboard)) {
 			const { boardSize } = this.gameDef.settings;
-			this.ghostboard = this.gameboard.copy();
-			this.gameboard = new Gameboard(boardSize[0], boardSize[1], this).fill(" ");
+			this.ghostboard = this.gameboard.pieces.copy();
+			this.gameboard = new Gameboard(boardSize[0], boardSize[1], this);
 			this.input.pressedMap[Keys.Ghostboard] = false;
 		}
 
@@ -652,15 +648,12 @@ export class Logic {
 		if (this.input.isPressed(Keys.CycleActivePiece)) {
 			const {
 				settings: { boardSize, screenSize },
-				pieces,
 			} = this.gameDef;
 
-			const piecesKeys = [...pieces.keys()];
-			const nextPieceName = piecesKeys[(piecesKeys.indexOf(this.activePiece.piece.name) + 1) % piecesKeys.length];
+			const piece = this.gameDef.getPiece(this.activePiece.piece.index + 1) ?? this.gameDef.getPiece(1);
 
-			const piece = pieces.get(nextPieceName)!;
 			// x = ceil((BW - n) / 2)
-			const x = Math.ceil((boardSize[0] - piece.matrix.width) / 2);
+			const x = Math.ceil((boardSize[0] - piece.data.width) / 2);
 			let y = screenSize[1] + 1;
 			if (y > boardSize[1]) y = boardSize[1];
 			this.activePiece = new PieceState(this, piece, RotState.Initial, x - 1, y - 1);
@@ -727,35 +720,19 @@ export class Logic {
 			switch (specialRotation) {
 				case "flip":
 					const p = this.activePiece;
-					const name = p.piece.name;
-					if (name.endsWith("'")) {
-						const pieceData = this.gameDef.pieces.get(name.slice(0, -1));
-						if (pieceData == undefined) {
-							piece = undefined;
-							break;
-						}
-						piece = new PieceState(this, pieceData, RotState.Initial, p.x, p.y);
-						if (p.rot.value == RotState.Right.value) {
-							piece.rotate90degcc();
-						}
-						if (p.rot.value == RotState.Left.value) {
-							piece.rotate90deg();
-						}
-					} else {
-						const pieceData = this.gameDef.pieces.get(name + "'");
-						if (pieceData == undefined) {
-							piece = undefined;
-							break;
-						}
-						piece = new PieceState(this, pieceData, RotState.Initial, p.x, p.y);
-						if (p.rot.value == RotState.Left.value) {
-							piece.rotate90deg();
-						}
-						if (p.rot.value == RotState.Right.value) {
-							piece.rotate90degcc();
-						}
+					const pieceData = this.gameDef.getPiece(p.piece.mirror);
+					if (pieceData == undefined) {
+						piece = undefined;
+						break;
 					}
-					if (p.rot.value == RotState.Twice.value) {
+					piece = new PieceState(this, pieceData, RotState.Initial, p.x, p.y);
+					if (p.rot.equals(RotState.Right)) {
+						piece.rotate90degcc();
+					}
+					if (p.rot.equals(RotState.Left)) {
+						piece.rotate90deg();
+					}
+					if (p.rot.equals(RotState.Twice)) {
 						piece.rotate90deg();
 						piece.rotate90deg();
 					}

@@ -244,7 +244,7 @@ export class GlDraw extends BaseDraw {
 	reset() {
 		super.reset();
 
-		this.canvas.width = this.grid * (this.sw + this.maxPieceWidth * 2 + 4);
+		this.canvas.width = this.grid * (this.sw + this.logic.gameDef.maxPieceWidth * 2 + 4);
 		this.canvas.height = this.grid * (this.sh + 2 + 2);
 
 		this.clientWidth = this.canvas.clientWidth;
@@ -496,9 +496,9 @@ export class GlDraw extends BaseDraw {
 
 		for (let y = 0; y < piece.data.height; y++) {
 			for (let x = 0; x < piece.data.width; x++) {
-				const b = piece.data.atXY(x, y);
-				if (b !== 0) {
-					const [u, v] = gameDef.uvs.get(piece.piece.name) ?? gameDef.uvs.get(gameDef.subpieces.get(b)!)!;
+				const p = piece.data.atXY(x, y)!;
+				if (p !== 0) {
+					const [u, v] = gameDef.getPiece(p).uv;
 
 					this.drawBlock(piece.x + x, piece.y - yStart + 1 + y, u, v, a);
 				}
@@ -511,23 +511,23 @@ export class GlDraw extends BaseDraw {
 			logic: { gameDef },
 		} = this;
 
-		const topLeft = this.topLeftMap.get(piece.name)!;
-		for (let y = topLeft[1]; y < piece.matrix.height; y++) {
-			for (let x = topLeft[0]; x < piece.matrix.width; x++) {
-				const b = piece.matrix.atXY(x, y);
-				if (b != 0) {
-					const [u, v] = gameDef.uvs.get(piece.name) ?? gameDef.uvs.get(gameDef.subpieces.get(b)!)!;
+		const topLeft = gameDef.topLeftMap.get(piece.index)!;
+		for (let y = topLeft[1]; y < piece.data.height; y++) {
+			for (let x = topLeft[0]; x < piece.data.width; x++) {
+				const p = piece.data.atXY(x, y)!;
+				if (p != 0) {
+					const [u, v] = gameDef.getPiece(p).uv;
 					const xx = offsetX + x - topLeft[0];
 					const yy = offsetY + y - topLeft[1];
 
-					this.drawBlock(xx, yy - this.maxPieceHeight + 1, u, v);
+					this.drawBlock(xx, yy - gameDef.maxPieceHeight + 1, u, v);
 					if (grid) this.drawRect(xx, yy);
 				}
 			}
 		}
 	}
 
-	private drawBoard(playfield: ArrayMatrix<string>, a = 1.0) {
+	private drawBoard(playfield: ArrayMatrix<number>, a = 1.0) {
 		const {
 			sh,
 			sw,
@@ -549,10 +549,10 @@ export class GlDraw extends BaseDraw {
 
 		for (let y = yStart; y < boardSize[1]; y++) {
 			for (let x = 0; x < sw; x++) {
-				const name = playfield.atXY(x, y);
-				if (name == " ") continue;
-
-				const [u, v] = gameDef.uvs.get(name)!;
+				const p = playfield.atXY(x, y)!;
+				if (p == 0) continue;
+				
+				const [u, v] = gameDef.getPiece(p).uv;
 				this.drawBlock(x, y - yStart + 1 + yOffset, u, v, a);
 			}
 		}
@@ -654,7 +654,7 @@ export class GlDraw extends BaseDraw {
 		this.layers.use(Layers.BOARD);
 		// draw the tetris pieces
 		this.drawBoard(this.logic.ghostboard, 0.4);
-		this.drawBoard(this.logic.gameboard);
+		this.drawBoard(this.logic.gameboard.pieces);
 
 		if (!this.logic.activePiece.invalid) {
 			const piece = this.logic.activePiece;
@@ -683,23 +683,23 @@ export class GlDraw extends BaseDraw {
 		} = this;
 
 		this.layers.use(Layers.UI);
-		const queue = gameDef.randomizer.peek(gameDef.settings.queueLength).map((v) => gameDef.pieces.get(v)!);
+		const queue = gameDef.randomizer.peek(gameDef.settings.queueLength).map((v) => gameDef.getPiece(v)!);
 		let y = -0.25;
 		for (const piece of queue) {
-			y += this.maxPieceHeight + 0.5;
+			y += gameDef.maxPieceHeight + 0.5;
 			this.drawPiece(piece, sw + 1, y);
 		}
-		this.drawRect(sw + 1 - 0.25, 0, this.maxPieceWidth + 0.5, -y - 0.25, 1.0, 1.0, 1.0, 0.8);
+		this.drawRect(sw + 1 - 0.25, 0, gameDef.maxPieceWidth + 0.5, -y - 0.25, 1.0, 1.0, 1.0, 0.8);
 
 		const holdPiece = this.logic.holdPiece;
-		if (holdPiece != " ") {
-			this.drawPiece(gameDef.pieces.get(holdPiece)!, -this.maxPieceWidth - 1, this.maxPieceHeight + 0.25);
+		if (holdPiece != 0) {
+			this.drawPiece(gameDef.getPiece(holdPiece)!, -gameDef.maxPieceWidth - 1, gameDef.maxPieceHeight + 0.25);
 		}
 		this.drawRect(
-			-this.maxPieceWidth - 1 - 0.25,
+			-gameDef.maxPieceWidth - 1 - 0.25,
 			0,
-			this.maxPieceWidth + 0.5,
-			-this.maxPieceHeight - 0.5,
+			gameDef.maxPieceWidth + 0.5,
+			-gameDef.maxPieceHeight - 0.5,
 			1.0,
 			1.0,
 			1.0,
@@ -729,7 +729,7 @@ export class GlDraw extends BaseDraw {
 	}
 
 	drawScene() {
-		const { gl, triProgram, lineProgram } = this;
+		const { gl, triProgram, lineProgram, logic: { gameDef } } = this;
 
 		gl.clearColor(0.0, 0.0, 0.0, 1.0); // clear to black, fully opaque
 		gl.clearDepth(1.0); // clear everything
@@ -748,8 +748,8 @@ export class GlDraw extends BaseDraw {
 
 		// layout is lr margins of the max piece width + 2, and dimensions of sw by sh + 2 + 2
 
-		const left = -this.maxPieceWidth - 2;
-		const right = this.sw + this.maxPieceWidth + 2;
+		const left = -gameDef.maxPieceWidth - 2;
+		const right = this.sw + gameDef.maxPieceWidth + 2;
 		const top = -this.sh - 2;
 		const bottom = 3;
 
