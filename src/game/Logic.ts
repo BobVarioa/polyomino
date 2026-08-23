@@ -408,20 +408,37 @@ export class Logic {
 		return genPiece;
 	}
 
-	createPiece(pieceIdx: number) {
+	resetPiece(piece: PieceState) {
 		const { boardSize, screenSize } = this.gameDef.settings;
 
-		const piece = this.gameDef.getPiece(pieceIdx);
-		const pieceWidth = this.gameDef.widthHeightMap.get(pieceIdx)![0];
-		const topLeft = this.gameDef.topLeftMap.get(pieceIdx)!;
+		const pieceWidth = this.gameDef.widthHeightMap.get(piece.piece.index)![0];
+		const topLeft = this.gameDef.topLeftMap.get(piece.piece.index)!;
 		let x = Math.floor((boardSize[0] - pieceWidth) / 2);
 		let y = boardSize[1] - screenSize[1] - 1;
 		if (y > boardSize[1]) y = boardSize[1] - 1;
 		if (x < 1) x = 1;
 		if (y < 1) y = 1;
-		const genPiece = new PieceState(this, piece, RotState.Initial, x - topLeft[0], y - topLeft[1]);
 
-		return genPiece;
+		piece.x = x - topLeft[0];
+		piece.y = y - topLeft[1];
+
+		if (piece.rot.equals(RotState.Left)) {
+			piece.rotate90degcc();
+		}
+		if (piece.rot.equals(RotState.Right)) {
+			piece.rotate90deg();
+		}
+		if (piece.rot.equals(RotState.Twice)) {
+			piece.rotate180();
+		}
+	}
+
+	createPiece(pieceIdx: number) {
+		const piece = this.gameDef.getPiece(pieceIdx);
+		const state = new PieceState(this, piece, RotState.Initial, 0, 0);
+		this.resetPiece(state);
+
+		return state;
 	}
 
 	/**
@@ -494,10 +511,20 @@ export class Logic {
 			}
 
 			if (canHold && this.swapHold) {
-				this.holdPiece = this.activePiece;
-				this.activePiece = this.holdPiece;
+				if (!this.holdPiece.invalid) {
+					this.activePiece.invalid = false;
+					const hold = this.activePiece.copy();
+					this.resetPiece(hold);
+					this.activePiece = this.holdPiece.copy();
+					this.holdPiece = hold;
+				} else {
+					this.holdPiece = this.activePiece.copy();
+					this.activePiece.invalidate();
+				}
 				this.swapHold = false;
-			} else {
+			}
+
+			if (this.activePiece.invalid) {
 				if (this.state.queue.length > 0) {
 					this.activePiece = this.state.queue.shift()!;
 				} else {
@@ -530,10 +557,7 @@ export class Logic {
 			if (!this.pieceIntersecting(this.activePiece)) {
 				if (canHold && !this.state.heldLast && this.input.isPressed(Keys.Hold)) {
 					this.activePiece.invalidate();
-					this.swapHold = !this.holdPiece.invalid;
-					if (this.swapHold == false) {
-						this.holdPiece = this.activePiece;
-					}
+					this.swapHold = true;
 					// make are longer for holds
 					this.state.areTimer = -holdDelay;
 					this.state.heldLast = true;
