@@ -107,10 +107,10 @@
         - [x] Configurable preferences and keys
             - [ ] Controller support
         - [x] i18n
-        - [ ] Fail screen
-        - [ ] Win screen
-        - [ ] Pause screen
-    - [ ] Mulitplayer
+        - [x] Fail screen
+        - [x] Win screen
+        - [x] Pause screen
+    - [ ] Multiplayer
       - [x] Sending garbage 
       - [ ] Accounts
       - [ ] Actual connections between players

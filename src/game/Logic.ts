@@ -168,11 +168,14 @@ export class Logic {
 
 	gameOver() {
 		this.failed = true;
+		this._signal.emit("stop");
+		this._signal.emit("fail");
 	}
 
 	gameWin() {
-		// todo: actually do this lmao
 		this.failed = true;
+		this._signal.emit("stop");
+		this._signal.emit("win");
 	}
 
 	calculateKicks(piece: Piece, from: RotState, to: RotState): [number, number][] {
@@ -441,6 +444,18 @@ export class Logic {
 		return state;
 	}
 
+	pause() {
+		this.paused = true;
+		this.state.pauseBuffer = 30; // 0.25s
+		this._signal.emit("pause");
+	}
+
+	resume() {
+		this.paused = false;
+		this.state.pauseBuffer = 30; // 0.25s
+		this._signal.emit("resume");
+	}
+
 	/**
 	 * logic loop function, should run 60 times per second
 	 */
@@ -454,21 +469,13 @@ export class Logic {
 		}
 
 		if (this.input.isPressed(Keys.Pause) && this.state.pauseBuffer == 0) {
-			this.paused = !this.paused;
-			this.state.pauseBuffer = 30; // 0.25s
+			if (this.paused) {
+				this.resume();
+			} else {
+				this.pause();
+			}
 		} else if (this.state.pauseBuffer != 0) {
 			this.state.pauseBuffer--;
-		}
-
-		if (this.failed) {
-			if (this.state.failTimer >= 60) {
-				this._signal.emit("stop");
-				this._signal.emit("fail");
-				return;
-			}
-			if (this.input.isPressed(Keys.Fail)) {
-				this.state.failTimer += 1;
-			}
 		}
 
 		if (this.input.isPressed(Keys.Fail)) {
@@ -485,7 +492,7 @@ export class Logic {
 			this.state.failBuffer--;
 		}
 
-		if (this.paused || this.failed) return;
+		if (this.paused) return;
 
 		const { are, hold: canHold, gravity, lockDelay, holdDelay, gravityType } = this.gameDef.settings;
 
@@ -501,6 +508,8 @@ export class Logic {
 			this.state.checkState = this.gameboard.gravity();
 		}
 		if (this.state.checkState != CheckState.Done) return;
+
+		if (this.failed) return;
 
 		// if no piece,
 		if (this.activePiece.invalid) {

@@ -25,7 +25,7 @@ interface SliderEle extends BaseMenuEle {
 
 interface ModeEle extends BaseMenuEle {
 	action: "mode";
-	mode: new () => BaseMode
+	mode: new () => BaseMode;
 }
 
 interface GameEle extends BaseMenuEle {
@@ -44,13 +44,94 @@ export type MenuEle = KeyEle | SliderEle | GameEle | ModeEle | NestEle;
 export class MenuManager {
 	public menuQueue: number[] = [];
 
+	failListener: () => void;
+	winListener: () => void;
+	pauseListener: () => void;
+	resumeListener: () => void;
+
 	constructor(
 		public logic: Logic,
 		public input: InputManager,
 		public prefs: Preferences,
 		public parentEle: HTMLDivElement,
-		public menuMap: MenuEle[]
-	) {}
+		public menuMap: MenuEle[],
+	) {
+		this.failListener = () => {
+			this.renderDone(false);
+		};
+		this.winListener = () => {
+			this.renderDone(true);
+		};
+		this.pauseListener = () => {
+			this.renderPause();
+		};
+		this.resumeListener = () => {
+			this.parentEle.replaceChildren();
+		};
+	}
+
+
+	renderPause() {
+		const title = document.createElement("span");
+		title.textContent = l("menu.pause");
+
+		const resumeButton = document.createElement("button");
+		resumeButton.textContent = l("menu.resume");
+		resumeButton.addEventListener("click", () => {
+			this.parentEle.replaceChildren();
+
+			this.logic.resume();
+		});
+
+		const quitButton = document.createElement("button");
+		quitButton.textContent = l("menu.quit");
+		quitButton.addEventListener("click", () => {
+			this.logic.draw.clear();
+			this.logic.draw.setScreenSize(640, 640);
+			
+			this.logic._signal.removeListener("fail", this.failListener);
+			this.logic._signal.removeListener("win", this.winListener);
+			this.logic._signal.removeListener("pause", this.pauseListener);
+			this.logic._signal.removeListener("resume", this.pauseListener);
+			this.render();
+		});
+
+		this.parentEle.appendChild(title);
+		this.parentEle.appendChild(resumeButton);
+		this.parentEle.appendChild(quitButton);
+	}
+
+
+	renderDone(win: boolean) {
+		const title = document.createElement("span");
+		title.textContent = win ? l("menu.win") : l("menu.fail");
+
+		const restartButton = document.createElement("button");
+		restartButton.textContent = l("menu.restart");
+		restartButton.addEventListener("click", () => {
+			this.parentEle.replaceChildren();
+
+			this.logic.reset();
+			this.logic._signal.emit("start");
+		});
+
+		const quitButton = document.createElement("button");
+		quitButton.textContent = l("menu.quit");
+		quitButton.addEventListener("click", () => {
+			this.logic.draw.clear();
+			this.logic.draw.setScreenSize(640, 640);
+			
+			this.logic._signal.removeListener("fail", this.failListener);
+			this.logic._signal.removeListener("win", this.winListener);
+			this.logic._signal.removeListener("pause", this.pauseListener);
+			this.logic._signal.removeListener("resume", this.pauseListener);
+			this.render();
+		});
+
+		this.parentEle.appendChild(title);
+		this.parentEle.appendChild(restartButton);
+		this.parentEle.appendChild(quitButton);
+	}
 
 	render() {
 		this.parentEle.replaceChildren();
@@ -86,18 +167,17 @@ export class MenuManager {
 						this.parentEle.replaceChildren();
 						if (!parent || parent.action != "game") return;
 						this.logic.swapGameDef(parent.gamedef);
-						this.logic.swapMode(new menuEle.mode())
+						this.logic.swapMode(new menuEle.mode());
 
-						this.logic._signal.once("fail", () => {
-							this.logic.draw.clear();
-							this.logic.draw.setScreenSize(640, 640);
-							this.render();
-						});
+						this.logic._signal.on("fail", this.failListener);
+						this.logic._signal.on("win", this.winListener);
+						this.logic._signal.on("pause", this.pauseListener);
+						this.logic._signal.on("resume", this.resumeListener);
 						this.logic.reset();
 						this.logic._signal.emit("start");
 					});
 					break;
-					
+
 				case "game":
 					ele = document.createElement("button");
 					ele.textContent = l(menuEle.id);
@@ -111,7 +191,7 @@ export class MenuManager {
 					ele.classList.add("key");
 
 					const spacerEle = document.createElement("div");
-					spacerEle.classList.add("spacer")
+					spacerEle.classList.add("spacer");
 
 					const setEle = document.createElement("button");
 					const keyEle = document.createElement("span");
