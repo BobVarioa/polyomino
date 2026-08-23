@@ -88,7 +88,8 @@ export class MenuManager {
 		quitButton.addEventListener("click", () => {
 			this.logic.draw.clear();
 			this.logic.draw.setScreenSize(640, 640);
-			
+			this.logic._signal.emit("stop");
+
 			this.logic._signal.removeListener("fail", this.failListener);
 			this.logic._signal.removeListener("win", this.winListener);
 			this.logic._signal.removeListener("pause", this.pauseListener);
@@ -120,6 +121,7 @@ export class MenuManager {
 		quitButton.addEventListener("click", () => {
 			this.logic.draw.clear();
 			this.logic.draw.setScreenSize(640, 640);
+			this.logic._signal.emit("stop");
 			
 			this.logic._signal.removeListener("fail", this.failListener);
 			this.logic._signal.removeListener("win", this.winListener);
