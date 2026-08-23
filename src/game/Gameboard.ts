@@ -142,6 +142,7 @@ export default class Gameboard {
 
 			if (a != b) return false;
 			if (a == 0 || b == 0) return false;
+			if ((af & PieceFlags.Garbage) !== 0 || (bf & PieceFlags.Garbage) !== 0) return false;
 
 			if (ax === bx && ay === by) return true;
 

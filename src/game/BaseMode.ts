@@ -2,8 +2,8 @@ import { ArrayMatrix } from "../utils/ArrayMatrix";
 import { Logic } from "./Logic";
 
 export abstract class BaseMode {
-	public logic!: Logic
-	
+	public logic!: Logic;
+
 	constructor() {}
 
 	writeBoard(board: ArrayMatrix<string>, boardStr: string[], offset: [number, number] = [0, 0]) {
@@ -94,4 +94,8 @@ export abstract class BaseMode {
 	}
 
 	abstract frame(): void;
+	
+	abstract reset(): void;
+
+	lineClear(lines: number) {}
 }

@@ -244,9 +244,6 @@ export class GlDraw extends BaseDraw {
 	reset() {
 		super.reset();
 
-		this.canvas.width = this.grid * (this.sw + this.logic.gameDef.maxPieceWidth * 2 + 4);
-		this.canvas.height = this.grid * (this.sh + 2 + 2);
-
 		this.clientWidth = this.canvas.clientWidth;
 		this.clientHeight = this.canvas.clientHeight;
 

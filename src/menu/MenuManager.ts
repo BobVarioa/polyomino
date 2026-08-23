@@ -1,10 +1,11 @@
 import { Logic } from "../game/Logic";
-import * as GameTypes from "../data/gameTypes";
 import { hasOwn } from "../utils/types";
 import { InputManager } from "../game/InputManager";
 import { Preferences } from "../game/Preferences";
 import { l } from "../utils/lang";
 import { GameDef } from "../game/GameDef";
+import { BaseMode } from "../game/BaseMode";
+import { Draw } from "../game/render/Draw";
 
 interface BaseMenuEle {
 	id: string;
@@ -22,8 +23,15 @@ interface SliderEle extends BaseMenuEle {
 	minLabel?: string;
 }
 
+interface ModeEle extends BaseMenuEle {
+	action: "mode";
+	mode: new () => BaseMode
+}
+
 interface GameEle extends BaseMenuEle {
 	action: "game";
+	gamedef: GameDef;
+	children: ModeEle[];
 }
 
 interface NestEle extends BaseMenuEle {
@@ -31,7 +39,7 @@ interface NestEle extends BaseMenuEle {
 	children: MenuEle[];
 }
 
-export type MenuEle = KeyEle | SliderEle | GameEle | NestEle;
+export type MenuEle = KeyEle | SliderEle | GameEle | ModeEle | NestEle;
 
 export class MenuManager {
 	public menuQueue: number[] = [];
@@ -48,10 +56,12 @@ export class MenuManager {
 		this.parentEle.replaceChildren();
 
 		let menu = this.menuMap;
+		let parent: MenuEle | undefined = undefined;
 		for (let i = 0; i < this.menuQueue.length; i++) {
 			const subMenu = menu[this.menuQueue[i]];
 			if (hasOwn(subMenu, "children")) {
 				menu = subMenu.children;
+				parent = subMenu;
 			} else {
 				throw new Error("invalid menu structure");
 			}
@@ -69,20 +79,31 @@ export class MenuManager {
 						this.render();
 					});
 					break;
-				case "game":
+				case "mode":
 					ele = document.createElement("button");
 					ele.textContent = l(menuEle.id);
 					ele.addEventListener("click", () => {
 						this.parentEle.replaceChildren();
-						// @ts-expect-error ts doesn't like that we index a string to a string set
-						this.logic.swapGameDef(GameTypes[menuEle.id.slice("game.".length)]);
+						if (!parent || parent.action != "game") return;
+						this.logic.swapGameDef(parent.gamedef);
+						this.logic.swapMode(new menuEle.mode())
 
 						this.logic._signal.once("fail", () => {
 							this.logic.draw.clear();
+							this.logic.draw.setScreenSize(640, 640);
 							this.render();
 						});
 						this.logic.reset();
 						this.logic._signal.emit("start");
+					});
+					break;
+					
+				case "game":
+					ele = document.createElement("button");
+					ele.textContent = l(menuEle.id);
+					ele.addEventListener("click", () => {
+						this.menuQueue.push(i);
+						this.render();
 					});
 					break;
 				case "key":

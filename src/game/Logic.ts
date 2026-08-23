@@ -146,6 +146,7 @@ export class Logic {
 		this.paused = false;
 		this.lastMove = Keys.Pause; // used as a placeholder empty value
 		this.draw.reset();
+		this.mode.reset();
 	}
 
 	pieceIntersecting(piece: PieceState): boolean {
@@ -165,6 +166,11 @@ export class Logic {
 	}
 
 	gameOver() {
+		this.failed = true;
+	}
+
+	gameWin() {
+		// todo: actually do this lmao
 		this.failed = true;
 	}
 
@@ -303,7 +309,6 @@ export class Logic {
 
 			const garbage = this.gameDef.garbage.clear(clearedLines, this.state.combo, this.state.b2b, wasSpin, wasPC);
 			if (this.flags.receiveSentGarbage) {
-				console.log("sent garbage", garbage);
 				this.garbageQueue.push(garbage);
 			}
 
@@ -319,6 +324,7 @@ export class Logic {
 		}
 
 		this.abilityManager.charge += clearedLines;
+		this.mode.lineClear(clearedLines);
 	}
 
 	public garbageQueue: number[] = [];
@@ -386,6 +392,7 @@ export class Logic {
 			gravityType,
 		} = this.gameDef.settings;
 
+		this.mode.frame();
 		if (this.gameboard.step()) return;
 		if (this.state.checkState == CheckState.Clear) {
 			this.state.checkState = CheckState.Done;
@@ -492,10 +499,6 @@ export class Logic {
 				// and then only if the piece can't be pushed up then we game over
 				this.gameOver();
 			}
-		}
-
-		if (this.mode) {
-			this.mode.frame();
 		}
 	}
 

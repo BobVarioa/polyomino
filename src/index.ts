@@ -5,12 +5,18 @@ import { Preferences, Prefs } from "./game/Preferences";
 import { PCOMode } from "./game/PCOMode";
 import { MenuEle, MenuManager } from "./menu/MenuManager";
 import { SoundManager, Sounds } from "./game/SoundManager";
+import { BaseMode } from "./game/BaseMode";
+import { DummyMode } from "./game/DummyMode";
+import * as GameTypes from "./data/gameTypes";
+import { SpeedMode } from "./game/SpeedMode";
+import { DigMode } from "./game/DigMode";
+import { AttackMode } from "./game/AttackMode";
 
 const $ = <T>(s: string): T => document.querySelector(s) as T;
 
 async function init() {
 	const prefs = new Preferences();
-	
+
 	const input = new InputManager(document);
 	input.set(Keys.RotateLeft, "KeyZ");
 	input.set(Keys.RotateRight, "KeyX");
@@ -42,16 +48,13 @@ async function init() {
 	}
 
 	const sound = new SoundManager(prefs);
-	await Promise.all([
-		sound.load(Sounds.Lock, "./snd/lock.wav"),
-		sound.load(Sounds.Clear, "./snd/clear.wav")
-	])
+	await Promise.all([sound.load(Sounds.Lock, "./snd/lock.wav"), sound.load(Sounds.Clear, "./snd/clear.wav")]);
 
 	const canvas = $<HTMLCanvasElement>("#gameCanvas");
 	const draw = Draw.create(DrawMode.WebGL, canvas);
 	const logic = new Logic(prefs, input, draw, sound);
 	logic.init();
-	
+
 	// init menus
 	const menusEle = $<HTMLDivElement>("#menus");
 
@@ -60,10 +63,36 @@ async function init() {
 			id: "menu.play",
 			action: "nest",
 			children: [
-				{ id: "game.duo", action: "game" },
-				{ id: "game.tro", action: "game" },
-				{ id: "game.tetro", action: "game" },
-				{ id: "game.pento", action: "game" },
+				{
+					id: "game.duo",
+					action: "game",
+					gamedef: GameTypes.duo,
+					children: [
+						{ id: "mode.speed", action: "mode", mode: SpeedMode },
+						{ id: "mode.attack", action: "mode", mode: AttackMode },
+					],
+				},
+				{ id: "game.tro", action: "game", gamedef: undefined, children: [] },
+				{
+					id: "game.tetro",
+					action: "game",
+					gamedef: GameTypes.tetro,
+					children: [
+						{ id: "mode.speed", action: "mode", mode: SpeedMode },
+						{ id: "mode.attack", action: "mode", mode: AttackMode },
+						{ id: "mode.dig", action: "mode", mode: DigMode },
+					],
+				},
+				{
+					id: "game.pento",
+					action: "game",
+					gamedef: GameTypes.pento,
+					children: [
+						{ id: "mode.speed", action: "mode", mode: SpeedMode },
+						{ id: "mode.attack", action: "mode", mode: AttackMode },
+						{ id: "mode.dig", action: "mode", mode: DigMode },
+					],
+				},
 			],
 		},
 		{
