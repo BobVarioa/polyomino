@@ -1,180 +1,184 @@
 # Todo / Design Doc
 
 - [ ] Games
-	- [ ] Monomino
-    	- Idea 1:
-    		- Inspiration:
-    			- [Tetris Attack/Panel de Pon](https://tetris.wiki/Tetris_Attack)?
-    			- General match-3 mechanics
-    		- [ ] Cursor that can swap pieces
-    		- [ ] Generating new pieces
-        		- [ ] Clears generate new pieces, can't top out from anything but garbage?
-        		- [ ] Manual send pieces button?
-        		- [ ] Screen is forced to be full of pieces?
-    		- [ ] Random replace garbage
-    		- General problem: match-3 is not really that fun in long sessions, and most definitely has a pretty low skill ceiling
-		- Idea 2:
-    		- Inspiration:
-        		- [Stackitect](https://farly.itch.io/stackitect)
-        		- [C::Reactris](https://hdms.itch.io/c4r)
-      		- [ ] Blocks with special abilities that interact in dynamic ways
-        		- [ ] Restricted placement mechanics
-        		- [ ] Mainipulating the playfield (pushing blocks, creating new blocks, destroying them, etc.)
-        		- [ ] Special clear mechanics (if near X block and Y block, destroy this one)
-        		- [ ] Liquids? (this works in C::Reactris because there's proper tetraminos with this ability, unsure how this would work with monominos)
-      		- [ ] C::Reactris has a concept of weather and a day night cycle, so perhaps a similar global style effect
-      		- [ ] Stackitect has a selection screen that lets them choose which blocks to get next, perhaps something where you manipulate the pieces in your queue
-      		- General problems: 
-        		- This would be very gimmicky, and I kinda wanna keep that stuff in a polyomino mode/character? 
-        		- This would be either really simple or really complex strategy-wise (there is one correct way to play / essentially random)
-        		- Too relient on RNG
-  		- Idea 3:
-    		- Inspiration:
-        		- [Elementris](https://mayzavan.itch.io/elementris)
-        		- [Tactris](https://nofowl.itch.io/tactris)
-      		- [ ] Reversed board gravity (pieces come from bottom and go up)
-      		- [x] Linear gravity 
-      		- [ ] Garbage comes from the top and slowly sinks down
-        		- [ ] Garbage will be tiered in how many clears it takes to remove (think Puyo Puyo)
-        		- [ ] Garbage will be generated at a faster rate per level, and steadly take more hits to remove
-        		- [ ] Enemy garbage will be additional to your normal steady garbage 
-      		- [ ] Each monomino has a special ability that will clear an area
-        		- [ ] Bomb-type ability that clears garbage in a 5x5 under (over) it
-        		- [ ] Blocking garbage from rising
-        		- [ ] Moving garbage
-        		- [ ] Digging holes through garbage]
-      		- [ ] Minos are activated whenever they touch three other minos
-    		- General problems:
-        		- Conveying to the player what each piece does without tutorializing it, the other gamemodes make this pretty easy
-        		- Limited complexity, for example, in Elementris, a winning strategy is just to spam pieces
-            		- No rotation, potenially addressable by allowing the player to "aim" the pieces
-            		- Limited combo or set up potenial
-	- [ ] Domino
-		- Inspiration:
-			- [Dr. Mario](https://tetris.wiki/Dr._Mario)?
-			- [Puyo Puyo](https://puyonexus.com/wiki/Tsu_(rule))
-		- [x] Multicolor pieces that clear based on the color
-		- [x] Linear gravity
-		- [ ] Garbage
-    		- [x] Falling garbage
-    		- [ ] Actually create garbage table
-		- [ ] Verify piece generation is fair and good
-	- [ ] Tromino
-		- Inspiration:
-			- None (as of yet)
-		- Ideas:
-			- Color matching? Problem: Too similar to domino, no idea how to make it more interesting
-			- Something about manipulating the board instead of your pieces? 
-    			- [Pipe Tetris?](https://alphageneric.itch.io/pipe-tetris)
-	- [x] Tetromino
-		- Inspiration:
-			- [Tetris](https://tetris.wiki/Tetris_Guideline)
-		- [x] Guildline rules
-			- [x] All Tetrominos
-			- [x] Rotation: SRS
-			- [x] Lock delay: 0.5s
-			- [x] Piece preview
-			- [x] Hold box
-			- [x] Bag randomizer
-			- [x] Garbage
-	- [ ] Pentomino
-		- Inspiration:
-			- Pentomino modes in jstris, Puyo Puyo Tetris, and various tetris fangames
-		- [x] All non mirrored pentominos
-		- [~] Add a new rotation system based on SRS
-			- [x] Flipping
-			- [ ] Look into nullpomino's rotation system editor to fix the bugs, because doing this by hand is painful
-		- [ ] Garbage
-			- [ ] Look into which pieces should give spin bonuses
-			- [ ] Line clears should be initally less, but multiple line clears should be more due to their difficulty
-	- [ ] Polyomino
-		- Inspiration:
-			- [Puyo Puyo Tetris: Party](https://puyonexus.com/wiki/Party)
-			- [Tetris Effect Conected: Zone](https://tetris.wiki/Tetris_Effect#Zone_mechanic)
-			- [Pac-Attack](https://en.wikipedia.org/wiki/Pac-Attack)
-			- ...and the various games listed below
-		- [ ] Special Effects
-			- These are obtained via an XP like system, or maybe an ingame currency to give more agency to the player
-			- [ ] Characters
-				- Inspiration:
-					- [TETR.IO](https://characters.osk.sh/) 
-					- Puyo Puyo Characters
-				- In general, things that change gameplay throughout the whole match
-				- [ ] Something like [Hot Wax](https://www.lexaloffle.com/bbs/?pid=146729)? 
-					- Fires would come every X bags, no candle bombs 
-					- The same wax piece mechanics 
-					- More fires burning continously on your side would mean more garbage 
-				- [ ] Something that involves player movement on the board
-					- Maybe something like [Combo Postage](https://kirklindsay.itch.io/combo-postage)?
-					- Player could be crushed by blocks, but could do something to clear them
-					- Blocks would increase in speed much more rapidly
-				- [ ] Manipulating your sent garbage
-					- [ ] Multi hole garbage
-					- [ ] Garbage which requires some condition to be cleared
-				- [ ] Something that requires you to both move pieces and a cursor
-					- Maybe something like [Tetrisweeper](https://kertisjones.itch.io/tetrisweeper)?
-				- [ ] Something unlike the other things mentioned
-					- [Sandtris](https://sandtris.com/)
-					- [Soft Body Tetris](https://newbie-indie-game-dev.itch.io/softbody-tetris)
-			- [ ] Active abilities
-				- By pressing the [Ability] key, these will be activated
-				- Generally these require a charge meter of some sort, the specific action required will depend 
-				- [x] Zone
-				- [x] Filling holes
-				- [ ] Changes your hold box into a special mino
-					- [ ] Fairies, removes n lines of garbage 
-					- [ ] Bomb, removes all tiles in an area
-					- [ ] Sword, clears all minos in a direction
-					- [ ] Putty, makes a piiece that can fit into any space (think O-spin)
-				- [ ] Send X lines of garbage to opponent but ... to you
-					- [ ] Double back?
-					- [ ] Unclearable garbage?
-				- [ ] Breakout? Like ball and paddle, probably your piece becomes the paddle
-		- [ ] Allows different players to play different gamemodes against each other, i.e. a duo and a tetra player
-		- [ ] Players should be able to have loadouts of characters / active abilities
+    - [ ] Monomino
+        - Inspiration:
+            - [Tetris Attack/Panel de Pon](https://tetris.wiki/Tetris_Attack)?
+            - General match-3 mechanics
+        - [ ] Cursor that can swap pieces
+        - [ ] Generating new pieces
+            - [ ] Clears generate new pieces, can't top out from anything but garbage?
+            - [ ] Manual send pieces button?
+            - [ ] Screen is forced to be full of pieces?
+        - [ ] Random replace garbage
+        - General problem: match-3 is not really that fun in long sessions, and most definitely has a pretty low skill ceiling
+    - [ ] Domino
+        - Inspiration:
+            - [Puyo Puyo](https://puyonexus.com/wiki/Tsu_(rule))
+        - [x] Multicolor pieces that clear based on the color
+        - [x] Linear gravity
+        - [ ] Garbage
+            - [x] Falling garbage
+            - [ ] Actually create garbage table
+        - [ ] Verify piece generation is fair and good
+    - [ ] Tromino
+        - Inspiration:
+            - [Columns](https://segaretro.org/Columns)
+        - [x] Multicolor pieces that clear based on match-3 rules
+            - [ ] Allow longer matches (4+)
+        - [x] Linear gravity
+        - [ ] Garbage
+        - [ ] Verify piece generation is fair and good
+    - [x] Tetromino
+        - Inspiration:
+            - [Tetris](https://tetris.wiki/Tetris_Guideline)
+        - [x] Guildline rules
+            - [x] All Tetrominos
+            - [x] Rotation: SRS
+            - [x] Lock delay: 0.5s
+            - [x] Piece preview
+            - [x] Hold box
+            - [x] Bag randomizer
+            - [x] Garbage
+    - [ ] Pentomino
+        - Inspiration:
+            - Pentomino modes in jstris, Puyo Puyo Tetris, and various tetris fangames
+        - [x] All non mirrored pentominos
+        - [~] Add a new rotation system based on SRS
+            - [x] Flipping
+            - [ ] Look into nullpomino's rotation system editor to fix the bugs, because doing this by hand is painful
+        - [ ] Garbage
+            - [ ] Look into which pieces should give spin bonuses
+            - [ ] Line clears should be initally less, but multiple line clears should be more due to their difficulty
+    - [ ] Polyomino
+        - Inspiration:
+            - [Puyo Puyo Tetris: Party](https://puyonexus.com/wiki/Party)
+            - [Tetris Effect Conected: Zone](https://tetris.wiki/Tetris_Effect#Zone_mechanic)
+            - [Pac-Attack](https://en.wikipedia.org/wiki/Pac-Attack)
+            - ...and the various games listed below
+        - [ ] Special Effects
+            - These are obtained via an XP like system, or maybe an ingame currency to give more agency to the player
+            - [ ] Characters
+                - Inspiration:
+                    - [TETR.IO](https://characters.osk.sh/)
+                    - [Tetris Battle Gaiden](https://tetris.wiki/Tetris_Battle_Gaiden)
+                    - Puyo Puyo Characters
+                - In general, these should change how you approach playing the game
+                    - [ ] Manipulating your sent garbage
+                        - [ ] Multi hole garbage
+                        - [ ] Garbage which requires some condition to be cleared
+            - [ ] Active abilities
+                - By pressing the [Ability] key, these will be activated
+                - Generally these require a charge meter of some sort, the specific action required will depend
+                - [x] Zone
+                - [x] Filling holes
+                - [ ] Changes your hold box into a special mino
+                    - [ ] Fairies, removes n lines of garbage
+                    - [ ] Bomb, removes all tiles in an area
+                    - [ ] Sword, clears all minos in a direction
+                    - [ ] Putty, makes a piiece that can fit into any space (think O-spin)
+                - [ ] Send X lines of garbage to opponent but ... to you
+                    - [ ] Double back?
+                    - [ ] Unclearable garbage?
+                - [ ] Breakout? Like ball and paddle, probably your piece becomes the paddle
+        - [ ] Allows different players to play different gamemodes against each other, i.e. a duo and a tetra player
+        - [ ] Players should be able to have loadouts of characters / active abilities
 - [ ] Features
-	- [x] [Gravity Modes](https://tetris.wiki/Line_clear#Line_clear_gravity)
-		- [x] Naive
-		- [x] Sticky
-		- [ ] Cascade
-		- [x] Linear
-	- [ ] Rotation Modes
-		- [x] Normal
-		- [ ] Cycle
-		- [x] Flip
-	- [x] Line Clear Modes
-		- [x] Width
-		- [x] Color match (see Monomino/Domino)
-	- [ ] Piece Types
-		- [x] Solid (normal)
-		- [x] Metapiece
-		- [ ] Special, some unique effect on lock/clear
-    	- [x] Garbage
-        	- [x] Normal
-        	- [x] Unclearable
-	- [x] Actual menus 
-		- [x] Configurable preferences and keys
-			- [ ] Controller support
-		- [x] i18n
-		- [ ] Add actual fail screen
-		- [ ] Add actual pause screen
-	- [ ] Mulitplayer
-    	- [x] Sending garbage
-    	- [ ] Accounts
-    	- [ ] Actual connections between players
-        	- [ ] Sending garbage
-        	- [ ] Mirroring screens between players
-        	- [ ] Replays
-        	- [ ] Basic anti-cheat (ensure game state is possible)
-    	- [ ] Matchmaking
-		- [ ] Elo system
-		- [ ] Rollback? Todo, research
-	- [ ] Game modes
-    	- [ ] Survival, last as long as possible, gravity increases with lines cleared
-    	- [ ] Line-attack, send as many lines as possible within ? minutes
-    	- [ ] Trainer, a mix between a puzzle mode and something that teaches you the mechanics of all the modes and features
-        	- [ ] This will include the PCO Mode I have already made
-    	- [ ] Custom, change flags and features to your hearts intent
-        	- [ ] I'm not sure if I want this to also be a map editor for players to upload, but I am unsure
-      	- [ ] Maps, player designed games and maps  
+    - [x] [Gravity Modes](https://tetris.wiki/Line_clear#Line_clear_gravity)
+        - [x] Naive
+        - [x] Sticky
+        - [x] Cascade
+        - [x] Linear
+    - [x] Rotation Modes
+        - [x] Normal
+        - [x] Cycle
+        - [x] Flip
+    - [x] Line Clear Modes
+        - [x] Width
+        - [x] Color match (see Monomino/Domino)
+        - [~] Match 3 (see Tromino)
+    - [x] Piece Types
+        - [x] Solid (normal)
+        - [x] Metapiece
+        - [x] Garbage
+            - [x] Normal
+            - [x] Unclearable
+    - [x] Menus
+        - [x] Configurable preferences and keys
+            - [ ] Controller support
+        - [x] i18n
+        - [ ] Fail screen
+        - [ ] Win screen
+        - [ ] Pause screen
+    - [ ] Mulitplayer
+      - [x] Sending garbage 
+      - [ ] Accounts
+      - [ ] Actual connections between players
+        - [ ] Sending garbage
+        - [ ] Mirroring screens between players 
+        - [ ] Rollback?
+      - [ ] Replays 
+      - [ ] Basic anti-cheat (ensure game state is possible) 
+      - [ ] Matchmaking
+      - [ ] Elo system
+    - [ ] Game modes 
+      - [ ] Survival, last as long as possible, gravity increases with lines cleared 
+      - [x] Attack, send as many lines as possible within 2 minutes 
+      - [x] Speed, send as 40 lines as fast as possible 
+      - [ ] Trainer, a mix between a puzzle mode and something that teaches you the mechanics of all the modes and features 
+        - [ ] PCO Trainer 
+        - [ ] [Puyo Puyo Trainer](https://puyonexus.com/wiki/How_to_Play_Puyo_Puyo) 
+      - [ ] Custom, change flags and features to your hearts intent 
+        - [ ]  I'm not sure if I want this to also be a map editor for players to upload, but I am unsure 
+      - [ ] Maps, player designed games and maps
 - [ ] Desktop version
+
+# Misc Ideas
+
+- Idea 1:
+    - Inspiration:
+        - [Stackitect](https://farly.itch.io/stackitect)
+        - [C::Reactris](https://hdms.itch.io/c4r)
+        - [ ] Blocks with special abilities that interact in dynamic ways
+        - [ ] Restricted placement mechanics
+        - [ ] Mainipulating the playfield (pushing blocks, creating new blocks, destroying them, etc.)
+        - [ ] Special clear mechanics (if near X block and Y block, destroy this one)
+        - [ ] Liquids? (this works in C::Reactris because there's proper tetraminos with this ability, unsure how this would work with monominos)
+        - [ ] C::Reactris has a concept of weather and a day night cycle, so perhaps a similar global style effect
+        - [ ] Stackitect has a selection screen that lets them choose which blocks to get next, perhaps something where you manipulate the pieces in your queue
+        - General problems:
+        - This would be very gimmicky, and I kinda wanna keep that stuff in a polyomino mode/character?
+        - This would be either really simple or really complex strategy-wise (there is one correct way to play / essentially random)
+        - Too relient on RNG
+- Idea 2:
+    - Inspiration:
+        - [Elementris](https://mayzavan.itch.io/elementris)
+        - [Tactris](https://nofowl.itch.io/tactris)
+    - [ ] Reversed board gravity (pieces come from bottom and go up)
+    - [x] Linear gravity
+    - [ ] Garbage comes from the top and slowly sinks down
+        - [ ] Garbage will be tiered in how many clears it takes to remove (think Puyo Puyo)
+        - [ ] Garbage will be generated at a faster rate per level, and steadly take more hits to remove
+        - [ ] Enemy garbage will be additional to your normal steady garbage
+    - [ ] Each monomino has a special ability that will clear an area
+        - [ ] Bomb-type ability that clears garbage in a 5x5 under (over) it
+        - [ ] Blocking garbage from rising
+        - [ ] Moving garbage
+        - [ ] Digging holes through garbage]
+    - [ ] Minos are activated whenever they touch three other minos
+    - General problems:
+        - Conveying to the player what each piece does without tutorializing it, the other gamemodes make this pretty easy
+        - Limited complexity, for example, in Elementris, a winning strategy is just to spam pieces - No rotation, potenially addressable by allowing the player to "aim" the pieces - Limited combo or set up potenial
+- [ ] Something like [Hot Wax](https://www.lexaloffle.com/bbs/?pid=146729)?
+    - Fires would come every X bags, no candle bombs
+    - The same wax piece mechanics
+    - More fires burning continously on your side would mean more garbage
+- [ ] Something that involves player movement on the board
+    - Maybe something like [Combo Postage](https://kirklindsay.itch.io/combo-postage)?
+    - Player could be crushed by blocks, but could do something to clear them
+    - Blocks would increase in speed much more rapidly
+- [ ] Something that requires you to both move pieces and a cursor
+    - Maybe something like [Tetrisweeper](https://kertisjones.itch.io/tetrisweeper)?
+- [ ] Something unlike the other things mentioned
+    - [Sandtris](https://sandtris.com/)
+    - [Soft Body Tetris](https://newbie-indie-game-dev.itch.io/softbody-tetris)
