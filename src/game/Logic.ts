@@ -8,7 +8,7 @@ import random from "secure-random";
 import { pento, tetro } from "../data/gameTypes";
 import { BaseDraw } from "./render/BaseDraw";
 import { EventEmitter } from "eventemitter3";
-import { BaseMode } from "./BaseMode";
+import { BaseMode } from "./modes/BaseMode";
 import Gameboard from "./Gameboard";
 import { Random } from "../utils/randomizer";
 import { SoundManager, Sounds } from "./SoundManager";
@@ -26,7 +26,7 @@ export class Logic {
 	public holdPiece!: PieceState;
 	public paused!: boolean;
 	public swapHold!: boolean;
-	public failed!: boolean;
+	public gameover!: boolean;
 	public lastMove!: Keys;
 	public abilityManager!: AbilityManager;
 	public gameDef!: GameDef;
@@ -52,7 +52,9 @@ export class Logic {
 			now *= 0.001;
 			this.draw.frame(now - then);
 			then = now;
-			rAF = requestAnimationFrame(drawLoop);
+			if (!this.stopped) {
+				rAF = requestAnimationFrame(drawLoop);
+			}
 		};
 
 		const fps = 60;
@@ -71,7 +73,6 @@ export class Logic {
 
 		this._signal.on("stop", () => {
 			this.stopped = true;
-			cancelAnimationFrame(rAF);
 			clearTimeout(timeout);
 		});
 		this._signal.on("start", () => {
@@ -126,7 +127,7 @@ export class Logic {
 			checkState: CheckState.Clear,
 			queue: [],
 		};
-		this.failed = false;
+		this.gameover = false;
 
 		this.flags = {
 			noLineClears: false,
@@ -167,14 +168,12 @@ export class Logic {
 	}
 
 	gameOver() {
-		this.failed = true;
-		this._signal.emit("stop");
+		this.gameover = true;
 		this._signal.emit("fail");
 	}
 
 	gameWin() {
-		this.failed = true;
-		this._signal.emit("stop");
+		this.gameover = true;
 		this._signal.emit("win");
 	}
 
@@ -459,36 +458,37 @@ export class Logic {
 	 * logic loop function, should run 60 times per second
 	 */
 	frame() {
-		if (this.input.isPressed(Keys.Restart)) {
-			this.input.pressedMap[Keys.Restart] = false;
-			const ghost = this.ghostboard;
-			this.restart();
-			this.ghostboard = ghost;
-			return;
-		}
-
-		if (this.input.isPressed(Keys.Pause) && this.state.pauseBuffer == 0) {
-			if (this.paused) {
-				this.resume();
-			} else {
-				this.pause();
-			}
-		} else if (this.state.pauseBuffer != 0) {
-			this.state.pauseBuffer--;
-		}
-
-		if (this.input.isPressed(Keys.Fail)) {
-			this.state.failBuffer = 10;
-			if (this.state.failTimer >= 60) {
-				this.gameOver();
+		if (!this.gameover) {
+			if (this.input.isPressed(Keys.Restart)) {
+				this.input.pressedMap[Keys.Restart] = false;
+				const ghost = this.ghostboard;
+				this.restart();
+				this.ghostboard = ghost;
 				return;
-			} else {
-				this.state.failTimer += 1;
 			}
-		} else if (this.state.failBuffer <= 0) {
-			if (this.state.failTimer >= 0) this.state.failTimer -= 1;
-		} else {
-			this.state.failBuffer--;
+	
+			if (this.input.isPressed(Keys.Pause) && this.state.pauseBuffer == 0) {
+				if (this.paused) {
+					this.resume();
+				} else {
+					this.pause();
+				}
+			} else if (this.state.pauseBuffer != 0) {
+				this.state.pauseBuffer--;
+			}
+
+			if (this.input.isPressed(Keys.Fail)) {
+				this.state.failBuffer = 10;
+				if (this.state.failTimer >= 60) {
+					this.gameOver();
+				} else {
+					this.state.failTimer += 1;
+				}
+			} else if (this.state.failBuffer <= 0) {
+				if (this.state.failTimer >= 0) this.state.failTimer -= 1;
+			} else {
+				this.state.failBuffer--;
+			}
 		}
 
 		if (this.paused) return;
@@ -508,7 +508,12 @@ export class Logic {
 		}
 		if (this.state.checkState != CheckState.Done) return;
 
-		if (this.failed) return;
+		if (this.gameover) {
+			if (this.gameboard.actionQueue.length == 0) {
+				this._signal.emit("stop");
+			}
+			return;
+		}
 
 		// if no piece,
 		if (this.activePiece.invalid) {

@@ -1,5 +1,4 @@
 import { BaseMode } from "./BaseMode";
-import { CheckState } from "./Logic";
 
 export class DigMode extends BaseMode {
 	state!: {

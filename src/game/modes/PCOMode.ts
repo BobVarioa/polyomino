@@ -1,7 +1,7 @@
-import { ArrayMatrix } from "../utils/ArrayMatrix";
-import { MultiKeyMap } from "../utils/MultiKeyMap";
+import { ArrayMatrix } from "../../utils/ArrayMatrix";
+import { MultiKeyMap } from "../../utils/MultiKeyMap";
 import { BaseMode } from "./BaseMode";
-import { Logic } from "./Logic";
+import { Logic } from "../Logic";
 
 const solutions = new MultiKeyMap<string, string[]>();
 // prettier-ignore

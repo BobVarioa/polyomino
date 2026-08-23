@@ -4,7 +4,7 @@ import { InputManager } from "../game/InputManager";
 import { Preferences } from "../game/Preferences";
 import { l } from "../utils/lang";
 import { GameDef } from "../game/GameDef";
-import { BaseMode } from "../game/BaseMode";
+import { BaseMode } from "../game/modes/BaseMode";
 import { Draw } from "../game/render/Draw";
 
 interface BaseMenuEle {

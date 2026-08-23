@@ -2,15 +2,12 @@ import { InputManager, Keys } from "./game/InputManager";
 import { Logic } from "./game/Logic";
 import { Draw, DrawMode } from "./game/render/Draw";
 import { Preferences, Prefs } from "./game/Preferences";
-import { PCOMode } from "./game/PCOMode";
 import { MenuEle, MenuManager } from "./menu/MenuManager";
 import { SoundManager, Sounds } from "./game/SoundManager";
-import { BaseMode } from "./game/BaseMode";
-import { DummyMode } from "./game/DummyMode";
 import * as GameTypes from "./data/gameTypes";
-import { SpeedMode } from "./game/SpeedMode";
-import { DigMode } from "./game/DigMode";
-import { AttackMode } from "./game/AttackMode";
+import { SpeedMode } from "./game/modes/SpeedMode";
+import { DigMode } from "./game/modes/DigMode";
+import { AttackMode } from "./game/modes/AttackMode";
 
 const $ = <T>(s: string): T => document.querySelector(s) as T;
 
