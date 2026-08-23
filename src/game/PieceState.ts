@@ -60,8 +60,8 @@ export class PieceState {
 		public x: number,
 		public y: number,
 	) {
-		this.data = piece?.data;
-		this.flags = piece?.flags;
+		this.data = piece?.data.copy();
+		this.flags = piece?.flags.copy();
 	}
 
 	invalidate() {

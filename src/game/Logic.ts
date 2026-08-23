@@ -23,7 +23,7 @@ export class Logic {
 	public gameboard!: Gameboard;
 	public ghostboard!: ArrayMatrix<number>;
 	public activePiece!: PieceState;
-	public holdPiece!: number;
+	public holdPiece!: PieceState;
 	public paused!: boolean;
 	public swapHold!: boolean;
 	public failed!: boolean;
@@ -124,6 +124,7 @@ export class Logic {
 			failTimer: 0,
 			failBuffer: 0,
 			checkState: CheckState.Clear,
+			queue: [],
 		};
 		this.failed = false;
 
@@ -141,7 +142,7 @@ export class Logic {
 		this.gameboard = new Gameboard(boardSize[0], boardSize[1], this);
 		this.ghostboard = ArrayMatrix.create(boardSize[0], boardSize[1], 0);
 		this.activePiece = PieceState.none;
-		this.holdPiece = 0;
+		this.holdPiece = PieceState.none;
 		this.swapHold = false;
 		this.paused = false;
 		this.lastMove = Keys.Pause; // used as a placeholder empty value
@@ -208,6 +209,7 @@ export class Logic {
 		failTimer: number;
 		failBuffer: number;
 		checkState: CheckState;
+		queue: PieceState[];
 	};
 
 	flags!: {
@@ -299,6 +301,38 @@ export class Logic {
 				}
 				this.gameboard.out(lineClearDelay);
 				break;
+
+			case "match3":
+				this.gameboard.in();
+				for (let y = this.gameboard.height - 1; y > 0; y--) {
+					for (let x = 0; x < this.gameboard.width; x++) {
+						const a = this.gameboard.pieceXY(x, y);
+						const af = this.gameboard.flagXY(x, y)!;
+						if (a === 0 || (af & PieceFlags.Unclearable) !== 0 || (af & PieceFlags.Garbage) !== 0) {
+							continue;
+						}
+
+						top: for (const xx of [-1, 0, 1]) {
+							for (const yy of [-1, 0, 1]) {
+								if (xx == 0 && yy == 0) continue;
+								const b = this.gameboard.pieceXY(x + xx, y + yy);
+								if (a == b) {
+									const c = this.gameboard.pieceXY(x + xx + xx, y + yy + yy);
+									if (a == c) {
+										this.gameboard.delete(x, y);
+										this.gameboard.delete(x + xx, y + yy);
+										this.gameboard.delete(x + xx + xx, y + yy + yy);
+
+										clearedLines += 1;
+										break top;
+									}
+								}
+							}
+						}
+					}
+				}
+				this.gameboard.out(lineClearDelay);
+				break;
 		}
 
 		const wasB2B = this.gameDef.garbage.isB2B(clearedLines, wasSpin);
@@ -333,6 +367,61 @@ export class Logic {
 		this.gameboard.in();
 		this.gameboard.receiveGarbage(lines);
 		this.gameboard.out(0);
+	}
+
+	peekPieces(n: number) {
+		let peeked = [];
+		for (let i = 0; i < n; i++) {
+			if (this.state.queue[i] != undefined) {
+				peeked.push(this.state.queue[i]);
+			} else {
+				const piece = this.genPiece();
+				this.state.queue.push(piece);
+				peeked.push(piece);
+			}
+		}
+		return peeked;
+	}
+
+	genPiece() {
+		const { pieceGeneration } = this.gameDef.settings;
+
+		let pieceIdx = 0;
+		switch (pieceGeneration.type) {
+			case "simple":
+				pieceIdx = this.gameDef.randomizer.next();
+				break;
+			case "subpiece":
+				pieceIdx = this.gameDef.getPieceIdx(pieceGeneration.template);
+				break;
+		}
+		const genPiece = this.createPiece(pieceIdx);
+
+		if (pieceGeneration.type == "subpiece") {
+			for (let i = 0; i < genPiece.data.length; i++) {
+				if (genPiece.data[i] != 0) {
+					genPiece.data[i] = this.gameDef.randomizer.next();
+				}
+			}
+		}
+
+		return genPiece;
+	}
+
+	createPiece(pieceIdx: number) {
+		const { boardSize, screenSize } = this.gameDef.settings;
+
+		const piece = this.gameDef.getPiece(pieceIdx);
+		const pieceWidth = this.gameDef.widthHeightMap.get(pieceIdx)![0];
+		const topLeft = this.gameDef.topLeftMap.get(pieceIdx)!;
+		let x = Math.floor((boardSize[0] - pieceWidth) / 2);
+		let y = boardSize[1] - screenSize[1] - 1;
+		if (y > boardSize[1]) y = boardSize[1] - 1;
+		if (x < 1) x = 1;
+		if (y < 1) y = 1;
+		const genPiece = new PieceState(this, piece, RotState.Initial, x - topLeft[0], y - topLeft[1]);
+
+		return genPiece;
 	}
 
 	/**
@@ -381,16 +470,7 @@ export class Logic {
 
 		if (this.paused || this.failed) return;
 
-		const {
-			boardSize,
-			screenSize,
-			are,
-			hold: canHold,
-			gravity,
-			lockDelay,
-			holdDelay,
-			gravityType,
-		} = this.gameDef.settings;
+		const { are, hold: canHold, gravity, lockDelay, holdDelay, gravityType } = this.gameDef.settings;
 
 		this.mode.frame();
 		if (this.gameboard.step()) return;
@@ -413,24 +493,17 @@ export class Logic {
 				return;
 			}
 
-			let pieceIdx = 0;
 			if (canHold && this.swapHold) {
-				pieceIdx = this.holdPiece;
-				this.holdPiece = this.activePiece.piece.index;
+				this.holdPiece = this.activePiece;
+				this.activePiece = this.holdPiece;
 				this.swapHold = false;
 			} else {
-				pieceIdx = this.gameDef.randomizer.next();
+				if (this.state.queue.length > 0) {
+					this.activePiece = this.state.queue.shift()!;
+				} else {
+					this.activePiece = this.genPiece();
+				}
 			}
-
-			const piece = this.gameDef.getPiece(pieceIdx);
-			const pieceWidth = this.gameDef.widthHeightMap.get(pieceIdx)![0];
-			const topLeft = this.gameDef.topLeftMap.get(pieceIdx)!;
-			let x = Math.floor((boardSize[0] - pieceWidth) / 2);
-			let y = boardSize[1] - screenSize[1] - 1;
-			if (y > boardSize[1]) y = boardSize[1] - 1;
-			if (x < 1) x = 1;
-			if (y < 1) y = 1;
-			this.activePiece = new PieceState(this, piece, RotState.Initial, x - topLeft[0], y - topLeft[1]);
 
 			// check if player is trying to rotate piece, rotate
 			this.handleInputs();
@@ -457,9 +530,9 @@ export class Logic {
 			if (!this.pieceIntersecting(this.activePiece)) {
 				if (canHold && !this.state.heldLast && this.input.isPressed(Keys.Hold)) {
 					this.activePiece.invalidate();
-					this.swapHold = this.holdPiece != 0;
+					this.swapHold = !this.holdPiece.invalid;
 					if (this.swapHold == false) {
-						this.holdPiece = this.activePiece.piece.index;
+						this.holdPiece = this.activePiece;
 					}
 					// make are longer for holds
 					this.state.areTimer = -holdDelay;
@@ -511,7 +584,7 @@ export class Logic {
 		}
 
 		if (this.input.isPressed(Keys.ClearHoldBox)) {
-			this.holdPiece = 0;
+			this.holdPiece = PieceState.none;
 			this.input.pressedMap[Keys.ClearHoldBox] = false;
 		}
 
@@ -599,9 +672,9 @@ export class Logic {
 		}
 
 		if (this.input.isPressed(Keys.RotateSpecial) && specialRotation != "none") {
-			let piece;
+			let piece: PieceState | undefined;
 			switch (specialRotation) {
-				case "flip":
+				case "flip": {
 					const p = this.activePiece;
 					const pieceData = this.gameDef.getPiece(p.piece.mirror);
 					if (pieceData == undefined) {
@@ -623,6 +696,37 @@ export class Logic {
 						piece = undefined;
 					}
 					break;
+				}
+				case "cycle": {
+					const p = this.activePiece;
+					const colorQueue: number[] = [];
+					for (let i = 0; i < p.data.length; i++) {
+						if (p.data[i] != 0) {
+							colorQueue.push(p.data[i]);
+						}
+					}
+					colorQueue.push(colorQueue.shift()!);
+
+					piece = new PieceState(this, p.piece, RotState.Initial, p.x, p.y);
+					if (p.rot.equals(RotState.Right)) {
+						piece.rotate90degcc();
+					}
+					if (p.rot.equals(RotState.Left)) {
+						piece.rotate90deg();
+					}
+					if (p.rot.equals(RotState.Twice)) {
+						piece.rotate90deg();
+						piece.rotate90deg();
+					}
+					// note: not a differently shaped piece, so should be physically impossible to intersect the piece with the board, so no checks necessary
+
+					for (let i = 0; i < p.data.length; i++) {
+						if (p.data[i] != 0) {
+							piece.data[i] = colorQueue.shift()!;
+						}
+					}
+					break;
+				}
 			}
 			if (piece != undefined) {
 				this.activePiece = piece;

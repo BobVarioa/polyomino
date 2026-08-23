@@ -77,7 +77,8 @@
 		"dropDelay": 0,
 		"garbageLocation": "bottom",
 		"garbageHoles": 1,
-		"garbageCheese": 6
+		"garbageCheese": 6,
+		"pieceGeneration": { "type": "simple" }
 	},
 	"garbage": {
 		// todo: actually build a real garbage system here

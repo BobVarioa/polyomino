@@ -1,30 +1,36 @@
 {
 	"pieces": {
-		"I": { "def": "010/010/010", "color": "cyan" }
+		"R": { "def": "1", "color": "red", "parent": true, "uv": [1, 0] },
+		"G": { "def": "1", "color": "green", "parent": true, "uv": [1, 1] },
+		"B": { "def": "1", "color": "blue", "parent": true, "uv": [0, 0] },
+		"C": { "def": "1", "color": "cyan", "parent": true, "uv": [2, 0] },
+		"M": { "def": "1", "color": "purple", "parent": true, "uv": [3, 0] },
+		"Y": { "def": "1", "color": "yellow", "parent": true, "uv": [2, 1] },
 
-		// red 
-		// orange
-		// yellow
-		// green
-		// blue
-		// purple 
+		"I": { "def": "010/010/010" }
 	},
 	"rotation": {},
-	"randomizer": "I",
+	"randomizer": "bag of 2*R,2*G,2*B,2*C,2*M,2*Y",
 	"settings": {
-		"boardSize": [10, 40],
-		"screenSize": [10, 20],
+		"boardSize": [6, 26],
+		"screenSize": [6, 13],
 		"are": 6,
 		"gravity":  64,
-		"gravityType": "naive",
+		"gravityType": "linear",
 		"lockDelay": 30,
-		"hold": true,
+		"hold": false,
 		"holdDelay": 2,
-		"rotation": true,
+		"rotation": false,
 		"specialRotation": "cycle",
 		"lineClearDelay": 10,
+		"queueLength": 2,
+		"pieceType": "meta",
+		"clearType": "match3",
 		"dropDelay": 0,
-		"garbageLocation": "bottom"
+		"garbageLocation": "bottom",
+		"garbageHoles": 0,
+		"garbageCheese": 1,
+		"pieceGeneration": { "type": "subpiece", "template": "I" }
 	},
 	"garbage": {
 		"lines": []

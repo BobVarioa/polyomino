@@ -46,7 +46,8 @@
 		"dropDelay": 0,
 		"garbageLocation": "bottom",
 		"garbageHoles": 1,
-		"garbageCheese": 5
+		"garbageCheese": 5,
+		"pieceGeneration": { "type": "simple" }
 	},
 	"garbage": {
 		"lines": [0, 1, 2, 4],

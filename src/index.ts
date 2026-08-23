@@ -72,7 +72,15 @@ async function init() {
 						{ id: "mode.attack", action: "mode", mode: AttackMode },
 					],
 				},
-				{ id: "game.tro", action: "game", gamedef: undefined, children: [] },
+				{
+					id: "game.tro",
+					action: "game",
+					gamedef: GameTypes.tro,
+					children: [
+						{ id: "mode.speed", action: "mode", mode: SpeedMode },
+						{ id: "mode.attack", action: "mode", mode: AttackMode },
+					],
+				},
 				{
 					id: "game.tetro",
 					action: "game",

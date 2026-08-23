@@ -478,7 +478,7 @@ export class GlDraw extends BaseDraw {
 		gl.enableVertexAttribArray(attr);
 	}
 
-	private drawPieceState(piece: PieceState, a = 1.0) {
+	private drawPiece(piece: PieceState, a = 1.0) {
 		const {
 			sh,
 			logic: {
@@ -503,12 +503,12 @@ export class GlDraw extends BaseDraw {
 		}
 	}
 
-	private drawPiece(piece: Piece, offsetX: number, offsetY: number, grid = false) {
+	private drawPieceXY(piece: PieceState, offsetX: number, offsetY: number, grid = false) {
 		const {
 			logic: { gameDef },
 		} = this;
 
-		const topLeft = gameDef.topLeftMap.get(piece.index)!;
+		const topLeft = gameDef.topLeftMap.get(piece.piece.index)!;
 		for (let y = topLeft[1]; y < piece.data.height; y++) {
 			for (let x = topLeft[0]; x < piece.data.width; x++) {
 				const p = piece.data.atXY(x, y)!;
@@ -657,8 +657,8 @@ export class GlDraw extends BaseDraw {
 			const piece = this.logic.activePiece;
 			const ghostPiece = this.logic.activePiece.copy().hardDrop();
 
-			this.drawPieceState(ghostPiece, 0.4);
-			this.drawPieceState(piece);
+			this.drawPiece(ghostPiece, 0.4);
+			this.drawPiece(piece);
 		}
 
 		this.layers.use(Layers.GRID);
@@ -680,28 +680,32 @@ export class GlDraw extends BaseDraw {
 		} = this;
 
 		this.layers.use(Layers.UI);
-		const queue = gameDef.randomizer.peek(gameDef.settings.queueLength).map((v) => gameDef.getPiece(v)!);
-		let y = -0.25;
-		for (const piece of queue) {
-			y += gameDef.maxPieceHeight + 0.5;
-			this.drawPiece(piece, sw + 1, y);
+		if (gameDef.settings.queueLength > 0) {
+			const queue = this.logic.peekPieces(gameDef.settings.queueLength);
+			let y = -0.25;
+			for (const piece of queue) {
+				y += gameDef.maxPieceHeight + 0.5;
+				this.drawPieceXY(piece, sw + 1, y);
+			}
+			this.drawRect(sw + 1 - 0.25, 0, gameDef.maxPieceWidth + 0.5, -y - 0.25, 1.0, 1.0, 1.0, 0.8);
 		}
-		this.drawRect(sw + 1 - 0.25, 0, gameDef.maxPieceWidth + 0.5, -y - 0.25, 1.0, 1.0, 1.0, 0.8);
 
-		const holdPiece = this.logic.holdPiece;
-		if (holdPiece != 0) {
-			this.drawPiece(gameDef.getPiece(holdPiece)!, -gameDef.maxPieceWidth - 1, gameDef.maxPieceHeight + 0.25);
+		if (gameDef.settings.hold) {
+			const holdPiece = this.logic.holdPiece;
+			if (!holdPiece.invalid) {
+				this.drawPieceXY(holdPiece, -gameDef.maxPieceWidth - 1, gameDef.maxPieceHeight + 0.25);
+			}
+			this.drawRect(
+				-gameDef.maxPieceWidth - 1 - 0.25,
+				0,
+				gameDef.maxPieceWidth + 0.5,
+				-gameDef.maxPieceHeight - 0.5,
+				1.0,
+				1.0,
+				1.0,
+				0.8,
+			);
 		}
-		this.drawRect(
-			-gameDef.maxPieceWidth - 1 - 0.25,
-			0,
-			gameDef.maxPieceWidth + 0.5,
-			-gameDef.maxPieceHeight - 0.5,
-			1.0,
-			1.0,
-			1.0,
-			0.8,
-		);
 
 		this.layers.use(Layers.GRID);
 		const failTimer = this.logic.state.failTimer;

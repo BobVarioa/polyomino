@@ -57,6 +57,15 @@ export interface PieceDef {
 	readonly parent?: boolean;
 }
 
+export interface SimplePieceGenerator {
+	readonly type: "simple"
+}
+
+export interface SubpieceGenerator {
+	readonly type: "subpiece"
+	readonly template: string;
+}
+
 export interface Settings {
 	readonly boardSize: [number, number];
 	readonly screenSize: [number, number];
@@ -66,16 +75,17 @@ export interface Settings {
 	readonly hold: boolean;
 	readonly holdDelay: number;
 	readonly lineClearDelay: number;
-	readonly specialRotation: string;
+	readonly specialRotation: "flip" | "cycle" | "none";
 	readonly rotation: boolean;
-	readonly gravityType: string;
+	readonly gravityType: "naive" | "linear" | "cascade" | "sticky";
 	readonly queueLength: number;
-	readonly clearType: string;
-	readonly pieceType: string;
+	readonly clearType: "line" | "color" | "match3";
+	readonly pieceType: "normal" | "meta";
 	readonly dropDelay: number;
-	readonly garbageLocation: string;
+	readonly garbageLocation: "top" | "bottom";
 	readonly garbageHoles: number;
 	readonly garbageCheese: number;
+	readonly pieceGeneration: SimplePieceGenerator | SubpieceGenerator;
 }
 
 export interface KickTable {
