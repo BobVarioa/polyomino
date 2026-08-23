@@ -426,14 +426,13 @@ export class Logic {
 		piece.y = y - topLeft[1];
 
 		if (piece.rot.equals(RotState.Left)) {
-			piece.rotateRight();
+			piece.rotate90deg();
+		} else if (piece.rot.equals(RotState.Right)) {
+			piece.rotate90degcc();
+		} else if (piece.rot.equals(RotState.Twice)) {
+			piece.rotate90deg().rotate90deg();
 		}
-		if (piece.rot.equals(RotState.Right)) {
-			piece.rotateLeft();
-		}
-		if (piece.rot.equals(RotState.Twice)) {
-			piece.rotate180();
-		}
+		piece.rot = RotState.Initial;
 	}
 
 	createPiece(pieceIdx: number) {
