@@ -86,9 +86,10 @@ export class MenuManager {
 		const quitButton = document.createElement("button");
 		quitButton.textContent = l("menu.quit");
 		quitButton.addEventListener("click", () => {
+			this.logic._signal.emit("stop");
+			this.logic._signal.emit("stop-draw");
 			this.logic.draw.clear();
 			this.logic.draw.setScreenSize(640, 640);
-			this.logic._signal.emit("stop");
 
 			this.logic._signal.removeListener("fail", this.failListener);
 			this.logic._signal.removeListener("win", this.winListener);
@@ -119,9 +120,10 @@ export class MenuManager {
 		const quitButton = document.createElement("button");
 		quitButton.textContent = l("menu.quit");
 		quitButton.addEventListener("click", () => {
+			this.logic._signal.emit("stop");
+			this.logic._signal.emit("stop-draw");
 			this.logic.draw.clear();
 			this.logic.draw.setScreenSize(640, 640);
-			this.logic._signal.emit("stop");
 			
 			this.logic._signal.removeListener("fail", this.failListener);
 			this.logic._signal.removeListener("win", this.winListener);

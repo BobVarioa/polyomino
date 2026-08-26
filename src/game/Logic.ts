@@ -75,6 +75,9 @@ export class Logic {
 			this.stopped = true;
 			clearTimeout(timeout);
 		});
+		this._signal.on("stop-draw", () => {
+			cancelAnimationFrame(rAF);
+		});
 		this._signal.on("start", () => {
 			this.stopped = false;
 			func();
